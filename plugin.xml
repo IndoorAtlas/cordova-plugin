@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        id="cordova-plugin-indooratlas"
+        version="0.0.5">
+
+	<name>IndoorAtlas</name>
+	<description>A Cordova plugin that integrates IndoorAtlas</description>
+	<engines>
+		<engine name="cordova" version=">=3.6.0" />
+		<engine name="cordova-plugman" version=">=4.2.0"/><!-- needed for gradleReference support -->
+	</engines>
+
+	<js-module src="www/Coordinates.js" name="Coordinates">
+		<clobbers target="Coordinates" />
+	</js-module>
+	<js-module src="www/PositionError.js" name="PositionError">
+		<clobbers target="PositionError" />
+	</js-module>
+	<js-module src="www/Position.js" name="Position">
+		<clobbers target="Position" />
+	</js-module>
+	<js-module src="www/Region.js" name="Region">
+		<clobbers target="Region" />
+	</js-module>
+	<js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
+		<clobbers target="IndoorAtlas" />
+	</js-module>
+    <js-module src="www/Floorplan.js" name="FloorPlan">
+        <clobbers target="FloorPlan" />
+    </js-module>
+    
+
+	<!-- ios -->
+	<platform name="ios">
+		<config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
+			<string>Platform location requested for better indoor positioning experience.</string> 
+		</config-file>
+		<config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
+			<string>Platform location requested for better indoor positioning experience.</string> 
+		</config-file>
+		<framework src="CFNetwork.framework" />
+		<framework src="CoreLocation.framework" />
+		<framework src="CoreMotion.framework" />
+		<framework src="Security.framework" />
+		<framework src="SystemConfiguration.framework"/>
+		<framework src="libz.dylib" />
+		<framework src="libc++.dylib" />
+		<framework src="src/ios/IndoorAtlas2.1/IndoorAtlas.framework" custom="true" />
+		<config-file target="config.xml" parent="/*">
+			<feature name="IndoorAtlas">
+				<param name="ios-package" value="IndoorLocation" />
+			</feature>
+		</config-file>
+		<header-file src="src/ios/IndoorAtlasLocationService.h" />
+		<source-file src="src/ios/IndoorAtlasLocationService.m" />
+		<header-file src="src/ios/IndoorLocation.h" />
+		<source-file src="src/ios/IndoorLocation.m" />
+	</platform>
+	
+	<!-- android -->
+    <platform name="android">
+		<framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
+		
+		<config-file target="res/xml/config.xml" parent="/*">
+            <feature name="IndoorAtlas">
+                <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
+				<param name="onload" value="true" />
+            </feature>
+        </config-file>
+		
+		<config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+			<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+			<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+        </config-file>
+		
+		<source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
+		<source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
+		<source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
+	</platform>
+</plugin>
