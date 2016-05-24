@@ -25,7 +25,7 @@
 	<js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
 		<clobbers target="IndoorAtlas" />
 	</js-module>
-    <js-module src="www/Floorplan.js" name="FloorPlan">
+    <js-module src="www/FloorPlan.js" name="FloorPlan">
         <clobbers target="FloorPlan" />
     </js-module>
     
