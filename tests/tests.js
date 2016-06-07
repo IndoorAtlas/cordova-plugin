@@ -314,7 +314,7 @@ exports.defineAutoTests = function () {
                     expect(p.topRight).toBeDefined();
                     done();
                   }, function (err) {
-                    if (err.message) {
+                    if (err.message && err.message.indexOf('kCLErrorDomain') > -1) {
                       console.log("Error: Location not set in simulator, tests will fail.");
                       expect(true).toBe(false);
                       isIOSSim = true;
