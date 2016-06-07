@@ -64,7 +64,7 @@ exports.defineAutoTests = function () {
 
   describe('Location (IndoorAtlas)', function () {
 
-    it("test.spec.1 111should exist", function () {
+    it("test.spec.1 should exist", function () {
       expect(IndoorAtlas).toBeDefined();
     });
 
