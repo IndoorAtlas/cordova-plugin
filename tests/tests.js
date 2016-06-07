@@ -187,7 +187,7 @@ exports.defineAutoTests = function () {
           // which were causing occasional test failures
           setTimeout(function () {
             done();
-          }, 200);
+          }, 100);
         });
 
         describe('error callback', function () {
@@ -287,7 +287,7 @@ exports.defineAutoTests = function () {
 
                   IndoorAtlas.fetchFloorPlanWithId("Wrongid", fail.bind(null, done),
                   succeed.bind(null, done));
-                }, 50000);
+                }, 25000);
               });
 
               describe('success callback', function () {
@@ -314,7 +314,7 @@ exports.defineAutoTests = function () {
                     expect(p.topRight).toBeDefined();
                     done();
                   }, function (err) {
-                    if (err.message && err.message.indexOf('kCLErrorDomain') > -1) {
+                    if (err.message) {
                       console.log("Error: Location not set in simulator, tests will fail.");
                       expect(true).toBe(false);
                       isIOSSim = true;
