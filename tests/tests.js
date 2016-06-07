@@ -187,7 +187,7 @@ exports.defineAutoTests = function () {
           // which were causing occasional test failures
           setTimeout(function () {
             done();
-          }, 100);
+          }, 200);
         });
 
         describe('error callback', function () {
@@ -287,7 +287,7 @@ exports.defineAutoTests = function () {
 
                   IndoorAtlas.fetchFloorPlanWithId("Wrongid", fail.bind(null, done),
                   succeed.bind(null, done));
-                }, 25000);
+                }, 50000);
               });
 
               describe('success callback', function () {
