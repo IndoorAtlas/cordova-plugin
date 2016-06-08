@@ -176,7 +176,7 @@ exports.defineAutoTests = function () {
                 fail(done);
               }
             });
-          }, 50000); // first geolocation call can take several seconds on some devices
+          }, 100000); // first geolocation call can take several seconds on some devices
         });
       });
 
