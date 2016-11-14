@@ -18,6 +18,8 @@ public class PositionError {
     public static final int INITIALIZATION_ERROR = 5;
     public static final int FLOOR_PLAN_UNAVAILABLE = 6;
     public static final int UNSPECIFIED_ERROR = 7;
+    public static final int FLOOR_PLAN_UNDEFINED = 8;
+    public static final int INVALID_VALUE = 9;
 
     /**
      * Returns an error JSON object with given errorCode and message
@@ -71,6 +73,13 @@ public class PositionError {
                     errorObject.put("code",errorCode);
                     errorObject.put("message","Floor plan unavailable");
                     break;
+                case FLOOR_PLAN_UNDEFINED:
+                    errorObject.put("code",errorCode);
+                    errorObject.put("message","Floor plan undefined. See ~/www/jsAPIKeys.js file");
+                    break;
+                case INVALID_VALUE:
+                    errorObject.put("code",errorCode);
+                    errorObject.put("message","Distance value should be positive");
                 case UNSPECIFIED_ERROR:
                     errorObject.put("code",errorCode);
                     errorObject.put("message","Unspecified error");

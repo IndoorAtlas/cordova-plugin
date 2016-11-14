@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-indooratlas",
-  "version": "0.9.1",
+  "version": "1.0",
   "description": "Cordova plugin using IndoorAtlas positioning API.",
   "cordova": {
     "id": "cordova-plugin-indooratlas",

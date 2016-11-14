@@ -38,7 +38,7 @@ var Coordinates = function(lat, lng, alt, acc, head, vel,flr) {
     * The altitude accuracy of the position.
     */
     //this.altitudeAccuracy = (altacc !== undefined) ? altacc : null;
-    this.altitudeAccuracy=null;
+    this.altitudeAccuracy = null;
 
     /**
     * The floor of the position.

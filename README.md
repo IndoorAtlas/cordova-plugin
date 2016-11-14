@@ -19,10 +19,10 @@
 #
 -->
 
-# IndoorAtlas Early Access Alpha Cordova Plugin
+# IndoorAtlas Cordova Plugin
 
-This Early Access Cordova plugin provides information about the device's location inside finger printed buildings and uses the [IndoorAtlas location APIs](http://docs.indooratlas.com/cordova/api-documentation).
+This Cordova plugin provides information about the device's location inside finger printed buildings and uses the [IndoorAtlas location APIs](http://docs.indooratlas.com/cordova/).
 
 ## Documentation
-Documentation for this early access plugin is available in [http://docs.indooratlas.com/cordova](http://docs.indooratlas.com/cordova).
+Documentation for this plugin is available in [http://docs.indooratlas.com/cordova](http://docs.indooratlas.com/cordova).
 

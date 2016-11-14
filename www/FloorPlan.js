@@ -18,14 +18,14 @@
  * @param {Object} topRight
  * @constructor
  */
-var FloorPlan = function(id,name,url,floorLevel,bearing,bitmapHeight,bitmapWidth,heightMeters,widthMeters,metersToPixels,pixelsToMeters,bottomLeft,center,topLeft,topRight) {
+var FloorPlan = function(id, name, url, floorLevel, bearing, bitmapHeight, bitmapWidth, heightMeters, widthMeters, metersToPixels, pixelsToMeters, bottomLeft, center, topLeft, topRight) {
     this.id = id;
     this.name = name;
     this.url = url;
     this.floorLevel = floorLevel;
     this.bearing = bearing;
     this.bitmapHeight = bitmapHeight;
-    this.bitmapWidth=bitmapWidth;
+    this.bitmapWidth = bitmapWidth;
     this.heightMeters = heightMeters;
     this.widthMeters = widthMeters;
     this.metersToPixels = metersToPixels;

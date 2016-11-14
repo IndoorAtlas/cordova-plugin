@@ -10,12 +10,12 @@ function getDeviceType(){
     return deviceType;
 }
 
-function parseSetPositionParameters(options){
+function parseSetPositionParameters(options) {
     var opt = {
         regionId:'',
         coordinates:[]
     };
-    if (options){
+    if (options) {
         if (options.regionId !== undefined) {
             opt.regionId = options.regionId;
         }
@@ -26,12 +26,12 @@ function parseSetPositionParameters(options){
     return opt;
 }
 
-function parseParameters(options){
+function parseParameters(options) {
     var opt = {
         timeout: Infinity
     };
 
-    if (options){
+    if (options) {
         if (options.timeout !== undefined && !isNaN(options.timeout)) {
             if (options.timeout < 0) {
                 opt.timeout = 0;
@@ -57,32 +57,32 @@ function createTimeout(errorCallback, timeout) {
 
 var IndoorAtlas = {
     lastPosition:null, // reference to last known (cached) position returned
-    initializeAndroid:function(successCallback, errorCallback, options){
-        var requestWin = function(result){
-                var win = function(result){
+    initializeAndroid:function(successCallback, errorCallback, options) {
+        var requestWin = function(result) {
+                var win = function(result) {
                     successCallback(result);
                 };
-                var fail = function(error){
+                var fail = function(error) {
                     var err = new PositionError(error.code,error.message);
                     errorCallback(err);
                 };
                 exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key,options.secret]);
         };
-        var requestFail = function(error){
+        var requestFail = function(error) {
             var err = new PositionError(error.code,error.message);
             errorCallback(err);
         };
-        exec(requestWin,requestFail,"IndoorAtlas","getPermissions",[]);
+        exec(requestWin, requestFail, "IndoorAtlas", "getPermissions", []);
     },
-    initialize:function(successCallback, errorCallback, options){
-        if (getDeviceType()=='Android'){
+    initialize:function(successCallback, errorCallback, options) {
+        if (getDeviceType() == 'Android') {
             IndoorAtlas.initializeAndroid(successCallback, errorCallback, options);
 	        return;
         }
-        var win = function(p){
+        var win = function(p) {
             successCallback(p);
         };
-        var fail = function(e){
+        var fail = function(e) {
             var err = new PositionError(e.code, e.message);
             if (errorCallback) {
                 errorCallback(err);
@@ -90,16 +90,15 @@ var IndoorAtlas = {
         };
         exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options]);
     },
-    getCurrentPosition:function(successCallback,errorCallback,options){
-        try{
-
+    getCurrentPosition:function(successCallback, errorCallback, options) {
+        try {
             options = parseParameters(options);
 
             // Timer var that will fire an error callback if no position is retrieved from native
             // before the "timeout" param provided expires
             var timeoutTimer = {timer:null};
-            var win = function(p){
-                try{
+            var win = function(p) {
+                try {
                     clearTimeout(timeoutTimer.timer);
                     if (!(timeoutTimer.timer)) {
                         // Timeout already happened, or native fired error callback for
@@ -123,7 +122,7 @@ var IndoorAtlas = {
                     IndoorAtlas.lastPosition = pos;
                     successCallback(pos);
                 }
-                catch(error){
+                catch(error) {
                     alert(error);
                 }
             };
@@ -147,7 +146,7 @@ var IndoorAtlas = {
                     message:"timeout value in PositionOptions set to 0 and no cached Position object available, or cached Position object's age exceeds provided PositionOptions' maximumAge parameter."
                 });
             // Otherwise we have to call into native to retrieve a position.
-            } else{
+            } else {
                 if (options.timeout !== Infinity) {
                     // If the timeout value was not set to Infinity (default), then
                     // set up a timeout function that will fire the error callback
@@ -165,7 +164,7 @@ var IndoorAtlas = {
         }
         catch(error){alert(error);}
     },
-    watchRegion:function(onEnterRegion,onExitRegion,errorCallback){
+    watchRegion:function(onEnterRegion, onExitRegion, errorCallback) {
         var id = utils.createUUID();
 
         var fail = function(e) {
@@ -175,12 +174,12 @@ var IndoorAtlas = {
             }
         };
 
-        var win = function(r){
-            var region = new Region(r.regionId,r.timestamp,r.regionType,r.transitionType);
-            if (region.transitionType==Region.TRANSITION_TYPE_ENTER){
+        var win = function(r) {
+            var region = new Region(r.regionId, r.timestamp, r.regionType, r.transitionType);
+            if (region.transitionType == Region.TRANSITION_TYPE_ENTER){
                 onEnterRegion(region);
             }
-            if (region.transitionType==Region.TRANSITION_TYPE_EXIT){
+            if (region.transitionType == Region.TRANSITION_TYPE_EXIT){
                 onExitRegion(region);
             }
         };
@@ -188,20 +187,20 @@ var IndoorAtlas = {
         exec(win, fail, "IndoorAtlas", "addRegionWatch", [id]);
         return id;
     },
-    clearRegionWatch:function(watchId){
-        try{
+    clearRegionWatch:function(watchId) {
+        try {
             exec(
-                    function(success){
+                    function(success) {
                         console.log('Service stopped');
                     },
-                    function(error){
+                    function(error) {
                         console.log('Error while stopping service');
                     },
                     "IndoorAtlas","clearRegionWatch",[watchId]);
         }
         catch(error){alert(error);}
     },
-    watchPosition:function(successCallback,errorCallback,options){
+    watchPosition:function(successCallback, errorCallback, options) {
         options = parseParameters(options);
 
         var id = utils.createUUID();
@@ -241,25 +240,25 @@ var IndoorAtlas = {
         exec(win, fail, "IndoorAtlas", "addWatch", [id, options.floorPlan]);
         return id;
     },
-    clearWatch:function(watchId){
-        try{
+    clearWatch:function(watchId) {
+        try {
             exec(
-                function(success){
+                function(success) {
                     console.log('Service stopped');
                 },
-                function(error){
+                function(error) {
                     console.log('Error while stopping service');
                 },
                 "IndoorAtlas","clearWatch",[watchId]);
         }
         catch(error){alert(error);}
     },
-    setPosition:function(successCallback,errorCallback,options){
+    setPosition:function(successCallback, errorCallback, options) {
         options = parseSetPositionParameters(options);
-        var win = function(p){
+        var win = function(p) {
             successCallback(p);
         };
-        var fail = function(e){
+        var fail = function(e) {
             var err = new PositionError(e.code, e.message);
             if (errorCallback) {
                 errorCallback(err);
@@ -267,8 +266,8 @@ var IndoorAtlas = {
         };
         exec(win, fail, "IndoorAtlas", "setPosition", [options.regionId,options.coordinates]);
     },
-    fetchFloorPlanWithId:function(floorplanId,successCallback,errorCallback){
-        var win = function(p){
+    fetchFloorPlanWithId:function(floorplanId, successCallback, errorCallback){
+        var win = function(p) {
             var floorplan = new FloorPlan(
                 p.id,
                 p.name,
@@ -288,13 +287,48 @@ var IndoorAtlas = {
             );
             successCallback(floorplan);
         };
-        var fail = function(e){
+        var fail = function(e) {
             var err = new PositionError(e.code, e.message);
             if (errorCallback) {
                 errorCallback(err);
             }
         };
         exec(win, fail, "IndoorAtlas", "fetchFloorplan", [floorplanId]);
+    },
+    coordinateToPoint:function(coords, floorplanId, successCallback, errorCallback){
+        var win = function(p) {
+            successCallback(p);
+        };
+        var fail = function(e) {
+            var err = new PositionError(e.code, e.message);
+            if (errorCallback) {
+                errorCallback(err);
+            }
+        };
+        exec(win, fail, "IndoorAtlas", "coordinateToPoint", [coords.latitude, coords.longitude, floorplanId]);
+    },
+    pointToCoordinate:function(point, floorplanId, successCallback, errorCallback) {
+        var win = function(p) {
+            successCallback(p);
+        };
+        var fail = function(e) {
+            var err = new PositionError(e.code, e.message);
+            if (errorCallback) {
+                errorCallback(err);
+            }
+        };
+        exec(win, fail, "IndoorAtlas", "pointToCoordinate", [point.x, point.y, floorplanId]);
+    },
+    setDistanceFilter:function(successCallback, errorCallback, distance) {
+        var win = function(p) {
+            successCallback(p);
+        };
+        var fail = function(e) {
+            if (errorCallback) {
+                errorCallback(e);
+            }
+        };
+        exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
     }
 };
 module.exports = IndoorAtlas;

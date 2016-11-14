@@ -16,7 +16,6 @@ typedef NSUInteger IndoorLocationStatus;
 
 // simple object to keep track of location information
 @interface IndoorLocationInfo : NSObject {
-   
 }
 
 @property (nonatomic, assign) IndoorLocationStatus locationStatus;
@@ -39,8 +38,7 @@ typedef NSUInteger IndoorLocationStatus;
 @end
 
 
-@interface IndoorLocation : CDVPlugin{
-    
+@interface IndoorLocation : CDVPlugin{    
 }
 
 @property (nonatomic, strong) CLLocationManager* locationManager;
@@ -55,4 +53,10 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)clearRegionWatch:(CDVInvokedUrlCommand*)command;
 - (void)setPosition:(CDVInvokedUrlCommand*)command;
 - (void)fetchFloorplan:(CDVInvokedUrlCommand*)command;
+- (void)coordinateToPoint:(CDVInvokedUrlCommand*)command;
+- (void)pointToCoordinate:(CDVInvokedUrlCommand*)command;
+- (void)sendCoordinateToPoint:(CGPoint)point;
+- (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
+- (void)setDistanceFilter:(CDVInvokedUrlCommand*)command;
+
 @end

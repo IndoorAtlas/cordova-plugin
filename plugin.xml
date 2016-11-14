@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="0.0.5">
+        version="1.0.0">
 
 	<name>IndoorAtlas</name>
 	<description>A Cordova plugin that integrates IndoorAtlas</description>
@@ -28,15 +28,15 @@
     <js-module src="www/FloorPlan.js" name="FloorPlan">
         <clobbers target="FloorPlan" />
     </js-module>
-
+    
 
 	<!-- ios -->
 	<platform name="ios">
 		<config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
-			<string>Platform location requested for better indoor positioning experience.</string>
+			<string>Platform location requested for better indoor positioning experience.</string> 
 		</config-file>
 		<config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
-			<string>Platform location requested for better indoor positioning experience.</string>
+			<string>Platform location requested for better indoor positioning experience.</string> 
 		</config-file>
 		<framework src="CFNetwork.framework" />
 		<framework src="CoreLocation.framework" />
@@ -56,18 +56,18 @@
 		<header-file src="src/ios/IndoorLocation.h" />
 		<source-file src="src/ios/IndoorLocation.m" />
 	</platform>
-
+	
 	<!-- android -->
     <platform name="android">
 		<framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
-
+		
 		<config-file target="res/xml/config.xml" parent="/*">
             <feature name="IndoorAtlas">
                 <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
 				<param name="onload" value="true" />
             </feature>
         </config-file>
-
+		
 		<config-file target="AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.INTERNET" />
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -75,7 +75,7 @@
 			<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 			<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
         </config-file>
-
+		
 		<source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
