@@ -58,7 +58,8 @@ public class IALocationPlugin extends CordovaPlugin{
     private boolean mLocationServiceRunning=false;
     private Timer mTimer;
     private String mApiKey, mApiSecret;
-
+    private IALocationRequest mLocationRequest = IALocationRequest.create();
+    
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
      * by other Java methods in the event that a plugin is using this as a dependency.
@@ -177,8 +178,23 @@ public class IALocationPlugin extends CordovaPlugin{
                 clearRegionWatch(watchId);
                 callbackContext.success();
             }else if("fetchFloorplan".equals(action)){
-                String floorplanId = args.getString(0);
-                fetchFloorplan(floorplanId,callbackContext);
+                if (!args.getString(0).isEmpty()) {
+                    String floorplanId = args.getString(0);
+                    fetchFloorplan(floorplanId,callbackContext);
+                } else {
+                    callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNDEFINED));
+                }
+            }else if ("coordinateToPoint".equals(action)){
+                IALatLng coords = new IALatLng(args.getDouble(0), args.getDouble(1));
+                String floorplanId = args.getString(2);
+                coordinateToPoint(coords, floorplanId, callbackContext);
+            } else if ("pointToCoordinate".equals(action)) {
+                PointF point = new PointF(args.getInt(0), args.getInt(1));
+                String floorplanId = args.getString(2);
+                pointToCoordinate(point, floorplanId, callbackContext);
+            } else if ("setDistanceFilter".equals(action)) {
+                float distance = (float) args.getDouble(0);
+                setDistanceFilter(distance, callbackContext);
             }
 
         }
@@ -316,6 +332,77 @@ public class IALocationPlugin extends CordovaPlugin{
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
+    
+    /**
+     * Calculates point based on given coordinates
+     * @param coords
+     * @param floorplanId
+     * @param callbackContext
+     */
+    private void coordinateToPoint(final IALatLng coords, String floorplanId, final CallbackContext callbackContext) {
+        if (mResourceManager!=null){
+            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
+            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
+                @Override
+                public void onResult(IAResult<IAFloorPlan> iaResult) {
+                    JSONObject pointInfo = new JSONObject();
+                    IAFloorPlan floorPlan = iaResult.getResult();
+                    try {
+                        if (floorPlan != null) {
+                            PointF point = floorPlan.coordinateToPoint(coords);
+                            pointInfo.put("x", point.x);
+                            pointInfo.put("y", point.y);
+                            Log.d("SendPoint", "" + point);
+                            callbackContext.success(pointInfo);
+                        } else {
+                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
+                        }
+
+                    } catch (JSONException ex) {
+                        Log.e(TAG, ex.toString());
+                        throw new IllegalStateException(ex.getMessage());
+                    }
+                }
+            }, Looper.getMainLooper());
+        } else {
+            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
+        }
+    }
+
+    /**
+     * Calculates coordinates based on given point
+     * @param point
+     * @param floorplanId
+     * @param callbackContext
+     */
+    private void pointToCoordinate(final PointF point, String floorplanId, final CallbackContext callbackContext) {
+        if (mResourceManager!=null){
+            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
+            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
+                @Override
+                public void onResult(IAResult<IAFloorPlan> iaResult) {
+                    JSONObject coordsInfo = new JSONObject();
+                    IAFloorPlan floorPlan = iaResult.getResult();
+                    try {
+                        if (floorPlan != null) {
+                            IALatLng coords = floorPlan.pointToCoordinate(point);
+                            coordsInfo.put("latitude", coords.latitude);
+                            coordsInfo.put("longitude", coords.longitude);
+                            Log.d("SendCoords", "" + coords.latitude + " " + coords.longitude);
+                            callbackContext.success(coordsInfo);
+                        } else {
+                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
+                        }
+                    } catch (JSONException ex) {
+                        Log.e(TAG, ex.toString());
+                        throw new IllegalStateException(ex.getMessage());
+                    }
+                }
+            }, Looper.getMainLooper());
+        } else {
+            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
+        }
+    }
 
     /**
      * Helper method to cancel current task if any.
@@ -427,7 +514,14 @@ public class IALocationPlugin extends CordovaPlugin{
                         IALocation iaLocation;
                         iaLocation = builder.build();
                         mLocationManager.setLocation(iaLocation);
-                        callbackContext.success();
+                        JSONObject successObject = new JSONObject();
+                        try {
+                            successObject.put("message","Position set");
+                        } catch (JSONException ex) {
+                            Log.e(TAG, ex.toString());
+                            throw new IllegalStateException(ex.getMessage());
+                        }
+                        callbackContext.success(successObject);
                     }
                 });
             }
@@ -450,6 +544,24 @@ public class IALocationPlugin extends CordovaPlugin{
         }
     }
 
+    private void setDistanceFilter(float distance, CallbackContext callbackContext) {
+        stopPositioning();
+        if (distance >= 0) {
+            mLocationRequest.setSmallestDisplacement(distance);
+            JSONObject successObject = new JSONObject();
+            try {
+                successObject.put("message","Distance filter set");
+            } catch (JSONException ex) {
+                Log.e(TAG, ex.toString());
+                throw new IllegalStateException(ex.getMessage());
+            }
+            callbackContext.success(successObject);
+            startPositioning();
+        } else {
+            callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_VALUE));
+        }
+    }
+
     /**
      * Starts IndoorAtlas positioning session
      */
@@ -457,7 +569,7 @@ public class IALocationPlugin extends CordovaPlugin{
         cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mLocationManager.requestLocationUpdates(IALocationRequest.create(), getListener(IALocationPlugin.this));
+                mLocationManager.requestLocationUpdates(mLocationRequest, getListener(IALocationPlugin.this));
                 mLocationManager.registerRegionListener(getListener(IALocationPlugin.this));
                 mLocationServiceRunning=true;
             }

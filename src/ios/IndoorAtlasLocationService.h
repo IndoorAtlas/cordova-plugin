@@ -22,7 +22,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateLocation:(IALocation *)newLocation;
 @optional
 /**
- *  Invoked when erro in IndoorAtlas location
+ *  Invoked when error in IndoorAtlas location
  *
  *  @param manager
  *  @param error
@@ -52,6 +52,23 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 -(void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
 
+/**
+ * Passes the calculated point to the Javascript side
+ *
+ * @param point
+ */
+- (void)sendCoordinateToPoint:(CGPoint)point;
+
+/**
+ * Passes the calculated coordinate to the Javascript side
+ *
+ * @param coords
+ */
+- (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
+
+- (void)errorInCoordinateToPoint:(NSError *) error;
+- (void)errorInPointToCoordinate:(NSError *) error;
+
 @end
 @interface IndoorAtlasLocationService : NSObject{
     
@@ -63,7 +80,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 /**
  *  Starting Service
  *
- *  @param floorid 
+ *  @param floorid
  */
 -(void)startPositioning:(NSString *)floorid;
 
@@ -81,7 +98,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 /**
  *  setLocation support
  *
- *  @param floorPlan   Refrence FloorPlan
+ *  @param floorPlan   Reference FloorPlan
  *  @param newLocation Reference Location
  */
 -(void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation;
@@ -91,5 +108,22 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param floorplanId
  */
 - (void)fetchFloorplanWithId:(NSString*)floorplanId;
+
+/**
+ * Calculates point with the given coordinates
+ *
+ * @param coords
+ */
+- (void)getCoordinateToPoint:(NSString*)floorplanId andCoordinates: (CLLocationCoordinate2D) coords;
+
+/**
+ * Calculates coordinates with the given point
+ *
+ * @param point
+ */
+- (void)getPointToCoordinate:(NSString*)floorplanId andPoint: (CGPoint) point;
+
+- (void)valueForDistanceFilter:(double*)distance;
+
 @end
 
