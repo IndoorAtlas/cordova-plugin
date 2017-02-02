@@ -28,24 +28,22 @@
     <js-module src="www/FloorPlan.js" name="FloorPlan">
         <clobbers target="FloorPlan" />
     </js-module>
-    
+
 
 	<!-- ios -->
 	<platform name="ios">
 		<config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
-			<string>Platform location requested for better indoor positioning experience.</string> 
-		</config-file>
-		<config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
-			<string>Platform location requested for better indoor positioning experience.</string> 
+			<string>Platform location requested for better indoor positioning experience.</string>
 		</config-file>
 		<framework src="CFNetwork.framework" />
 		<framework src="CoreLocation.framework" />
 		<framework src="CoreMotion.framework" />
+    <framework src="CoreBluetooth.framework" />
 		<framework src="Security.framework" />
 		<framework src="SystemConfiguration.framework"/>
 		<framework src="libz.dylib" />
 		<framework src="libc++.dylib" />
-		<framework src="src/ios/IndoorAtlas2.2/IndoorAtlas.framework" custom="true" />
+		<framework src="src/ios/IndoorAtlas2.3/IndoorAtlas.framework" custom="true" />
 		<config-file target="config.xml" parent="/*">
 			<feature name="IndoorAtlas">
 				<param name="ios-package" value="IndoorLocation" />
@@ -56,26 +54,28 @@
 		<header-file src="src/ios/IndoorLocation.h" />
 		<source-file src="src/ios/IndoorLocation.m" />
 	</platform>
-	
+
 	<!-- android -->
     <platform name="android">
 		<framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
-		
+
 		<config-file target="res/xml/config.xml" parent="/*">
-            <feature name="IndoorAtlas">
-                <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
+      <feature name="IndoorAtlas">
+        <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
 				<param name="onload" value="true" />
-            </feature>
-        </config-file>
-		
+      </feature>
+    </config-file>
+
 		<config-file target="AndroidManifest.xml" parent="/*">
-            <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-			<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-			<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-        </config-file>
-		
+      <uses-permission android:name="android.permission.INTERNET" />
+      <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+      <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+      <uses-permission android:name="android.permission.BLUETOOTH" />
+      <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+      <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+      <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    </config-file>
+
 		<source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
