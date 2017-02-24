@@ -31,7 +31,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private HashMap<String, CallbackContext> regionWatches = new HashMap<String, CallbackContext>();
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
-    private IALocation lastKnownLocation=null;
+    public IALocation lastKnownLocation=null;
     private IALocationPlugin owner;
 
     /**

@@ -18,6 +18,7 @@ Region.TRANSITION_TYPE_UNKNOWN = 0;
 Region.TRANSITION_TYPE_ENTER = 1;
 Region.TRANSITION_TYPE_EXIT = 2;
 Region.TYPE_FLOORPLAN = 1;
+Region.TYPE_VENUE = 2;
 Region.TYPE_UNKNOWN = -1;
 
 module.exports = Region;

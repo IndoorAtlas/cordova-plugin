@@ -71,7 +71,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @end
 @interface IndoorAtlasLocationService : NSObject{
-    
+
 }
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
@@ -123,7 +123,8 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 - (void)getPointToCoordinate:(NSString*)floorplanId andPoint: (CGPoint) point;
 
-- (void)valueForDistanceFilter:(double*)distance;
+- (void)valueForDistanceFilter:(float*)distance;
+- (float)fetchFloorCertainty;
+- (NSString *)fetchTraceId;
 
 @end
-
