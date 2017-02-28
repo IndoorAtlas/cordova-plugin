@@ -47,6 +47,8 @@
 @property (nonatomic, strong) NSString * coordinateToPointCallbackID;
 @property (nonatomic, strong) NSString * pointToCoordinateCallbackID;
 @property (nonatomic, strong) NSString * setDistanceFilterCallbackID;
+@property (nonatomic, strong) NSString * getFloorCertaintyCallbackID;
+@property (nonatomic, strong) NSString * getTraceIdCallbackID;
 
 @end
 
@@ -67,7 +69,7 @@
 - (BOOL)isAuthorized
 {
     BOOL authorizationStatusClassPropertyAvailable = [CLLocationManager respondsToSelector:@selector(authorizationStatus)]; // iOS 4.2+
-    
+
     if (authorizationStatusClassPropertyAvailable) {
         NSUInteger authStatus = [CLLocationManager authorizationStatus];
 #ifdef __IPHONE_8_0
@@ -77,9 +79,9 @@
 #else
         return (authStatus == kCLAuthorizationStatusAuthorized) || (authStatus == kCLAuthorizationStatusNotDetermined);
 #endif
-        
+
     }
-    
+
     // by default, assume YES (for iOS < 4.2)
     return YES;
 }
@@ -88,12 +90,12 @@
 {
     BOOL locationServicesEnabledInstancePropertyAvailable = [self.locationManager respondsToSelector:@selector(locationServicesEnabled)]; // iOS 3.x
     BOOL locationServicesEnabledClassPropertyAvailable = [CLLocationManager respondsToSelector:@selector(locationServicesEnabled)]; // iOS 4.x
-    
+
     if (locationServicesEnabledClassPropertyAvailable) { // iOS 4.x
         return [CLLocationManager locationServicesEnabled];
     } else if (locationServicesEnabledInstancePropertyAvailable) { // iOS 2.x, iOS 3.x
         return [(id)self.locationManager locationServicesEnabled];
-        
+
     } else {
         return NO;
     }
@@ -122,10 +124,10 @@
         }
         // PERMISSIONDENIED is only PositionError that makes sense when authorization denied
         [self returnLocationError:PERMISSION_DENIED withMessage:message];
-        
+
         return;
     }
-    
+
 #ifdef __IPHONE_8_0
     NSUInteger code = [CLLocationManager authorizationStatus];
     if (code == kCLAuthorizationStatusNotDetermined && ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)] || [self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)])) { //iOS8+
@@ -139,7 +141,7 @@
         return;
     }
 #endif
-    
+
     // Tell the location manager to start notifying us of location updates. We
     // first stop, and then start the updating to ensure we get at least one
     // update, even if our location did not change.
@@ -148,13 +150,13 @@
     __locationStarted = YES;
     [self.locationManager stopUpdatingLocation];
     [self.IAlocationInfo startPositioning:self.watchingFloorPlanID];
-    
+
 }
 
 - (void)_stopLocation
 {
     BOOL stopLocationservice = YES;
-    
+
     if(self.locationData && (self.locationData.watchCallbacks.count >0 ||self.locationData.locationCallbacks.count>0)) {
         stopLocationservice = NO;
     }
@@ -166,7 +168,7 @@
             if (![self isLocationServicesEnabled]) {
                 return;
             }
-            
+
             [self.locationManager stopUpdatingLocation];
             __locationStarted = NO;
         }
@@ -178,7 +180,7 @@
 {
     CDVPluginResult* result = nil;
     IndoorLocationInfo* lData = self.locationData;
-    
+
     if (lData && !lData.locationInfo) {
         // return error
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -197,12 +199,12 @@
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.altitude] forKey:@"altitude"];
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.coordinate.latitude] forKey:@"latitude"];
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.coordinate.longitude] forKey:@"longitude"];
-        
+
         [returnInfo setObject:lData.floorID forKey:@"flr"];
         if (lData.region != nil) {
             [returnInfo setObject:[self formatRegionInfo:lData.region andTransitionType:TRANSITION_TYPE_UNKNOWN] forKey:@"region"];
         }
-        
+
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
         [result setKeepCallbackAsBool:keepCallback];
     }
@@ -215,7 +217,7 @@
 {
     CDVPluginResult* result = nil;
     IndoorRegionInfo* lData = self.regionData;
-    
+
     if (lData && !lData.region) {
         // return error
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -235,17 +237,17 @@
 - (void)returnLocationError:(NSUInteger)errorCode withMessage:(NSString*)message
 {
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
-    
+
     [posError setObject:[NSNumber numberWithUnsignedInteger:errorCode] forKey:@"code"];
     [posError setObject:message ? message:@"" forKey:@"message"];
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-    
+
     for (NSString* callbackId in self.locationData.locationCallbacks) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
-    
+
     [self.locationData.locationCallbacks removeAllObjects];
-    
+
     for (NSString* callbackId in self.locationData.watchCallbacks) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
@@ -280,7 +282,7 @@
     NSString* callbackId = command.callbackId;
     CDVPluginResult* pluginResult;
     NSDictionary *options = [command.arguments objectAtIndex:0];
-    
+
     NSString *iakey = [options objectForKey:@"key"];
     NSString *iasecret = [options objectForKey:@"secret"];
     if (iakey == nil || iasecret == nil) {
@@ -293,27 +295,27 @@
     else{
         self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey hash:iasecret];
         self.IAlocationInfo.delegate=self;
-        
+
         NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
         [result setObject:@"service Initialize" forKey:@"message"];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
-    
+
 }
 
 - (void)setPosition:(CDVInvokedUrlCommand*)command
 {
     NSString* callbackId = command.callbackId;
-    
+
     if (self.IAlocationInfo == nil) {
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
         [posError setObject:@"Invalid access token" forKey:@"message"];
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-        
+
     }
     else {
         NSString* region = [command.arguments objectAtIndex:0];
@@ -322,12 +324,12 @@
         if([location count] == 2){
             newLocation = [[CLLocation alloc] initWithLatitude:[location[0] doubleValue] longitude:[location[1] doubleValue]];
         }
-        
+
         [self.IAlocationInfo setFloorPlan:[region isEqualToString:@""]?nil:region orLocation:newLocation];
         if(region != nil){
             self.watchingFloorPlanID=region;
         }
-        
+
         CDVPluginResult* pluginResult;
         NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
@@ -348,7 +350,7 @@
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
         return;
     }
-    
+
     if ([self isLocationServicesEnabled] == NO) {
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
@@ -363,13 +365,13 @@
         if (!lData.locationCallbacks) {
             lData.locationCallbacks = [NSMutableArray arrayWithCapacity:1];
         }
-        
+
         if (!__locationStarted || _locationData.region == nil) {
             // add the callbackId into the array so we can call back when get data
             if (callbackId != nil) {
                 [lData.locationCallbacks addObject:callbackId];
             }
-            
+
             // Tell the location manager to start notifying us of heading updates
             [self startLocation];
         } else {
@@ -390,19 +392,19 @@
         return;
     }
     NSString* timerId = [command argumentAtIndex:0];
-    
+
     if (!self.locationData) {
         self.locationData = [[IndoorLocationInfo alloc] init];
     }
     IndoorLocationInfo* lData = self.locationData;
-    
+
     if (!lData.watchCallbacks) {
         lData.watchCallbacks = [NSMutableDictionary dictionaryWithCapacity:1];
     }
-    
+
     // add the callbackId into the dictionary so we can call back whenever get data
     [lData.watchCallbacks setObject:callbackId forKey:timerId];
-    
+
     if ([self isLocationServicesEnabled] == NO) {
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
@@ -420,7 +422,7 @@
 - (void)clearWatch:(CDVInvokedUrlCommand*)command
 {
     NSString* timerId = [command argumentAtIndex:0];
-    
+
     if (self.locationData && self.locationData.watchCallbacks && [self.locationData.watchCallbacks objectForKey:timerId]) {
         [self.locationData.watchCallbacks removeObjectForKey:timerId];
         if([self.locationData.watchCallbacks count] == 0) {
@@ -441,19 +443,19 @@
         return;
     }
     NSString* timerId = [command argumentAtIndex:0];
-    
+
     if (!self.regionData) {
         self.regionData = [[IndoorRegionInfo alloc] init];
     }
     IndoorRegionInfo* lData = self.regionData;
-    
+
     if (!lData.watchCallbacks) {
         lData.watchCallbacks = [NSMutableDictionary dictionaryWithCapacity:1];
     }
-    
+
     // add the callbackId into the dictionary so we can call back whenever get data
     [lData.watchCallbacks setObject:callbackId forKey:timerId];
-    
+
     if ([self isLocationServicesEnabled] == NO) {
         NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
@@ -471,7 +473,7 @@
 - (void)clearRegionWatch:(CDVInvokedUrlCommand*)command
 {
     NSString* timerId = [command argumentAtIndex:0];
-    
+
     if (self.regionData && self.regionData.watchCallbacks && [self.regionData.watchCallbacks objectForKey:timerId]) {
         [self.regionData.watchCallbacks removeObjectForKey:timerId];
         if([self.regionData.watchCallbacks count] == 0) {
@@ -497,15 +499,15 @@
 {
     // Callback id of the call from Javascript side
     self.coordinateToPointCallbackID = command.callbackId;
-    
+
     NSString* floorplanid = [command argumentAtIndex:2];
     NSString* latitude = [command argumentAtIndex:0];
     NSString* longitude = [command argumentAtIndex:1];
-    
+
     CLLocationCoordinate2D coords = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
     NSLog(@"coordinateToPoint: latitude %f", coords.latitude);
     NSLog(@"coordinateToPoint: longitude %f", coords.longitude);
-    
+
     [self.IAlocationInfo getCoordinateToPoint:floorplanid andCoordinates:coords];
 }
 
@@ -513,11 +515,11 @@
 - (void)sendCoordinateToPoint:(CGPoint) point
 {
     NSLog(@"sendCoordinateToPoint: point %@", NSStringFromCGPoint(point));
-    
+
     NSMutableDictionary* returnInfo = [NSMutableDictionary dictionaryWithCapacity:2];
     [returnInfo setObject:[NSNumber numberWithDouble:point.x] forKey:@"x"];
     [returnInfo setObject:[NSNumber numberWithDouble:point.y] forKey:@"y"];
-    
+
     // Cordova plugin functions
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
     [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
@@ -529,16 +531,16 @@
 {
     // Callback id of the call from Javascript side
     self.pointToCoordinateCallbackID = command.callbackId;
-    
+
     NSString* floorplanid = [command argumentAtIndex:2];
     NSString* x = [command argumentAtIndex:0];
     NSString* y = [command argumentAtIndex:1];
-    
+
     NSLog(@"pointToCoordinate: x %@", x);
     NSLog(@"pointToCoordinate: y %@", y);
-    
+
     CGPoint point = CGPointMake([x floatValue], [y floatValue]);
-    
+
     [self.IAlocationInfo getPointToCoordinate:floorplanid andPoint:point];
 }
 
@@ -547,11 +549,11 @@
 {
     NSLog(@"sendPointToCoordinate: latitude %f", coords.latitude);
     NSLog(@"sendPointToCoordinate: longitude %f", coords.longitude);
-    
+
     NSMutableDictionary* returnInfo = [NSMutableDictionary dictionaryWithCapacity:2];
     [returnInfo setObject:[NSNumber numberWithDouble:coords.latitude] forKey:@"latitude"];
     [returnInfo setObject:[NSNumber numberWithDouble:coords.longitude] forKey:@"longitude"];
-    
+
     // Cordova plugin functions
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
     [self.commandDelegate sendPluginResult:result callbackId:self.pointToCoordinateCallbackID];
@@ -561,25 +563,49 @@
 {
     self.setDistanceFilterCallbackID = command.callbackId;
     NSString* distance = [command argumentAtIndex:0];
-    
-    double d = [distance doubleValue];
+
+    float d = [distance floatValue];
     [self.IAlocationInfo valueForDistanceFilter: &d];
-    
+
     CDVPluginResult* pluginResult;
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:2];
     [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
     [result setObject:@"DistanceFilter set" forKey:@"message"];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.setDistanceFilterCallbackID];
-    
 }
 
+- (void)getFloorCertainty:(CDVInvokedUrlCommand*)command
+{
+  self.getFloorCertaintyCallbackID = command.callbackId;
+  float certainty = [self.IAlocationInfo fetchFloorCertainty];
+
+  CDVPluginResult* pluginResult;
+  NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
+  [result setObject:[NSNumber numberWithFloat:certainty] forKey:@"floorCertainty"];
+
+  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:self.getFloorCertaintyCallbackID];
+}
+
+- (void)getTraceId:(CDVInvokedUrlCommand*)command
+{
+  self.getTraceIdCallbackID = command.callbackId;
+  NSString* traceId = [self.IAlocationInfo fetchTraceId];
+
+  CDVPluginResult* pluginResult;
+  NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
+  [result setObject:traceId forKey:@"traceId"];
+
+  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:self.getTraceIdCallbackID];
+}
 
 #pragma mark IndoorAtlas Location
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateLocation:(IALocation *)newLocation
 {
     IndoorLocationInfo* cData = self.locationData;
-    
+
     cData.locationInfo = [[CLLocation alloc] initWithCoordinate:newLocation.location.coordinate altitude:0 horizontalAccuracy:newLocation.location.horizontalAccuracy verticalAccuracy:0 course:newLocation.location.course speed:0 timestamp:[NSDate date]];
     cData.floorID = [NSString stringWithFormat:@"%ld",newLocation.floor.level];
     cData.region = newLocation.region;
@@ -587,7 +613,7 @@
         for (NSString* callbackId in self.locationData.locationCallbacks) {
             [self returnLocationInfo:callbackId andKeepCallback:NO];
         }
-        
+
         [self.locationData.locationCallbacks removeAllObjects];
     }
     if (self.locationData.watchCallbacks.count > 0) {
@@ -636,7 +662,7 @@
 {
     if (self.floorPlanCallbackID != nil) {
         NSMutableDictionary* returnInfo = [NSMutableDictionary dictionaryWithCapacity:17];
-        
+
         NSNumber* timestamp = [NSNumber numberWithDouble:([[NSDate date] timeIntervalSince1970] * 1000)];
         [returnInfo setObject:timestamp forKey:@"timestamp"];
         [returnInfo setObject:floorPlan.floorPlanId forKey:@"id"];
@@ -658,7 +684,7 @@
         [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude],[NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topLeft"];
         locationPoint = floorPlan.topRight;
         [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude],[NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topRight"];
-        
+
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
         [self.commandDelegate sendPluginResult:result callbackId:self.floorPlanCallbackID];
     }
@@ -672,7 +698,7 @@
         [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
         [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        
+
         [self.commandDelegate sendPluginResult:result callbackId:self.floorPlanCallbackID];
     }
 }
@@ -685,7 +711,7 @@
         [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
         [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        
+
         [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
     }
 }
@@ -697,7 +723,7 @@
         [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
         [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        
+
         [self.commandDelegate sendPluginResult:result callbackId:self.pointToCoordinateCallbackID];
     }
 }

@@ -59,7 +59,7 @@ public class IALocationPlugin extends CordovaPlugin{
     private Timer mTimer;
     private String mApiKey, mApiSecret;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
-    
+
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
      * by other Java methods in the event that a plugin is using this as a dependency.
@@ -195,8 +195,11 @@ public class IALocationPlugin extends CordovaPlugin{
             } else if ("setDistanceFilter".equals(action)) {
                 float distance = (float) args.getDouble(0);
                 setDistanceFilter(distance, callbackContext);
+            } else if ("getTraceId".equals(action)) {
+              getTraceId(callbackContext);
+            } else if ("getFloorCertainty".equals(action)) {
+              getFloorCertainty(callbackContext);
             }
-
         }
         catch(Exception ex){
             Log.e(TAG,ex.toString());
@@ -332,7 +335,7 @@ public class IALocationPlugin extends CordovaPlugin{
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
-    
+
     /**
      * Calculates point based on given coordinates
      * @param coords
@@ -560,6 +563,42 @@ public class IALocationPlugin extends CordovaPlugin{
         } else {
             callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_VALUE));
         }
+    }
+
+    private void getTraceId(CallbackContext callbackContext) {
+      JSONObject data;
+      data = new JSONObject();
+      try {
+          data.put("traceId", mLocationManager.getExtraInfo().traceId);
+      } catch (JSONException ex) {
+          Log.e(TAG, ex.toString());
+          throw new IllegalStateException(ex.getMessage());
+      }
+      callbackContext.success(data);
+    }
+
+    private void getFloorCertainty(CallbackContext callbackContext) {
+
+      if (mListener != null) {
+        if(mListener.lastKnownLocation != null){
+          if (mListener.lastKnownLocation.hasFloorCertainty()) {
+            JSONObject data;
+            data = new JSONObject();
+            try {
+              data.put("floorCertainty", mListener.lastKnownLocation.getFloorCertainty());
+
+            } catch (JSONException ex) {
+              Log.e(TAG, ex.toString());
+              throw new IllegalStateException(ex.getMessage());
+            }
+            callbackContext.success(data);
+          }
+        } else {
+          callbackContext.error("No floor certainty");
+        }
+      } else {
+        callbackContext.error("No floor certainty");
+      }
     }
 
     /**

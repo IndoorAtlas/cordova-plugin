@@ -41,13 +41,13 @@
         self.apiSecret = apisecret;
         // Create IALocationManager and point delegate to receiver
         self.manager = [IALocationManager new];
-        
+
         // Set IndoorAtlas API key and secret
         [self.manager setApiKey:self.apikey andSecret:self.apiSecret];
-        
+
         self.manager.delegate = self;
         serviceStoped = YES;
-        
+
         // Create floor plan manager
         self.resourceManager = [IAResourceManager resourceManagerWithLocationManager:self.manager];
     }
@@ -121,7 +121,7 @@
         NSLog(@"Invalid Floor");
         return;
     }
-    
+
     if(self.delegate != nil) {
         [self.delegate location:self didUpdateLocation:loc];
     }
@@ -167,18 +167,18 @@
     NSLog(@"getCoordinateToPoint: previousFloorplanName %@", _previousFloorplan.name);
     NSLog(@"getCoordinateToPoint: longitude %f", coords.longitude);
     NSLog(@"getCoordinateToPoint: latitude %f", coords.latitude);
-    
+
     __weak IndoorAtlasLocationService *weakSelf = self;
-    
+
     // New floorplan information is not fetched if current and previous ids are the same
     // Finally, sendCoordinateToPoint function is called which prepares the data for Cordova and Javascript
     if ([floorplanId isEqualToString:self.previousFloorplan.floorPlanId]) {
-        
+
         CGPoint points = [self.previousFloorplan coordinateToPoint:coords];
         [weakSelf.delegate sendCoordinateToPoint:points];
-        
+
     } else {
-        
+
         // Fetches new floorplan information and calls sendCoordinateToPoint to send the data to Cordova and Javcascript.
         [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
             if (error) {
@@ -191,7 +191,7 @@
                 }*/
                 return;
             }
-            
+
             NSLog(@"getCoordinateToPoint: fetched floorplan with id: %@", floorplan.floorPlanId);
             CGPoint points = [floorplan coordinateToPoint:coords];
             NSLog(@"getCoordinateToPoint: point %@", NSStringFromCGPoint(points));
@@ -206,17 +206,17 @@
 {
     NSLog(@"getPointToCoordinate: previousFloorplanName %@", _previousFloorplan.name);
     NSLog(@"getPointToCoordinate: point %@", NSStringFromCGPoint(point));
-    
+
     __weak IndoorAtlasLocationService *weakSelf = self;
-    
+
     // New floorplan information is not fetched if current and previous ids are the same
     // Finally, sendCoordinateToPoint function is called which prepares the data for Cordova and Javascript
     if (floorplanId == self.previousFloorplan.floorPlanId) {
-        
+
         CLLocationCoordinate2D coords = [self.previousFloorplan pointToCoordinate:point];
         [weakSelf.delegate sendPointToCoordinate:coords];
     } else {
-        
+
         // Fetches new floorplan information and calls sendPointToCoordinate to send the data to Cordova and Javcascript.
         [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
             if (error) {
@@ -228,7 +228,7 @@
                 }*/
                 return;
             }
-            
+
             NSLog(@"getPointToCoordinate: fetched floorplan with id: %@", floorplan.floorPlanId);
             CLLocationCoordinate2D coords = [floorplan pointToCoordinate:point];
             self.previousFloorplan = floorplan;
@@ -256,7 +256,7 @@
             }
             return;
         }
-        
+
         NSLog(@"fetched floorplan with id: %@", floorplanId);
         if ([weakSelf.delegate respondsToSelector:@selector(location:withFloorPlan:)]) {
             [weakSelf.delegate  location:weakSelf withFloorPlan:floorplan];
@@ -265,11 +265,20 @@
     }];
 }
 
-- (void)valueForDistanceFilter:(double*)distance
+- (void)valueForDistanceFilter:(float*)distance
 {
     self.manager.distanceFilter = *(distance);
 }
 
+- (float)fetchFloorCertainty
+{
+  return [IALocationManager sharedInstance].location.floor.certainty;
+}
+
+- (NSString *)fetchTraceId
+{
+  return [[IALocationManager sharedInstance].extraInfo objectForKey:kIATraceId];
+}
 
 #pragma mark Supporting methods
 /**
