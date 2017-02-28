@@ -329,6 +329,28 @@ var IndoorAtlas = {
             }
         };
         exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
+    },
+    getFloorCertainty:function(successCallback, errorCallback) {
+      var win = function(p) {
+          successCallback(p);
+      };
+      var fail = function(e) {
+          if (errorCallback) {
+              errorCallback(e);
+          }
+      };
+      exec(win, fail, "IndoorAtlas", "getFloorCertainty");
+    },
+    getTraceId:function(successCallback, errorCallback) {
+      var win = function(p) {
+          successCallback(p);
+      };
+      var fail = function(e) {
+          if (errorCallback) {
+              errorCallback(e);
+          }
+      };
+      exec(win, fail, "IndoorAtlas", "getTraceId");
     }
 };
 module.exports = IndoorAtlas;

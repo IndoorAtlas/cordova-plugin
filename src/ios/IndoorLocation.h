@@ -29,7 +29,7 @@ typedef NSUInteger IndoorLocationStatus;
 
 // simple object to keep track of location information
 @interface IndoorRegionInfo : NSObject {
-    
+
 }
 @property (nonatomic, assign) IndoorLocationTransitionType regionStatus;
 @property (nonatomic,strong)  IARegion *region;
@@ -38,7 +38,7 @@ typedef NSUInteger IndoorLocationStatus;
 @end
 
 
-@interface IndoorLocation : CDVPlugin{    
+@interface IndoorLocation : CDVPlugin{
 }
 
 @property (nonatomic, strong) CLLocationManager* locationManager;
@@ -58,5 +58,7 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)sendCoordinateToPoint:(CGPoint)point;
 - (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
 - (void)setDistanceFilter:(CDVInvokedUrlCommand*)command;
+- (void)getFloorCertainty:(CDVInvokedUrlCommand*)command;
+- (void)getTraceId:(CDVInvokedUrlCommand*)command;
 
 @end
