@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.1.0">
+        version="1.2.0">
 
 	<name>IndoorAtlas</name>
 	<description>A Cordova plugin that integrates IndoorAtlas</description>
@@ -43,7 +43,7 @@
 		<framework src="SystemConfiguration.framework"/>
 		<framework src="libz.dylib" />
 		<framework src="libc++.dylib" />
-		<framework src="src/ios/IndoorAtlas2.3/IndoorAtlas.framework" custom="true" />
+		<framework src="src/ios/IndoorAtlas2.4/IndoorAtlas.framework" custom="true" />
 		<config-file target="config.xml" parent="/*">
 			<feature name="IndoorAtlas">
 				<param name="ios-package" value="IndoorLocation" />
