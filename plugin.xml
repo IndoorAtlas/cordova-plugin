@@ -43,7 +43,7 @@
 		<framework src="SystemConfiguration.framework"/>
 		<framework src="libz.dylib" />
 		<framework src="libc++.dylib" />
-		<framework src="src/ios/IndoorAtlas2.4/IndoorAtlas.framework" custom="true" />
+		<framework src="src/ios/IndoorAtlas/IndoorAtlas.framework" custom="true" embed="true" />
 		<config-file target="config.xml" parent="/*">
 			<feature name="IndoorAtlas">
 				<param name="ios-package" value="IndoorLocation" />
