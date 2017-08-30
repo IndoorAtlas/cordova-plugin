@@ -7,5 +7,5 @@ repositories {
 
 
 dependencies {
-    compile 'com.indooratlas.android:indooratlas-android-sdk:2.4.1@aar'
+    compile 'com.indooratlas.android:indooratlas-android-sdk:2.5.2@aar'
 }
