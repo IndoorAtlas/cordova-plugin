@@ -3,23 +3,22 @@
 #import "IndoorAtlasLocationService.h"
 #import <IndoorAtlas/IAResourceManager.h>
 
-
 @interface IndoorAtlasLocationService()<IALocationManagerDelegate> {
 }
 
 @property (nonatomic, strong) IALocationManager *manager;
 @property (nonatomic, strong) IAResourceManager *resourceManager;
-@property (nonatomic, retain) NSString* apikey;
-@property (nonatomic, retain) NSString* apiSecret;
-@property (nonatomic, retain) NSString* graphicID;
-@property (nonatomic, strong) IAFloorPlan* previousFloorplan;
+@property (nonatomic, retain) NSString *apikey;
+@property (nonatomic, retain) NSString *apiSecret;
+@property (nonatomic, retain) NSString *graphicID;
+@property (nonatomic, strong) IAFloorPlan *previousFloorplan;
 @end
 
 @implementation IndoorAtlasLocationService {
     BOOL serviceStoped;
 }
 
--(id)init
+- (id)init
 {
     [NSException raise:@"API keys invalid" format:@"Missing IndoorAtlas Credential"];
     return nil;
@@ -33,7 +32,7 @@
  *
  *  @return Object for indoor navigation
  */
--(id)init:(NSString *)apikey hash:(NSString *)apisecret
+- (id)init:(NSString *)apikey hash:(NSString *)apisecret
 {
     self = [super init];
     if (self) {
@@ -61,10 +60,10 @@
  *
  *  @param floorid
  */
--(void)startPositioning:(NSString *)floorid
+- (void)startPositioning:(NSString *)floorid
 {
-    serviceStoped=NO;
-    self.graphicID=floorid;
+    serviceStoped = NO;
+    self.graphicID = floorid;
     [self setCriticalLog:[NSString stringWithFormat:@"Started service for floorid %@", self.graphicID]];
     [self.manager stopUpdatingLocation];
     if (self.graphicID != nil) {
@@ -74,13 +73,12 @@
     [self.manager startUpdatingLocation];
 }
 
--(void)stopPositioning
+- (void)stopPositioning
 {
     serviceStoped = YES;
     [self.manager stopUpdatingLocation];
     [self setCriticalLog:@"IndoorAtlas service stopped"];
 }
-
 
 #pragma mark IndoorAtlasPositionerDelegate methods
 /**
@@ -88,9 +86,9 @@
  * @param manager The location manager object that generated the event.
  * @param region The region related to event.
  */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager didEnterRegion:(nonnull IARegion*)region
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didEnterRegion:(nonnull IARegion *)region
 {
-    if([self.delegate respondsToSelector:@selector(location:didRegionChange:type:)]){
+    if([self.delegate respondsToSelector:@selector(location:didRegionChange:type:)]) {
         [self.delegate location:self didRegionChange:region type:TRANSITION_TYPE_ENTER];
     }
 }
@@ -100,9 +98,9 @@
  * @param manager The location manager object that generated the event.
  * @param region The region related to event.
  */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager didExitRegion:(nonnull IARegion*)region
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didExitRegion:(nonnull IARegion *)region
 {
-    if([self.delegate respondsToSelector:@selector(location:didRegionChange:type:)]){
+    if([self.delegate respondsToSelector:@selector(location:didRegionChange:type:)]) {
         [self.delegate location:self didRegionChange:region type:TRANSITION_TYPE_EXIT];
     }
 }
@@ -115,8 +113,8 @@
  */
 - (void)indoorLocationManager:(IALocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
-    IALocation* loc = [locations lastObject];
-    IAFloor *floorID = [(IALocation*)locations.lastObject floor];
+    IALocation *loc = [locations lastObject];
+    IAFloor *floorID = [(IALocation *)locations.lastObject floor];
     if (floorID == nil) {
         NSLog(@"Invalid Floor");
         return;
@@ -132,7 +130,7 @@
  *  @param manager
  *  @param status
  */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager statusChanged:(nonnull IAStatus*)status
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager statusChanged:(nonnull IAStatus *)status
 {
     NSString *statusDisplay;
     switch (status.type) {
@@ -162,7 +160,7 @@
 }
 
 // Gets coordinate to a given point
-- (void)getCoordinateToPoint:(NSString*)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
+- (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
 {
     NSLog(@"getCoordinateToPoint: previousFloorplanName %@", _previousFloorplan.name);
     NSLog(@"getCoordinateToPoint: longitude %f", coords.longitude);
@@ -183,7 +181,7 @@
         [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
             if (error) {
                 NSLog(@"Error during floorplan fetch: %@", error);
-                if ([weakSelf.delegate respondsToSelector:@selector(errorInCoordinateToPoint:)]){
+                if ([weakSelf.delegate respondsToSelector:@selector(errorInCoordinateToPoint:)]) {
                     [weakSelf.delegate errorInCoordinateToPoint:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];};
 
                 /*if ([weakSelf.delegate respondsToSelector:@selector(location:didFloorPlanFailedWithError:)]) {
@@ -202,7 +200,7 @@
 }
 
 // Gets point to a given coordinate
-- (void)getPointToCoordinate:(NSString*)floorplanId andPoint: (CGPoint) point
+- (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point
 {
     NSLog(@"getPointToCoordinate: previousFloorplanName %@", _previousFloorplan.name);
     NSLog(@"getPointToCoordinate: point %@", NSStringFromCGPoint(point));
@@ -221,11 +219,8 @@
         [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
             if (error) {
                 NSLog(@"Error during floorplan fetch: %@", error);
-                if ([weakSelf.delegate respondsToSelector:@selector(errorInPointToCoordinate:)]){
+                if ([weakSelf.delegate respondsToSelector:@selector(errorInPointToCoordinate:)]) {
                     [weakSelf.delegate errorInPointToCoordinate:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];};
-                /*if ([weakSelf.delegate respondsToSelector:@selector(location:didFloorPlanFailedWithError:)]) {
-                    [weakSelf.delegate  location:weakSelf didFloorPlanFailedWithError:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];
-                }*/
                 return;
             }
 
@@ -245,7 +240,7 @@
  * These methods are just wrappers around server requests.
  * You will need api key and secret to fetch resources.
  */
-- (void)fetchFloorplanWithId:(NSString*)floorplanId
+- (void)fetchFloorplanWithId:(NSString *)floorplanId
 {
     __weak IndoorAtlasLocationService *weakSelf = self;
     [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
@@ -261,11 +256,10 @@
         if ([weakSelf.delegate respondsToSelector:@selector(location:withFloorPlan:)]) {
             [weakSelf.delegate  location:weakSelf withFloorPlan:floorplan];
         }
-        //weakSelf.floorPlan = floorplan;
     }];
 }
 
-- (void)valueForDistanceFilter:(float*)distance
+- (void)valueForDistanceFilter:(float *)distance
 {
     self.manager.distanceFilter = *(distance);
 }
@@ -296,11 +290,11 @@
  *
  *  @return YES/NO
  */
--(BOOL)isServiceActive
+- (BOOL)isServiceActive
 {
     return !serviceStoped;
 }
--(void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation
+- (void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation
 {
     BOOL isServiceResume = [self isServiceActive];
     [self.manager stopUpdatingLocation];

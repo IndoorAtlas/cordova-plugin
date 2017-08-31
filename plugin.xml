@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.2.0">
+        version="1.3.0">
 
 	<name>IndoorAtlas</name>
-	<description>A Cordova plugin that integrates IndoorAtlas</description>
+	<description>Cordova plugin using IndoorAtlas SDK.</description>
 	<engines>
 		<engine name="cordova" version=">=3.6.0" />
 		<engine name="cordova-plugman" version=">=4.2.0"/><!-- needed for gradleReference support -->
@@ -28,7 +28,6 @@
     <js-module src="www/FloorPlan.js" name="FloorPlan">
         <clobbers target="FloorPlan" />
     </js-module>
-
 
 	<!-- ios -->
 	<platform name="ios">

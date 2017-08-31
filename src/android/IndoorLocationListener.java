@@ -31,14 +31,14 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private HashMap<String, CallbackContext> regionWatches = new HashMap<String, CallbackContext>();
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
-    public IALocation lastKnownLocation=null;
+    public IALocation lastKnownLocation = null;
     private IALocationPlugin owner;
 
     /**
      * The constructor
      * @param iaLocationPlugin
      */
-    public IndoorLocationListener(IALocationPlugin iaLocationPlugin){
+    public IndoorLocationListener(IALocationPlugin iaLocationPlugin) {
         this.owner = iaLocationPlugin;
     }
 
@@ -46,7 +46,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Returns watchPosition callback collection.
      * @return
      */
-    public HashMap<String, CallbackContext> getWatches(){
+    public HashMap<String, CallbackContext> getWatches() {
         return watches;
     }
 
@@ -54,7 +54,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Returns getCurrentPosition callback collection
      * @return
      */
-    public ArrayList<CallbackContext> getCallbacks(){
+    public ArrayList<CallbackContext> getCallbacks() {
         return mCallbacks;
     }
 
@@ -62,8 +62,8 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Returns a JSON object the last known user position
      * @return
      */
-    public JSONObject getLastKnownLocation(){
-        if (lastKnownLocation!=null){
+    public JSONObject getLastKnownLocation() {
+        if (lastKnownLocation != null) {
             JSONObject locationData = getLocationJSONFromIALocation(lastKnownLocation);
             return locationData;
         }
@@ -75,7 +75,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param watchId
      * @param callbackContext
      */
-    public void addWatch(String watchId, CallbackContext callbackContext){
+    public void addWatch(String watchId, CallbackContext callbackContext) {
         watches.put(watchId, callbackContext);
     }
 
@@ -84,7 +84,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param watchId
      * @param callbackContext
      */
-    public void addRegionWatch(String watchId, CallbackContext callbackContext){
+    public void addRegionWatch(String watchId, CallbackContext callbackContext) {
         regionWatches.put(watchId, callbackContext);
     }
 
@@ -92,7 +92,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Adds getCurrentPosition JS callback to the collection
      * @param callbackContext
      */
-    public void addCallback(CallbackContext callbackContext){
+    public void addCallback(CallbackContext callbackContext) {
         mCallbacks.add(callbackContext);
     }
 
@@ -100,7 +100,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Returns the sum of the all callback collections
      * @return
      */
-    public int size(){
+    public int size() {
         return watches.size() + mCallbacks.size() + regionWatches.size();
     }
 
@@ -108,11 +108,11 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Removes a callback from watchPosition callback collection
      * @param watchId
      */
-    public void clearWatch(String watchId){
-        if (watches.containsKey(watchId)){
+    public void clearWatch(String watchId) {
+        if (watches.containsKey(watchId)) {
             watches.remove(watchId);
         }
-        if (size()==0){
+        if (size() == 0) {
             owner.stopPositioning();
         }
     }
@@ -121,11 +121,11 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Removes a callback from watchRegion callback collection
      * @param watchId
      */
-    public void clearRegionWatch(String watchId){
-        if (regionWatches.containsKey(watchId)){
+    public void clearRegionWatch(String watchId) {
+        if (regionWatches.containsKey(watchId)) {
             regionWatches.remove(watchId);
         }
-        if (size()==0){
+        if (size() == 0){
             owner.stopPositioning();
         }
     }
@@ -136,16 +136,16 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param transitionType
      * @return
      */
-    private JSONObject getRegionJSONFromIARegion(IARegion iaRegion, int transitionType){
-        try{
-            JSONObject regionData=new JSONObject();
-            regionData.put("regionId",iaRegion.getId());
-            regionData.put("timestamp",iaRegion.getTimestamp());
-            regionData.put("regionType",iaRegion.getType());
-            regionData.put("transitionType",transitionType);
+    private JSONObject getRegionJSONFromIARegion(IARegion iaRegion, int transitionType) {
+        try {
+            JSONObject regionData = ew JSONObject();
+            regionData.put("regionId", iaRegion.getId());
+            regionData.put("timestamp", iaRegion.getTimestamp());
+            regionData.put("regionType", iaRegion.getType());
+            regionData.put("transitionType", transitionType);
             return regionData;
         }
-        catch(JSONException ex){
+        catch(JSONException ex) {
             Log.e(TAG, ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
@@ -156,25 +156,25 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param iaLocation
      * @return
      */
-    private JSONObject getLocationJSONFromIALocation(IALocation iaLocation){
-        try{
+    private JSONObject getLocationJSONFromIALocation(IALocation iaLocation) {
+        try {
             JSONObject locationData,regionData;
             locationData = new JSONObject();
-            locationData.put("accuracy",iaLocation.getAccuracy());
-            locationData.put("altitude",iaLocation.getAltitude());
-            locationData.put("heading",iaLocation.getBearing());
-            locationData.put("flr",iaLocation.getFloorLevel());
-            locationData.put("latitude",iaLocation.getLatitude());
-            locationData.put("longitude",iaLocation.getLongitude());
-            if (iaLocation.getRegion()!=null){
+            locationData.put("accuracy", iaLocation.getAccuracy());
+            locationData.put("altitude", iaLocation.getAltitude());
+            locationData.put("heading", iaLocation.getBearing());
+            locationData.put("flr", iaLocation.getFloorLevel());
+            locationData.put("latitude", iaLocation.getLatitude());
+            locationData.put("longitude", iaLocation.getLongitude());
+            if (iaLocation.getRegion() != null) {
                 regionData = getRegionJSONFromIARegion(iaLocation.getRegion(), TRANSITION_TYPE_UNKNOWN);
-                locationData.put("region",regionData);
+                locationData.put("region", regionData);
             }
             locationData.put("velocity",iaLocation.toLocation().getSpeed());
             locationData.put("timestamp",iaLocation.getTime());
             return locationData;
         }
-        catch(JSONException ex){
+        catch(JSONException ex) {
             Log.e(TAG, ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
@@ -185,7 +185,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param iaLocation
      */
     @Override
-    public void onLocationChanged(IALocation iaLocation){
+    public void onLocationChanged(IALocation iaLocation) {
         JSONObject locationData;
         Log.w(TAG, "Got location");
         locationData = getLocationJSONFromIALocation(iaLocation);
@@ -199,8 +199,8 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * @param iaRegion
      */
     @Override
-    public void onEnterRegion(IARegion iaRegion){
-        JSONObject regionData = getRegionJSONFromIARegion(iaRegion,TRANSITION_TYPE_ENTER);
+    public void onEnterRegion(IARegion iaRegion) {
+        JSONObject regionData = getRegionJSONFromIARegion(iaRegion, TRANSITION_TYPE_ENTER);
         sendRegionResult(regionData);
     }
 
@@ -210,7 +210,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     @Override
     public void onExitRegion(IARegion iaRegion) {
-        JSONObject regionData = getRegionJSONFromIARegion(iaRegion,TRANSITION_TYPE_EXIT);
+        JSONObject regionData = getRegionJSONFromIARegion(iaRegion, TRANSITION_TYPE_EXIT);
         sendRegionResult(regionData);
     }
 
@@ -218,7 +218,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Invokes JS callback from watchRegion callback collection.
      * @param regionData
      */
-    private void sendRegionResult(JSONObject regionData){
+    private void sendRegionResult(JSONObject regionData) {
         PluginResult pluginResult;
         for (CallbackContext callbackContext : regionWatches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.OK, regionData);
@@ -231,7 +231,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      * Invokes JS callback from watchPosition callback collection.
      * @param locationData
      */
-    private void sendResult(JSONObject locationData){
+    private void sendResult(JSONObject locationData) {
         PluginResult pluginResult;
         for (CallbackContext callbackContext : mCallbacks) {
             pluginResult = new PluginResult(PluginResult.Status.OK, locationData);
@@ -245,7 +245,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             callbackContext.sendPluginResult(pluginResult);
         }
         mCallbacks.clear();
-        if (size()==0){
+        if (size() == 0) {
             owner.stopPositioning();
         }
     }
@@ -253,7 +253,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     /**
      * Notifies JS callbacks about service interuption
      */
-    private void handleServiceInteruption(){
+    private void handleServiceInteruption() {
         PluginResult pluginResult;
         for (CallbackContext callbackContext : watches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.POSITION_UNAVAILABLE));
@@ -275,7 +275,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     @Override
     public void onStatusChanged(String provider, int status, Bundle bundle) {
-        switch (status){
+        switch (status) {
             case IALocationManager.STATUS_AVAILABLE:
                 Log.d(TAG, provider);
                 break;

@@ -3,6 +3,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <Cordova/CDVPlugin.h>
 #import "IndoorAtlasLocationService.h"
+
 enum IndoorLocationStatus {
     PERMISSION_DENIED = 1,
     POSITION_UNAVAILABLE,
@@ -19,11 +20,11 @@ typedef NSUInteger IndoorLocationStatus;
 }
 
 @property (nonatomic, assign) IndoorLocationStatus locationStatus;
-@property (nonatomic, strong) CLLocation* locationInfo;
-@property (nonatomic,strong)  IARegion *region;
-@property (nonatomic, strong) NSString* floorID;
-@property (nonatomic, strong) NSMutableArray* locationCallbacks;
-@property (nonatomic, strong) NSMutableDictionary* watchCallbacks;
+@property (nonatomic, strong) CLLocation *locationInfo;
+@property (nonatomic, strong) IARegion *region;
+@property (nonatomic, strong) NSString *floorID;
+@property (nonatomic, strong) NSMutableArray *locationCallbacks;
+@property (nonatomic, strong) NSMutableDictionary *watchCallbacks;
 
 @end
 
@@ -32,33 +33,32 @@ typedef NSUInteger IndoorLocationStatus;
 
 }
 @property (nonatomic, assign) IndoorLocationTransitionType regionStatus;
-@property (nonatomic,strong)  IARegion *region;
-@property (nonatomic, strong) NSMutableDictionary* watchCallbacks;
+@property (nonatomic, strong) IARegion *region;
+@property (nonatomic, strong) NSMutableDictionary *watchCallbacks;
 
 @end
 
-
-@interface IndoorLocation : CDVPlugin{
+@interface IndoorLocation : CDVPlugin {
 }
 
-@property (nonatomic, strong) CLLocationManager* locationManager;
-@property (nonatomic, strong) IndoorLocationInfo* locationData;
-@property (nonatomic, strong) IndoorRegionInfo* regionData;
+@property (nonatomic, strong) CLLocationManager *locationManager;
+@property (nonatomic, strong) IndoorLocationInfo *locationData;
+@property (nonatomic, strong) IndoorRegionInfo *regionData;
 
-- (void)initializeIndoorAtlas:(CDVInvokedUrlCommand*)command;
-- (void)getLocation:(CDVInvokedUrlCommand*)command;
-- (void)addWatch:(CDVInvokedUrlCommand*)command;
-- (void)clearWatch:(CDVInvokedUrlCommand*)command;
-- (void)addRegionWatch:(CDVInvokedUrlCommand*)command;
-- (void)clearRegionWatch:(CDVInvokedUrlCommand*)command;
-- (void)setPosition:(CDVInvokedUrlCommand*)command;
-- (void)fetchFloorplan:(CDVInvokedUrlCommand*)command;
-- (void)coordinateToPoint:(CDVInvokedUrlCommand*)command;
-- (void)pointToCoordinate:(CDVInvokedUrlCommand*)command;
+- (void)initializeIndoorAtlas:(CDVInvokedUrlCommand *)command;
+- (void)getLocation:(CDVInvokedUrlCommand *)command;
+- (void)addWatch:(CDVInvokedUrlCommand *)command;
+- (void)clearWatch:(CDVInvokedUrlCommand *)command;
+- (void)addRegionWatch:(CDVInvokedUrlCommand *)command;
+- (void)clearRegionWatch:(CDVInvokedUrlCommand *)command;
+- (void)setPosition:(CDVInvokedUrlCommand *)command;
+- (void)fetchFloorplan:(CDVInvokedUrlCommand *)command;
+- (void)coordinateToPoint:(CDVInvokedUrlCommand *)command;
+- (void)pointToCoordinate:(CDVInvokedUrlCommand *)command;
 - (void)sendCoordinateToPoint:(CGPoint)point;
 - (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
-- (void)setDistanceFilter:(CDVInvokedUrlCommand*)command;
-- (void)getFloorCertainty:(CDVInvokedUrlCommand*)command;
-- (void)getTraceId:(CDVInvokedUrlCommand*)command;
+- (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
+- (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
+- (void)getTraceId:(CDVInvokedUrlCommand *)command;
 
 @end
