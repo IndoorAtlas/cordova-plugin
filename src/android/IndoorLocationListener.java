@@ -138,7 +138,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     private JSONObject getRegionJSONFromIARegion(IARegion iaRegion, int transitionType) {
         try {
-            JSONObject regionData = ew JSONObject();
+            JSONObject regionData = new JSONObject();
             regionData.put("regionId", iaRegion.getId());
             regionData.put("timestamp", iaRegion.getTimestamp());
             regionData.put("regionType", iaRegion.getType());
