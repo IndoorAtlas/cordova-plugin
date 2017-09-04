@@ -6,14 +6,18 @@ var argscheck = require('cordova/argscheck'),
 var timers = {};   // list of timers in use
 
 function getDeviceType(){
-    var deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" : (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "BlackBerry" : "null";
+    var deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" :
+                     (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" :
+                     (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" :
+                     (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "BlackBerry" :
+                     "null";
     return deviceType;
 }
 
 function parseSetPositionParameters(options) {
     var opt = {
-        regionId:'',
-        coordinates:[]
+        regionId : '',
+        coordinates : []
     };
     if (options) {
         if (options.regionId !== undefined) {
@@ -28,7 +32,7 @@ function parseSetPositionParameters(options) {
 
 function parseParameters(options) {
     var opt = {
-        timeout: Infinity
+        timeout : Infinity
     };
 
     if (options) {
@@ -48,33 +52,35 @@ function createTimeout(errorCallback, timeout) {
         clearTimeout(t);
         t = null;
         errorCallback({
-            code:PositionError.TIMEOUT,
-            message:"Position retrieval timed out."
+            code : PositionError.TIMEOUT,
+            message : "Position retrieval timed out."
         });
     }, timeout);
     return t;
 }
 
 var IndoorAtlas = {
-    lastPosition:null, // reference to last known (cached) position returned
-    initializeAndroid:function(successCallback, errorCallback, options) {
+    lastPosition : null, // reference to last known (cached) position returned
+    initializeAndroid: function(successCallback, errorCallback, options) {
         var requestWin = function(result) {
                 var win = function(result) {
                     successCallback(result);
                 };
                 var fail = function(error) {
-                    var err = new PositionError(error.code,error.message);
+                    var err = new PositionError(error.code, error.message);
                     errorCallback(err);
                 };
-                exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key,options.secret]);
+                exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas",
+                     [options.key, options.secret]);
         };
         var requestFail = function(error) {
-            var err = new PositionError(error.code,error.message);
+            var err = new PositionError(error.code, error.message);
             errorCallback(err);
         };
         exec(requestWin, requestFail, "IndoorAtlas", "getPermissions", []);
     },
-    initialize:function(successCallback, errorCallback, options) {
+
+    initialize: function(successCallback, errorCallback, options) {
         if (getDeviceType() == 'Android') {
             IndoorAtlas.initializeAndroid(successCallback, errorCallback, options);
 	        return;
@@ -90,13 +96,14 @@ var IndoorAtlas = {
         };
         exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options]);
     },
-    getCurrentPosition:function(successCallback, errorCallback, options) {
+
+    getCurrentPosition: function(successCallback, errorCallback, options) {
         try {
             options = parseParameters(options);
 
             // Timer var that will fire an error callback if no position is retrieved from native
             // before the "timeout" param provided expires
-            var timeoutTimer = {timer:null};
+            var timeoutTimer = {timer : null};
             var win = function(p) {
                 try {
                     clearTimeout(timeoutTimer.timer);
@@ -108,13 +115,13 @@ var IndoorAtlas = {
                     }
                     var pos = new Position(
                         {
-                            latitude:p.latitude,
-                            longitude:p.longitude,
-                            altitude:p.altitude,
-                            accuracy:p.accuracy,
-                            heading:p.heading,
-                            velocity:p.velocity,
-                            flr:p.flr
+                            latitude : p.latitude,
+                            longitude : p.longitude,
+                            altitude : p.altitude,
+                            accuracy : p.accuracy,
+                            heading : p.heading,
+                            velocity : p.velocity,
+                            flr : p.flr
                         },
                         p.region,
                         p.timestamp
@@ -137,13 +144,15 @@ var IndoorAtlas = {
             };
             // Check our cached position, if its timestamp difference with current time is less than the maximumAge, then just
             // fire the success callback with the cached position.
-            if (IndoorAtlas.lastPosition && options.maximumAge && (((new Date()).getTime() - IndoorAtlas.lastPosition.timestamp) <= options.maximumAge)) {
+            if (IndoorAtlas.lastPosition && options.maximumAge
+              && (((new Date()).getTime() - IndoorAtlas.lastPosition.timestamp) <= options.maximumAge)) {
+
                 successCallback(IndoorAtlas.lastPosition);
             // If the cached position check failed and the timeout was set to 0, error out with a TIMEOUT error object.
             } else if (options.timeout === 0) {
                 fail({
-                    code:PositionError.TIMEOUT,
-                    message:"timeout value in PositionOptions set to 0 and no cached Position object available, or cached Position object's age exceeds provided PositionOptions' maximumAge parameter."
+                    code : PositionError.TIMEOUT,
+                    message : "timeout value in PositionOptions set to 0 and no cached Position object available, or cached Position object's age exceeds provided PositionOptions' maximumAge parameter."
                 });
             // Otherwise we have to call into native to retrieve a position.
             } else {
@@ -162,9 +171,10 @@ var IndoorAtlas = {
             }
             return timeoutTimer;
         }
-        catch(error){alert(error);}
+        catch(error) {alert(error);}
     },
-    watchRegion:function(onEnterRegion, onExitRegion, errorCallback) {
+
+    watchRegion: function(onEnterRegion, onExitRegion, errorCallback) {
         var id = utils.createUUID();
 
         var fail = function(e) {
@@ -187,7 +197,8 @@ var IndoorAtlas = {
         exec(win, fail, "IndoorAtlas", "addRegionWatch", [id]);
         return id;
     },
-    clearRegionWatch:function(watchId) {
+
+    clearRegionWatch: function(watchId) {
         try {
             exec(
                     function(success) {
@@ -198,9 +209,10 @@ var IndoorAtlas = {
                     },
                     "IndoorAtlas","clearRegionWatch",[watchId]);
         }
-        catch(error){alert(error);}
+        catch(error) {alert(error);}
     },
-    watchPosition:function(successCallback, errorCallback, options) {
+
+    watchPosition: function(successCallback, errorCallback, options) {
         options = parseParameters(options);
 
         var id = utils.createUUID();
@@ -223,13 +235,13 @@ var IndoorAtlas = {
             }
             var pos = new Position(
                 {
-                    latitude:p.latitude,
-                    longitude:p.longitude,
-                    altitude:p.altitude,
-                    accuracy:p.accuracy,
-                    heading:p.heading,
-                    velocity:p.velocity,
-                    flr:p.flr
+                    latitude : p.latitude,
+                    longitude : p.longitude,
+                    altitude : p.altitude,
+                    accuracy : p.accuracy,
+                    heading : p.heading,
+                    velocity : p.velocity,
+                    flr : p.flr
                 },
                 p.region,
                 p.timestamp
@@ -240,7 +252,8 @@ var IndoorAtlas = {
         exec(win, fail, "IndoorAtlas", "addWatch", [id, options.floorPlan]);
         return id;
     },
-    clearWatch:function(watchId) {
+
+    clearWatch: function(watchId) {
         try {
             exec(
                 function(success) {
@@ -251,9 +264,10 @@ var IndoorAtlas = {
                 },
                 "IndoorAtlas","clearWatch",[watchId]);
         }
-        catch(error){alert(error);}
+        catch(error) {alert(error);}
     },
-    setPosition:function(successCallback, errorCallback, options) {
+
+    setPosition: function(successCallback, errorCallback, options) {
         options = parseSetPositionParameters(options);
         var win = function(p) {
             successCallback(p);
@@ -264,9 +278,11 @@ var IndoorAtlas = {
                 errorCallback(err);
             }
         };
-        exec(win, fail, "IndoorAtlas", "setPosition", [options.regionId,options.coordinates]);
+        exec(win, fail, "IndoorAtlas", "setPosition",
+             [options.regionId,options.coordinates]);
     },
-    fetchFloorPlanWithId:function(floorplanId, successCallback, errorCallback){
+
+    fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
         var win = function(p) {
             var floorplan = new FloorPlan(
                 p.id,
@@ -295,7 +311,8 @@ var IndoorAtlas = {
         };
         exec(win, fail, "IndoorAtlas", "fetchFloorplan", [floorplanId]);
     },
-    coordinateToPoint:function(coords, floorplanId, successCallback, errorCallback){
+
+    coordinateToPoint: function(coords, floorplanId, successCallback, errorCallback){
         var win = function(p) {
             successCallback(p);
         };
@@ -305,9 +322,11 @@ var IndoorAtlas = {
                 errorCallback(err);
             }
         };
-        exec(win, fail, "IndoorAtlas", "coordinateToPoint", [coords.latitude, coords.longitude, floorplanId]);
+        exec(win, fail, "IndoorAtlas", "coordinateToPoint",
+             [coords.latitude, coords.longitude, floorplanId]);
     },
-    pointToCoordinate:function(point, floorplanId, successCallback, errorCallback) {
+
+    pointToCoordinate: function(point, floorplanId, successCallback, errorCallback) {
         var win = function(p) {
             successCallback(p);
         };
@@ -317,9 +336,11 @@ var IndoorAtlas = {
                 errorCallback(err);
             }
         };
-        exec(win, fail, "IndoorAtlas", "pointToCoordinate", [point.x, point.y, floorplanId]);
+        exec(win, fail, "IndoorAtlas", "pointToCoordinate",
+             [point.x, point.y, floorplanId]);
     },
-    setDistanceFilter:function(successCallback, errorCallback, distance) {
+
+    setDistanceFilter: function(successCallback, errorCallback, distance) {
         var win = function(p) {
             successCallback(p);
         };
@@ -330,7 +351,8 @@ var IndoorAtlas = {
         };
         exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
     },
-    getFloorCertainty:function(successCallback, errorCallback) {
+
+    getFloorCertainty: function(successCallback, errorCallback) {
       var win = function(p) {
           successCallback(p);
       };
@@ -341,7 +363,8 @@ var IndoorAtlas = {
       };
       exec(win, fail, "IndoorAtlas", "getFloorCertainty");
     },
-    getTraceId:function(successCallback, errorCallback) {
+
+    getTraceId: function(successCallback, errorCallback) {
       var win = function(p) {
           successCallback(p);
       };

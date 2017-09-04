@@ -34,7 +34,7 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param manager The location manager object that generated the event
  *  @param region  The region related to event
  */
-- (void)location:(IndoorAtlasLocationService *)manager didRegionChange:(IARegion*)region type:(IndoorLocationTransitionType)enterOrExit;
+- (void)location:(IndoorAtlasLocationService *)manager didRegionChange:(IARegion *)region type:(IndoorLocationTransitionType)enterOrExit;
 
 /**
  *  Return Information about given Floor Refrence
@@ -42,7 +42,7 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param manager   The location manager object that generated the event
  *  @param floorPlan Information about FloorPlan
  */
--(void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan;
+- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan;
 
 /**
  *  Return Error Information if unable to fetch Floorplan Info from server
@@ -50,7 +50,7 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param manager
  *  @param error
  */
--(void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
+- (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
 
 /**
  * Passes the calculated point to the Javascript side
@@ -76,18 +76,18 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
 
--(id)init:(NSString *)apikey hash:(NSString *)apisecret;
+- (id)init:(NSString *)apikey hash:(NSString *)apisecret;
 /**
  *  Starting Service
  *
  *  @param floorid
  */
--(void)startPositioning:(NSString *)floorid;
+- (void)startPositioning:(NSString *)floorid;
 
 /**
  *  Stops IndoorAtlas Service
  */
--(void)stopPositioning;
+- (void)stopPositioning;
 
 /**
  *  State is service active or not
@@ -101,29 +101,29 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param floorPlan   Reference FloorPlan
  *  @param newLocation Reference Location
  */
--(void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation;
+- (void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation;
 /**
  *  Fetch Floorplan With Id
  *
  *  @param floorplanId
  */
-- (void)fetchFloorplanWithId:(NSString*)floorplanId;
+- (void)fetchFloorplanWithId:(NSString *)floorplanId;
 
 /**
  * Calculates point with the given coordinates
  *
  * @param coords
  */
-- (void)getCoordinateToPoint:(NSString*)floorplanId andCoordinates: (CLLocationCoordinate2D) coords;
+- (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords;
 
 /**
  * Calculates coordinates with the given point
  *
  * @param point
  */
-- (void)getPointToCoordinate:(NSString*)floorplanId andPoint: (CGPoint) point;
+- (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point;
 
-- (void)valueForDistanceFilter:(float*)distance;
+- (void)valueForDistanceFilter:(float *)distance;
 - (float)fetchFloorCertainty;
 - (NSString *)fetchTraceId;
 

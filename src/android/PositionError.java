@@ -27,14 +27,14 @@ public class PositionError {
      * @param message
      * @return
      */
-    public static JSONObject getErrorObject(int errorCode, String message){
+    public static JSONObject getErrorObject(int errorCode, String message) {
         try{
             JSONObject errorObject = new JSONObject();
-            errorObject.put("code",errorCode);
-            errorObject.put("message",message);
+            errorObject.put("code", errorCode);
+            errorObject.put("message", message);
             return errorObject;
         }
-        catch(Exception ex){
+        catch(Exception ex) {
             Log.e(TAG,ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
@@ -45,53 +45,53 @@ public class PositionError {
      * @param errorCode
      * @return
      */
-    public static JSONObject getErrorObject(int errorCode){
-        try{
+    public static JSONObject getErrorObject(int errorCode) {
+        try {
             JSONObject errorObject = new JSONObject();
-            switch(errorCode){
+            switch(errorCode) {
                 case PERMISSION_DENIED:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Permission denied");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Permission denied");
                     break;
                 case POSITION_UNAVAILABLE:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Position not available");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Position not available");
                     break;
                 case TIMEOUT:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Request timed out");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Request timed out");
                     break;
                 case INVALID_ACCESS_TOKEN:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Invalid access token");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Invalid access token");
                     break;
                 case INITIALIZATION_ERROR:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","IndoorAtlas is not initialized");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "IndoorAtlas is not initialized");
                     break;
                 case FLOOR_PLAN_UNAVAILABLE:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Floor plan unavailable");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Floor plan unavailable");
                     break;
                 case FLOOR_PLAN_UNDEFINED:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Floor plan undefined. See ~/www/jsAPIKeys.js file");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Floor plan undefined. See ~/www/jsAPIKeys.js file");
                     break;
                 case INVALID_VALUE:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Distance value should be positive");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Distance value should be positive");
                 case UNSPECIFIED_ERROR:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Unspecified error");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Unspecified error");
                     break;
                 default:
-                    errorObject.put("code",errorCode);
-                    errorObject.put("message","Unspecified error");
+                    errorObject.put("code", errorCode);
+                    errorObject.put("message", "Unspecified error");
                     break;
             }
             return errorObject;
         }
-        catch(Exception ex){
+        catch(Exception ex) {
             Log.e(TAG,ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
