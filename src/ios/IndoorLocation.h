@@ -51,6 +51,10 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)clearWatch:(CDVInvokedUrlCommand *)command;
 - (void)addRegionWatch:(CDVInvokedUrlCommand *)command;
 - (void)clearRegionWatch:(CDVInvokedUrlCommand *)command;
+- (void)addAttitudeCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeAttitudeCallback:(CDVInvokedUrlCommand *)command;
+- (void)addHeadingCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command;
 - (void)setPosition:(CDVInvokedUrlCommand *)command;
 - (void)fetchFloorplan:(CDVInvokedUrlCommand *)command;
 - (void)coordinateToPoint:(CDVInvokedUrlCommand *)command;
@@ -60,5 +64,6 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
+- (void)setSensitivities:(CDVInvokedUrlCommand *)command;
 
 @end

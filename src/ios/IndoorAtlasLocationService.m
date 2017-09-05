@@ -27,7 +27,7 @@
 /**
  *  IndoorAtlas Navigation
  *
- *  @param apikey    Indoor atlas key
+ *  @param apikey    IndoorAtlas key
  *  @param apisecret IndoorAtlas secret
  *
  *  @return Object for indoor navigation
@@ -159,6 +159,20 @@
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateAttitude:(nonnull IAAttitude *)newAttitude
+{
+    if([self.delegate respondsToSelector:@selector(location:didUpdateAttitude:)]) {
+        [self.delegate location:self didUpdateAttitude:newAttitude];
+    }
+}
+
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateHeading:(nonnull IAHeading *)newHeading
+{
+    if([self.delegate respondsToSelector:@selector(location:didUpdateHeading:)]) {
+        [self.delegate location:self didUpdateHeading:newHeading];
+    }
+}
+
 // Gets coordinate to a given point
 - (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
 {
@@ -261,7 +275,7 @@
 
 - (void)valueForDistanceFilter:(float *)distance
 {
-    self.manager.distanceFilter = *(distance);
+    self.manager.distanceFilter = (CLLocationDistance) *(distance);
 }
 
 - (float)fetchFloorCertainty
@@ -273,6 +287,13 @@
 {
   return [[IALocationManager sharedInstance].extraInfo objectForKey:kIATraceId];
 }
+
+- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity
+{
+    self.manager.attitudeFilter = (CLLocationDegrees) *(orientationSensitivity);
+    self.manager.headingFilter = (CLLocationDegrees) *(headingSensitivity);
+}
+
 
 #pragma mark Supporting methods
 /**
