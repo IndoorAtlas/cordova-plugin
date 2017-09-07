@@ -33,7 +33,7 @@ INDOORATLAS_API
  */
 
 /**
- * Associated IALocationManager (read-only).
+ * Associated <IALocationManager> (read-only).
  */
 @property (nonatomic, readonly, nullable) IALocationManager *locationManager;
 
@@ -42,9 +42,9 @@ INDOORATLAS_API
  */
 
 /**
- * Returns a new IAResourceManager associated with IALocationManager.
+ * Returns a new <IAResourceManager> associated with <IALocationManager>.
  *
- * @param locationManager Associated IALocationManager.
+ * @param locationManager Associated <IALocationManager>.
  *
  * @return IAResourceManager instance.
  */
