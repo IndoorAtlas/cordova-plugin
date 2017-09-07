@@ -6,19 +6,19 @@
 	<dict>
 		<key>Headers/IAFloor.h</key>
 		<data>
-		X23B/sUNjoFzgL9RbG7ZPTJbx78=
+		Y1UB0ltJxB0X9M/CTD5bnqDAwIk=
 		</data>
 		<key>Headers/IAFloorPlan.h</key>
 		<data>
-		OaH8rMNoQHTJm8imgzUym4jp5Qs=
+		QmcN4tI4e8KTQ5BaC2tcD0vC8jE=
 		</data>
 		<key>Headers/IALocationManager.h</key>
 		<data>
-		3tKxmgL7jJCPc+Cltc/2rGCmA2k=
+		XLgLI/O1SHtxkC2B94hRdCiBsVA=
 		</data>
 		<key>Headers/IAResourceManager.h</key>
 		<data>
-		t05bqbYuWdVFdfSjSfquX6urPFQ=
+		jQZ8YRjoif76nzH9FvdCqAvNAZk=
 		</data>
 		<key>Headers/IndoorAtlas.h</key>
 		<data>
@@ -26,7 +26,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		iGzcJY11CuzXS6aNvfByTxvM/p0=
+		ozpLSkQGVU0xKNUG8Goc9OZMujU=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -39,44 +39,44 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			X23B/sUNjoFzgL9RbG7ZPTJbx78=
+			Y1UB0ltJxB0X9M/CTD5bnqDAwIk=
 			</data>
 			<key>hash2</key>
 			<data>
-			6+m9OmjBJL6IBx6VWjDqba0OBFfcuDoBxNF1rj4sgBM=
+			UrICTadxnFFYWH9KyTngxfrqiV/xaeEHEWqDX4ydsD8=
 			</data>
 		</dict>
 		<key>Headers/IAFloorPlan.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			OaH8rMNoQHTJm8imgzUym4jp5Qs=
+			QmcN4tI4e8KTQ5BaC2tcD0vC8jE=
 			</data>
 			<key>hash2</key>
 			<data>
-			DSBa54urhZ4TZ3/ZUk2pzrRJXYczdQwbwalQXM/AXPc=
+			39wT0DGoUUV0Ff/SzTcz5dGNu0aFEqk+SE15bkFDfbw=
 			</data>
 		</dict>
 		<key>Headers/IALocationManager.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			3tKxmgL7jJCPc+Cltc/2rGCmA2k=
+			XLgLI/O1SHtxkC2B94hRdCiBsVA=
 			</data>
 			<key>hash2</key>
 			<data>
-			qBVRvNDrOhQRksnxnVaCYjZM0fD0dsoKnr1gXUoA6pg=
+			81FXPNG/1VrfFeg/kxpU6OR9WwXaxd3hRTdw69SWkGE=
 			</data>
 		</dict>
 		<key>Headers/IAResourceManager.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			t05bqbYuWdVFdfSjSfquX6urPFQ=
+			jQZ8YRjoif76nzH9FvdCqAvNAZk=
 			</data>
 			<key>hash2</key>
 			<data>
-			8YF6G0xSWcJA340OFUWJBE9bVsZe8ZpLLvpTcNMp+Bs=
+			HdWV3Tu7GR3MAlhlEiEG5AUOMDkfEUd5TcmiQR9UT3I=
 			</data>
 		</dict>
 		<key>Headers/IndoorAtlas.h</key>

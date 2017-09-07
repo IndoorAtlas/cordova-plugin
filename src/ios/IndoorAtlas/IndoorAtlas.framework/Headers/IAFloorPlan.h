@@ -75,7 +75,7 @@ INDOORATLAS_API
 @property (nonatomic, readonly) double bearing;
 
 /**
- * Corresponding WGS84 coordinate of center of floor plan bitmap placed 
+ * Corresponding WGS84 coordinate of center of floor plan bitmap placed
  * on the surface of Earth.
  */
 @property (nonatomic, readonly) CLLocationCoordinate2D center;
@@ -115,7 +115,7 @@ INDOORATLAS_API
 - (CLLocationCoordinate2D) pointToCoordinate:(CGPoint) point;
 
 /**
- * Initializes IAFloorPlan
+ * Initializes <IAFloorPlan>
  * @param floorPlanId is the identifier of floor plan
  * @param width is the width of the floor plan image in pixels
  * @param height is the height of the floor plan image in pixels

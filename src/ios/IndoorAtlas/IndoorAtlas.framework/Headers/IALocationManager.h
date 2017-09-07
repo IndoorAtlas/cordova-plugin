@@ -13,28 +13,91 @@ INDOORATLAS_API extern NSString * _Nonnull const kIATraceId;
 
 @class IALocationManager;
 
-enum ia_region_type {
+/**
+ * Defines the type of region.
+ */
+typedef NS_ENUM(NSInteger, ia_region_type) {
+    /**
+     * Region type is not known.
+     * This may be the result of running outdated SDK.
+     */
     kIARegionTypeUnknown,
+
+    /**
+     * Region type is floor plan.
+     */
     kIARegionTypeFloorPlan,
+
+    /**
+     * Region type is venue.
+     */
     kIARegionTypeVenue,
+
+    /**
+     * Region type is geofence.
+     */
     kIARegionTypeGeofence,
 };
 
-enum ia_status_type {
+/**
+ * Defines the location service status.
+ */
+typedef NS_ENUM(NSInteger, ia_status_type) {
+    /**
+     * Location service is not available and the condition is not expected to resolve itself soon.
+     */
     kIAStatusServiceOutOfService = 0,
+
+    /**
+     * Location service temporarily unavailable. This could be due to no network connectivity.
+     */
     kIAStatusServiceUnavailable = 1,
+
+    /**
+     * Location service running normally.
+     */
     kIAStatusServiceAvailable = 2,
+
+    /**
+     * Location service is running but with limited accuracy and functionality.
+     */
     kIAStatusServiceLimited = 10,
 };
 
-enum ia_calibration {
+/**
+ * Defines the device calibration quality.
+ * The quality of calibration affects location accuracy.
+ */
+typedef NS_ENUM(NSInteger, ia_calibration) {
+    /**
+     * Quality is poor.
+     */
     kIACalibrationPoor,
+
+    /**
+     * Quality is good.
+     */
     kIACalibrationGood,
+
+    /**
+     * Quality is excellent.
+     */
     kIACalibrationExcellent,
 };
 
-enum ia_location_accuracy {
+/**
+ * Defines the accuracy of location.
+ */
+typedef NS_ENUM(NSInteger, ia_location_accuracy) {
+    /**
+     * Best accuracy.
+     */
     kIALocationAccuracyBest,
+
+    /**
+     * Low accuracy.
+     * Locations with this accuracy are typically obtained with lowest amount of processing to reduce device power drain.
+     */
     kIALocationAccuracyLow,
 };
 
@@ -52,7 +115,9 @@ INDOORATLAS_API
  */
 @property (nonatomic, strong, nullable) NSString *name;
 /**
- * Region type.
+ * Region type
+ *
+ * @param type See possible values at [ia_region_type](/Constants/ia_region_type.html)
  */
 @property (nonatomic, assign) enum ia_region_type type;
 /**
@@ -65,6 +130,9 @@ INDOORATLAS_API
  * Struct defining bounding box in WGS84 coordinates.
  */
 struct ia_bounding_box {
+    /**
+     * Coordinates for min and max corners of the bounding box.
+     */
     CLLocationCoordinate2D coords[2];
 };
 
@@ -73,7 +141,7 @@ struct ia_bounding_box {
  */
 INDOORATLAS_API
 @interface IAGeofence : IARegion
-/*
+/**
  * Bounding box of the geofence.
  *
  * The bounding box must accurately cover the hit testable area by <containsCoordinate:> method.
@@ -85,14 +153,14 @@ INDOORATLAS_API
  * The floor the geofence is located on.
  */
 @property (nonatomic, strong, nullable) IAFloor *floor;
-/*
+/**
  * Does the geofence contain the coordinate?
  */
 - (BOOL)containsCoordinate:(CLLocationCoordinate2D)coordinate;
 @end
 
 /**
- * IAPolygonRegion object represents a polygonal region on Earth.
+ * IAPolygonGeofence object represents a polygonal region on Earth.
  */
 INDOORATLAS_API
 @interface IAPolygonGeofence : IAGeofence
@@ -103,21 +171,23 @@ INDOORATLAS_API
 /**
  * Creates a new polygonal region from unique edges.
  * @param identifier Identifier for the geofence.
- * @param IAFloor object with level information. Nil IAFloor means that the floor is unknown.
+ * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
  * @param edges Coordinates specifying the polygon.
- * 
+ *
  * The edges must be supplied in clockwise order for the polygon to be valid.
  */
 + (nonnull IAPolygonGeofence*)polygonGeofenceWithIdentifier:(nonnull NSString*)identifier andFloor:(nullable IAFloor*)floor edges:(nonnull NSArray<NSNumber*>*)edges;
 @end
 
 /**
- * IAStatus specifies the current status of locationing service.
+ * <IAStatus> specifies the current status of locationing service.
  */
 INDOORATLAS_API
 @interface IAStatus : NSObject
 /**
  * Type of status message.
+ *
+ * @param type See possible values at [ia_status_type](/Constants/ia_status_type.html)
  */
 @property (nonatomic, assign) enum ia_status_type type;
 @end
@@ -153,17 +223,17 @@ INDOORATLAS_API
  * @param floorPlanId Identifier of the floor plan.
  *
  * An explicit floor plan is used for initialising and locking the positioning to a certain floor. This means that the position estimate is not free to leave the indicated floor.
- *  Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
+ * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
  */
 + (nonnull IALocation*)locationWithFloorPlanId:(nonnull NSString*)floorPlanId;
 
 /**
  * Initializes and returns a location object with specified venue id (and floor).
  * @param venueId Identifier of the venue.
- * @param IAFloor object with level information. Nil IAFloor means that the floor is unknown.
+ * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
  *
  * An explicit venue is used for locking the positioning to a certain venue context (if a NIL floor is set). This means that the position estimate is not free to leave the indicated venue, but can move between floors. If an explicit floor is also given, the estimate is locked to that floor.
- *  Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
+ * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
  */
 + (nonnull IALocation*)locationWithVenueId:(nonnull NSString*)venueId andFloor:(nullable IAFloor*)floor;
 
@@ -199,7 +269,7 @@ INDOORATLAS_API
 @end
 
 /**
- * Object containing heading data. Generated by IALocationManager
+ * Object containing heading data. Generated by <IALocationManager>
  */
 INDOORATLAS_API
 @interface IAHeading : NSObject
@@ -207,12 +277,14 @@ INDOORATLAS_API
  * The heading in degrees. Relative to true north.
  */
 @property (nonatomic, readonly) CLLocationDirection trueHeading;
-/* Time when heading was obtained */
+/**
+ * Time when heading was obtained
+ */
 @property(readonly, nonatomic, copy, nullable) NSDate *timestamp;
 @end
 
 /**
- * Object containing orientation data. Generated by IALocationManager
+ * Object containing orientation data. Generated by <IALocationManager>
  */
 INDOORATLAS_API
 @interface IAAttitude : NSObject
@@ -220,7 +292,9 @@ INDOORATLAS_API
  * The orientation
  */
 @property(readonly, nonatomic) CMQuaternion quaternion;
-/* Time when orientation was obtained */
+/**
+ * Time when orientation was obtained
+ */
 @property(readonly, nonatomic, copy, nullable) NSDate *timestamp;
 @end
 
@@ -246,7 +320,7 @@ INDOORATLAS_API
  * Implementation of this method is optional but recommended.
  *
  * @param manager The location manager object that generated the update event.
- * @param locations An array of IALocation objects containing the location data. This array always contains at least one object representing the current location.
+ * @param locations An array of <IALocation> objects containing the location data. This array always contains at least one object representing the current location.
  * If updates were deferred or if multiple locations arrived before they could be delivered, the array may contain additional entries.
  * The objects in the array are organized in the order in which they occured. Threfore, the most recent location update is at the end of the array.
  */
@@ -267,7 +341,7 @@ INDOORATLAS_API
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didExitRegion:(nonnull IARegion*)region;
 
 /**
- * Tells that IALocationManager status changed. This is used to signal network connection issues.
+ * Tells that <IALocationManager> status changed. This is used to signal network connection issues.
  * @param manager The location manager object that generated the event.
  * @param status The status at the time of the event.
  */
@@ -313,6 +387,7 @@ INDOORATLAS_API
 /**
  * The latest calibration quality value
  *
+ * @param calibration See possible values at [ia_calibration](/Constants/ia_calibration.html)
  */
 @property (nonatomic, readonly) enum ia_calibration calibration;
 
@@ -363,6 +438,8 @@ INDOORATLAS_API
  * Determining a location with greater accuracy requires more time and more power.
  *
  * Default value is kIALocationAccuracyBest.
+ *
+ * @param desiredAccuracy See possible values at [ia_location_accuracy](/Constants/ia_location_accuracy)
  */
 @property(assign, nonatomic) enum ia_location_accuracy desiredAccuracy;
 
@@ -401,7 +478,7 @@ INDOORATLAS_API
 + (nonnull NSString*)versionString;
 
 /**
- * Returns the shared IALocationManager instance.
+ * Returns the shared <IALocationManager> instance.
  */
 + (nonnull IALocationManager *)sharedInstance;
 
@@ -442,7 +519,7 @@ INDOORATLAS_API
  */
 - (void)stopUpdatingLocation;
 
-/** 
+/**
  * Starts monitoring the specified geofence.
  *
  * You must call this method once for each geofence you want to monitor. If an existing geofence with the same identifier is already being monitored by the app, the old geofence is replaced by the new one.
