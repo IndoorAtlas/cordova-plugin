@@ -124,39 +124,18 @@
         [self.delegate location:self didUpdateLocation:loc];
     }
 }
+
 /**
- *  Error raised by Indooratlas SDK
+ *  Status Changed
  *
  *  @param manager
  *  @param status
  */
 - (void)indoorLocationManager:(nonnull IALocationManager *)manager statusChanged:(nonnull IAStatus *)status
 {
-    NSString *statusDisplay;
-    switch (status.type) {
-        case kIAStatusServiceAvailable:
-            statusDisplay = @"Connected";
-            break;
-        case kIAStatusServiceOutOfService:
-            statusDisplay = @"OutOfservice";
-            if ([self.delegate respondsToSelector:@selector(location:didFailWithError:)]) {
-                [self.delegate location:self didFailWithError:[NSError errorWithDomain:@"OutOfservice" code:kIAStatusServiceOutOfService userInfo:nil]];
-            }
-            break;
-        case kIAStatusServiceUnavailable:
-            if ([self.delegate respondsToSelector:@selector(location:didFailWithError:)]) {
-                [self.delegate location:self didFailWithError:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];
-            }
-            statusDisplay = @"Service Unavailable";
-            break;
-        case kIAStatusServiceLimited:
-            statusDisplay = @"Service Limited";
-            break;
-        default:
-            statusDisplay = @"Unknown";
-            break;
+    if([self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
+        [self.delegate location:self statusChanged:status];
     }
-    NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 
 - (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateAttitude:(nonnull IAAttitude *)newAttitude

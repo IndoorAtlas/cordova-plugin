@@ -53,6 +53,14 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
 
 /**
+ *  Status Changed
+ *
+ *  @param manager
+ *  @param status
+ */
+- (void)location:(IndoorAtlasLocationService *)manager statusChanged:(IAStatus *)status;
+
+/**
  *  UpdatedAttitude callback
  *
  *  @param manager

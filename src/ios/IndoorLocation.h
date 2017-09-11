@@ -55,6 +55,8 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)removeAttitudeCallback:(CDVInvokedUrlCommand *)command;
 - (void)addHeadingCallback:(CDVInvokedUrlCommand *)command;
 - (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command;
+- (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeStatusCallback:(CDVInvokedUrlCommand *)command;
 - (void)setPosition:(CDVInvokedUrlCommand *)command;
 - (void)fetchFloorplan:(CDVInvokedUrlCommand *)command;
 - (void)coordinateToPoint:(CDVInvokedUrlCommand *)command;

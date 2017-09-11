@@ -214,6 +214,10 @@ public class IALocationPlugin extends CordovaPlugin{
               double orientationSensitivity = args.getDouble(0);
               double headingSensitivity = args.getDouble(1);
               setSensitivities(orientationSensitivity, headingSensitivity, callbackContext);
+            } else if ("addStatusChangedCallback".equals(action)) {
+              addStatusChangedCallback(callbackContext);
+            } else if ("removeStatusCallback".equals(action)) {
+              removeStatusCallback();
             }
         }
         catch(Exception ex) {
@@ -338,9 +342,13 @@ public class IALocationPlugin extends CordovaPlugin{
                             pluginResult = new PluginResult(PluginResult.Status.OK, floorplanInfo);
                             pluginResult.setKeepCallback(true);
                             mCbContext.sendPluginResult(pluginResult);
+
                         }
                         else {
-                            mCbContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
+                          PluginResult pluginResult;
+                          pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
+                          pluginResult.setKeepCallback(true);
+                          mCbContext.sendPluginResult(pluginResult);
                         }
                     }
                     catch(JSONException ex) {
@@ -374,7 +382,6 @@ public class IALocationPlugin extends CordovaPlugin{
                             PointF point = floorPlan.coordinateToPoint(coords);
                             pointInfo.put("x", point.x);
                             pointInfo.put("y", point.y);
-                            Log.d("SendPoint", "" + point);
                             callbackContext.success(pointInfo);
                         } else {
                             callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
@@ -410,7 +417,6 @@ public class IALocationPlugin extends CordovaPlugin{
                             IALatLng coords = floorPlan.pointToCoordinate(point);
                             coordsInfo.put("latitude", coords.latitude);
                             coordsInfo.put("longitude", coords.longitude);
-                            Log.d("SendCoords", "" + coords.latitude + " " + coords.longitude);
                             callbackContext.success(coordsInfo);
                         } else {
                             callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
@@ -469,6 +475,13 @@ public class IALocationPlugin extends CordovaPlugin{
     }
 
     /**
+     * Adds a new callback to the IndoorAtlas IAAttitude.Listener
+     */
+    private void addStatusChangedCallback(CallbackContext callbackContext) {
+      getListener(this).addStatusChangedCallback(callbackContext);
+    }
+
+    /**
      * Removes callback from IndoorAtlas location listener
      * @param watchId
      */
@@ -498,6 +511,13 @@ public class IALocationPlugin extends CordovaPlugin{
        getListener(this).removeHeadingCallback();
      }
 
+     /**
+      * Removes callback from IndoorAtlas location listener
+      */
+     private void removeStatusCallback() {
+       getListener(this).removeStatusCallback();
+     }
+
     /**
      * Set sensitivities for orientation and heading filter
      */
@@ -510,7 +530,14 @@ public class IALocationPlugin extends CordovaPlugin{
              mLocationManager.registerOrientationListener(mOrientationRequest, getListener(IALocationPlugin.this));
            }
        });
-       callbackContext.success();
+
+       JSONObject successObject = new JSONObject();
+       try {
+           successObject.put("message","Sensitivies set");
+       } catch (JSONException ex) {
+           throw new IllegalStateException(ex.getMessage());
+       }
+       callbackContext.success(successObject);
      }
 
     /**

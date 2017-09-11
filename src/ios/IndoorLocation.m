@@ -51,6 +51,7 @@
 @property (nonatomic, strong) NSString *getTraceIdCallbackID;
 @property (nonatomic, strong) NSString *addAttitudeUpdateCallbackID;
 @property (nonatomic, strong) NSString *addHeadingUpdateCallbackID;
+@property (nonatomic, strong) NSString *addStatusUpdateCallbackID;
 
 @end
 
@@ -285,6 +286,20 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addHeadingUpdateCallbackID];
+    }
+}
+
+- (void)returnStatusInformation:(NSString *)statusString type:(NSString *) type
+{
+    if (_addStatusUpdateCallbackID != nil) {
+        CDVPluginResult *pluginResult;
+        
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
+        [result setObject:statusString forKey:@"message"];
+        [result setObject:type forKey:@"type"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addStatusUpdateCallbackID];
     }
 }
 
@@ -538,6 +553,16 @@
     _addHeadingUpdateCallbackID = nil;
 }
 
+- (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command
+{
+    _addStatusUpdateCallbackID = command.callbackId;
+}
+
+- (void)removeStatusCallback:(CDVInvokedUrlCommand *)command
+{
+    _addStatusUpdateCallbackID = nil;
+}
+
 - (void)stopLocation:(CDVInvokedUrlCommand *)command
 {
     [self _stopLocation];
@@ -624,8 +649,7 @@
     [self.IAlocationInfo valueForDistanceFilter: &d];
 
     CDVPluginResult *pluginResult;
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-    [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
     [result setObject:@"DistanceFilter set" forKey:@"message"];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.setDistanceFilterCallbackID];
@@ -668,8 +692,7 @@
     [self.IAlocationInfo setSensitivities: &orientationSensitivity headingSensitivity:&headingSensitivity];
     
     CDVPluginResult *pluginResult;
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-    [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
     [result setObject:@"Sensitivities set" forKey:@"message"];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -749,6 +772,37 @@
     NSDate *timestamp = heading.timestamp;
     
     [self returnHeadingInformation:direction timestamp:timestamp];
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager statusChanged:(IAStatus *)status
+{
+    NSString *statusDisplay;
+    NSString *statusType;
+    switch (status.type) {
+        case kIAStatusServiceAvailable:
+            statusDisplay = @"Connected";
+            statusType = @"STATUS_AVAILABLE";
+            break;
+        case kIAStatusServiceOutOfService:
+            statusDisplay = @"Out Of Service";
+            statusType = @"STATUS_OUT_OF_SERVICE";
+            break;
+        case kIAStatusServiceUnavailable:
+            statusDisplay = @"Service Unavailable";
+            statusType = @"STATUS_TEMPORARILY_UNAVAILABLE";
+            break;
+        case kIAStatusServiceLimited:
+            statusDisplay = @"Service Limited";
+            statusType = @"STATUS_LIMITED";
+            break;
+        default:
+            statusDisplay = @"Unknown";
+            statusType = @"Unknown";
+            break;
+    }
+    
+    [self returnStatusInformation:statusDisplay type:statusType];
+    NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan

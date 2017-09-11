@@ -32,6 +32,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private HashMap<String, CallbackContext> regionWatches = new HashMap<String, CallbackContext>();
     private CallbackContext attitudeUpdateCallbackContext;
     private CallbackContext headingUpdateCallbackContext;
+    private CallbackContext statusUpdateCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -105,7 +106,6 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     public void addHeadingCallback(CallbackContext callbackContext) {
       headingUpdateCallbackContext = callbackContext;
-
     }
 
     /**
@@ -114,6 +114,14 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     public void addCallback(CallbackContext callbackContext) {
         mCallbacks.add(callbackContext);
+    }
+
+    /**
+     * Adds headingWatch JS callback to the collection
+     * @param callbackContext
+     */
+    public void addStatusChangedCallback(CallbackContext callbackContext) {
+      statusUpdateCallbackContext = callbackContext;
     }
 
     /**
@@ -152,7 +160,6 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
 
     /**
      * Removes attitude callback
-     * @param watchId
      */
     public void removeAttitudeCallback() {
       attitudeUpdateCallbackContext = null;
@@ -160,11 +167,17 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
 
     /**
      * Removes heading callback
-     * @param watchId
      */
      public void removeHeadingCallback() {
        headingUpdateCallbackContext = null;
      }
+
+     /**
+      * Removes status callback
+      */
+      public void removeStatusCallback() {
+        statusUpdateCallbackContext = null;
+      }
 
     /**
      * Returns a JSON object which contains IARegion info.
@@ -358,6 +371,19 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     }
 
     /**
+     * Invokes JS callback from statusChanged callback.
+     * @param statusData
+     */
+    private void sendStatusResult(JSONObject statusData) {
+      if (statusUpdateCallbackContext != null) {
+        PluginResult pluginResult;
+        pluginResult = new PluginResult(PluginResult.Status.OK, statusData);
+        pluginResult.setKeepCallback(true);
+        statusUpdateCallbackContext.sendPluginResult(pluginResult);
+      }
+    }
+
+    /**
      * Notifies JS callbacks about service interuption
      */
     private void handleServiceInteruption() {
@@ -382,22 +408,35 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     @Override
     public void onStatusChanged(String provider, int status, Bundle bundle) {
+      try {
+        JSONObject statusData;
+        statusData = new JSONObject();
         switch (status) {
-            case IALocationManager.STATUS_AVAILABLE:
-                Log.d(TAG, provider);
-                break;
-            case IALocationManager.STATUS_LIMITED:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
-            case IALocationManager.STATUS_OUT_OF_SERVICE:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
-            case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
+          case IALocationManager.STATUS_AVAILABLE:
+          statusData.put("message", "Connected");
+          statusData.put("type", "STATUS_AVAILABLE");
+          sendStatusResult(statusData);
+          break;
+          case IALocationManager.STATUS_LIMITED:
+          statusData.put("message", "Service Limited");
+          statusData.put("type", "STATUS_LIMITED");
+          sendStatusResult(statusData);
+          break;
+          case IALocationManager.STATUS_OUT_OF_SERVICE:
+          statusData.put("message", "Out Of Service");
+          statusData.put("type", "STATUS_OUT_OF_SERVICE");
+          sendStatusResult(statusData);
+          break;
+          case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
+          statusData.put("message", "Service Unavailable");
+          statusData.put("type", "STATUS_TEMPORARILY_UNAVAILABLE");
+          sendStatusResult(statusData);
+          break;
         }
+      }
+      catch(JSONException ex) {
+        Log.e(TAG, ex.toString());
+        throw new IllegalStateException(ex.getMessage());
+      }
     }
-}
+  }
