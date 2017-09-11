@@ -212,6 +212,58 @@ var IndoorAtlas = {
         catch(error) {alert(error);}
     },
 
+    didUpdateAttitude: function(onAttitudeUpdated, errorCallback) {
+              var fail = function(e) {
+                  if (errorCallback) {
+                      errorCallback(e);
+                  }
+              };
+
+              var win = function(attitude) {
+                onAttitudeUpdated(attitude);
+              };
+
+              exec(win, fail, "IndoorAtlas", "addAttitudeCallback");
+    },
+
+    removeAttitudeCallback: function() {
+      var fail = function(e) {
+        console.log("Error while removing attitude callbackk");
+      };
+
+      var win = function(success) {
+        console.log("Attitude callback removed");
+      };
+
+      exec(win, fail, "IndoorAtlas", "removeAttitudeCallback");
+    },
+
+    didUpdateHeading: function(onHeadingUpdated, errorCallback) {
+      var fail = function(e) {
+          if (errorCallback) {
+              errorCallback(e);
+          }
+      };
+
+      var win = function(heading) {
+        onHeadingUpdated(heading);
+      };
+
+      exec(win, fail, "IndoorAtlas", "addHeadingCallback");
+    },
+
+    removeHeadingCallback: function() {
+      var fail = function(e) {
+        console.log("Error while removing heading callback");
+      };
+
+      var win = function(success) {
+        console.log("Heading callback removed");
+      };
+
+      exec(win, fail, "IndoorAtlas", "removeHeadingCallback");
+    },
+
     watchPosition: function(successCallback, errorCallback, options) {
         options = parseParameters(options);
 
@@ -349,7 +401,19 @@ var IndoorAtlas = {
                 errorCallback(e);
             }
         };
-        exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
+        exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance]);
+    },
+
+    setSensitivities: function(successCallback, errorCallback, orientationSensitivity, headingSensitivity) {
+      var win = function(success) {
+        successCallback(success)
+      };
+      var fail = function(e) {
+        if (errorCallback) {
+          errorCallback(e);
+        }
+      };
+      exec(win, fail, "IndoorAtlas", "setSensitivities", [orientationSensitivity, headingSensitivity]);
     },
 
     getFloorCertainty: function(successCallback, errorCallback) {

@@ -21,6 +21,8 @@ import com.indooratlas.android.sdk.resources.IAResourceManager;
 import com.indooratlas.android.sdk.resources.IAResult;
 import com.indooratlas.android.sdk.resources.IAResultCallback;
 import com.indooratlas.android.sdk.resources.IATask;
+import com.indooratlas.android.sdk.IAOrientationRequest;
+import com.indooratlas.android.sdk.IAOrientationListener;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -59,6 +61,7 @@ public class IALocationPlugin extends CordovaPlugin{
     private Timer mTimer;
     private String mApiKey, mApiSecret;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
+    private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
 
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
@@ -199,6 +202,18 @@ public class IALocationPlugin extends CordovaPlugin{
               getTraceId(callbackContext);
             } else if ("getFloorCertainty".equals(action)) {
               getFloorCertainty(callbackContext);
+            } else if ("addAttitudeCallback".equals(action)) {
+              addAttitudeCallback(callbackContext);
+            } else if ("removeAttitudeCallback".equals(action)) {
+              removeAttitudeCallback();
+            } else if ("addHeadingCallback".equals(action)) {
+              addHeadingCallback(callbackContext);
+            } else if ("removeHeadingCallback".equals(action)) {
+              removeHeadingCallback();
+            } else if ("setSensitivities".equals(action)) {
+              double orientationSensitivity = args.getDouble(0);
+              double headingSensitivity = args.getDouble(1);
+              setSensitivities(orientationSensitivity, headingSensitivity, callbackContext);
             }
         }
         catch(Exception ex) {
@@ -318,7 +333,11 @@ public class IALocationPlugin extends CordovaPlugin{
                             latlngArray.put(iaLatLng.longitude);
                             latlngArray.put(iaLatLng.latitude);
                             floorplanInfo.put("topRight", latlngArray);
-                            mCbContext.success(floorplanInfo);
+
+                            PluginResult pluginResult;
+                            pluginResult = new PluginResult(PluginResult.Status.OK, floorplanInfo);
+                            pluginResult.setKeepCallback(true);
+                            mCbContext.sendPluginResult(pluginResult);
                         }
                         else {
                             mCbContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
@@ -434,6 +453,21 @@ public class IALocationPlugin extends CordovaPlugin{
     private void addRegionWatch(String watchId, CallbackContext callbackContext) {
         getListener(this).addRegionWatch(watchId, callbackContext);
     }
+
+    /**
+     * Adds a new callback to the IndoorAtlas IAAttitude.Listener
+     */
+    private void addAttitudeCallback(CallbackContext callbackContext) {
+      getListener(this).addAttitudeCallback(callbackContext);
+    }
+
+    /**
+     * Adds a new callback to the IndoorAtlas IAAttitude.Listener
+     */
+    private void addHeadingCallback(CallbackContext callbackContext) {
+      getListener(this).addHeadingCallback(callbackContext);
+    }
+
     /**
      * Removes callback from IndoorAtlas location listener
      * @param watchId
@@ -449,6 +483,35 @@ public class IALocationPlugin extends CordovaPlugin{
     private void clearRegionWatch(String watchId) {
         getListener(this).clearRegionWatch(watchId);
     }
+
+    /**
+     * Removes callback from IndoorAtlas location listener
+     */
+    private void removeAttitudeCallback() {
+      getListener(this).removeAttitudeCallback();
+    }
+
+    /**
+     * Removes callback from IndoorAtlas location listener
+     */
+     private void removeHeadingCallback() {
+       getListener(this).removeHeadingCallback();
+     }
+
+    /**
+     * Set sensitivities for orientation and heading filter
+     */
+     private void setSensitivities(double orientationSensitivity, double headingSensitivity, CallbackContext callbackContext) {
+       mOrientationRequest = new IAOrientationRequest(headingSensitivity, orientationSensitivity);
+       cordova.getActivity().runOnUiThread(new Runnable() {
+           @Override
+           public void run() {
+             mLocationManager.unregisterOrientationListener(getListener(IALocationPlugin.this));
+             mLocationManager.registerOrientationListener(mOrientationRequest, getListener(IALocationPlugin.this));
+           }
+       });
+       callbackContext.success();
+     }
 
     /**
      * Resets IndoorAtlas positioning session (NOT BEING USED)
@@ -610,6 +673,7 @@ public class IALocationPlugin extends CordovaPlugin{
             public void run() {
                 mLocationManager.requestLocationUpdates(mLocationRequest, getListener(IALocationPlugin.this));
                 mLocationManager.registerRegionListener(getListener(IALocationPlugin.this));
+                mLocationManager.registerOrientationListener(mOrientationRequest, getListener(IALocationPlugin.this));
                 mLocationServiceRunning = true;
             }
         });
@@ -625,6 +689,7 @@ public class IALocationPlugin extends CordovaPlugin{
                 public void run() {
                     mLocationManager.unregisterRegionListener(getListener(IALocationPlugin.this));
                     mLocationManager.removeLocationUpdates(getListener(IALocationPlugin.this));
+                    mLocationManager.unregisterOrientationListener(getListener(IALocationPlugin.this));
                     mLocationServiceRunning = false;
                 }
             });

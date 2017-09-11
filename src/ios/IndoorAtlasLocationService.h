@@ -53,6 +53,21 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
 
 /**
+ *  UpdatedAttitude callback
+ *
+ *  @param manager
+ *  @param newAttitude
+ */
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateAttitude:(IAAttitude *)newAttitude;
+
+/**
+ *  UpdatedHeading callback
+ *
+ *  @param manager
+ *  @param newHeading
+ */
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)newHeading;
+/**
  * Passes the calculated point to the Javascript side
  *
  * @param point
@@ -126,5 +141,6 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)valueForDistanceFilter:(float *)distance;
 - (float)fetchFloorCertainty;
 - (NSString *)fetchTraceId;
+- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity;
 
 @end
