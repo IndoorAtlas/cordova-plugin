@@ -289,14 +289,14 @@
     }
 }
 
-- (void)returnStatusInformation:(NSString *)statusString type:(NSString *) type
+- (void)returnStatusInformation:(NSString *)statusString code:(NSUInteger) code
 {
     if (_addStatusUpdateCallbackID != nil) {
         CDVPluginResult *pluginResult;
         
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:statusString forKey:@"message"];
-        [result setObject:type forKey:@"type"];
+        [result setObject:[NSNumber numberWithUnsignedInteger:code] forKey:@"code"];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addStatusUpdateCallbackID];
@@ -777,31 +777,30 @@
 - (void)location:(IndoorAtlasLocationService *)manager statusChanged:(IAStatus *)status
 {
     NSString *statusDisplay;
-    NSString *statusType;
+    NSUInteger statusCode;
     switch (status.type) {
         case kIAStatusServiceAvailable:
-            statusDisplay = @"Connected";
-            statusType = @"STATUS_AVAILABLE";
+            statusDisplay = @"Available";
+            statusCode = STATUS_AVAILABLE;
             break;
         case kIAStatusServiceOutOfService:
-            statusDisplay = @"Out Of Service";
-            statusType = @"STATUS_OUT_OF_SERVICE";
+            statusDisplay = @"Out of Service";
+            statusCode = STATUS_OUT_OF_SERVICE;
             break;
         case kIAStatusServiceUnavailable:
             statusDisplay = @"Service Unavailable";
-            statusType = @"STATUS_TEMPORARILY_UNAVAILABLE";
+            statusCode = STATUS_TEMPORARILY_UNAVAILABLE;
             break;
         case kIAStatusServiceLimited:
             statusDisplay = @"Service Limited";
-            statusType = @"STATUS_LIMITED";
+            statusCode = STATUS_LIMITED;
             break;
         default:
-            statusDisplay = @"Unknown";
-            statusType = @"Unknown";
+            statusDisplay = @"Unspecified Status"
             break;
     }
     
-    [self returnStatusInformation:statusDisplay type:statusType];
+    [self returnStatusInformation:statusDisplay code:statusCode];
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 

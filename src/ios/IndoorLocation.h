@@ -13,6 +13,13 @@ enum IndoorLocationStatus {
     FLOORPLAN_UNAVAILABLE,
     UNSPECIFIED_ERROR
 };
+
+enum IACurrentStatus {
+    STATUS_OUT_OF_SERVICE = 0,
+    STATUS_TEMPORARILY_UNAVAILABLE = 1,
+    STATUS_AVAILABLE = 2,
+    STATUS_LIMITED = 10
+};
 typedef NSUInteger IndoorLocationStatus;
 
 // simple object to keep track of location information

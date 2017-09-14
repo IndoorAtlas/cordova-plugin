@@ -271,8 +271,9 @@ var IndoorAtlas = {
           }
       };
 
-      var win = function(heading) {
-        onStatusChanged(heading);
+      var win = function(status) {
+        var newStatus = new CurrentStatus(status.code, status.message);
+        onStatusChanged(newStatus);
       };
 
       exec(win, fail, "IndoorAtlas", "addStatusChangedCallback");
