@@ -22,4 +22,3 @@ PositionError.FLOOR_PLAN_UNDEFINED = 8;
 PositionError.INVALID_VALUE = 9;
 
 module.exports = PositionError;
-
