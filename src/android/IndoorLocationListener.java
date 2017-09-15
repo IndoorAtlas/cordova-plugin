@@ -7,6 +7,7 @@ import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IARegion;
+import com.indooratlas.android.sdk.IAOrientationListener;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 /**
  * Handles events from IALocationListener and IARegion.Listener and relays them to Javascript callbacks.
  */
-public class IndoorLocationListener implements IALocationListener, IARegion.Listener {
+public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener {
     private static final String TAG = "IndoorLocationListener";
 
     private static final int TRANSITION_TYPE_UNKNOWN = 0;
@@ -29,6 +30,9 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
 
     private HashMap<String, CallbackContext> watches = new HashMap<String, CallbackContext>();
     private HashMap<String, CallbackContext> regionWatches = new HashMap<String, CallbackContext>();
+    private CallbackContext attitudeUpdateCallbackContext;
+    private CallbackContext headingUpdateCallbackContext;
+    private CallbackContext statusUpdateCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -89,11 +93,35 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     }
 
     /**
+     * Adds attitudeWatch JS callback to the collection
+     * @param callbackContext
+     */
+    public void addAttitudeCallback(CallbackContext callbackContext) {
+      attitudeUpdateCallbackContext = callbackContext;
+    }
+
+    /**
+     * Adds headingWatch JS callback to the collection
+     * @param callbackContext
+     */
+    public void addHeadingCallback(CallbackContext callbackContext) {
+      headingUpdateCallbackContext = callbackContext;
+    }
+
+    /**
      * Adds getCurrentPosition JS callback to the collection
      * @param callbackContext
      */
     public void addCallback(CallbackContext callbackContext) {
         mCallbacks.add(callbackContext);
+    }
+
+    /**
+     * Adds headingWatch JS callback to the collection
+     * @param callbackContext
+     */
+    public void addStatusChangedCallback(CallbackContext callbackContext) {
+      statusUpdateCallbackContext = callbackContext;
     }
 
     /**
@@ -129,6 +157,27 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             owner.stopPositioning();
         }
     }
+
+    /**
+     * Removes attitude callback
+     */
+    public void removeAttitudeCallback() {
+      attitudeUpdateCallbackContext = null;
+    }
+
+    /**
+     * Removes heading callback
+     */
+     public void removeHeadingCallback() {
+       headingUpdateCallbackContext = null;
+     }
+
+     /**
+      * Removes status callback
+      */
+      public void removeStatusCallback() {
+        statusUpdateCallbackContext = null;
+      }
 
     /**
      * Returns a JSON object which contains IARegion info.
@@ -215,6 +264,77 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     }
 
     /**
+     * Called to report that orientation has changed
+     * @param timestamp
+     * @param quaternion
+     */
+    @Override
+    public void onOrientationChange(long timestamp, double[] quaternion) {
+      try {
+          JSONObject orientationData;
+          orientationData = new JSONObject();
+          orientationData.put("timestamp", timestamp);
+          orientationData.put("x", quaternion[1]);
+          orientationData.put("y", quaternion[2]);
+          orientationData.put("z", quaternion[3]);
+          orientationData.put("w", quaternion[0]);
+
+          sendOrientationResult(orientationData);
+      }
+      catch(JSONException ex) {
+          Log.e(TAG, ex.toString());
+          throw new IllegalStateException(ex.getMessage());
+      }
+    }
+
+    /**
+     * Called to report that orientation has changed
+     * @param timestamp
+     * @param quaternion
+     */
+    @Override
+    public void onHeadingChanged(long timestamp, double heading) {
+      try {
+          JSONObject headingData;
+          headingData = new JSONObject();
+          headingData.put("timestamp", timestamp);
+          headingData.put("trueHeading", heading);
+          sendHeadingResult(headingData);
+      }
+      catch(JSONException ex) {
+          Log.e(TAG, ex.toString());
+          throw new IllegalStateException(ex.getMessage());
+      }
+    }
+
+    /**
+     * Invokes JS callback from watchRegion callback collection.
+     * @param orientationData
+     */
+     private void sendOrientationResult(JSONObject orientationData) {
+       if (attitudeUpdateCallbackContext != null) {
+         PluginResult pluginResult;
+         pluginResult = new PluginResult(PluginResult.Status.OK, orientationData);
+         pluginResult.setKeepCallback(true);
+         attitudeUpdateCallbackContext.sendPluginResult(pluginResult);
+       }
+     }
+
+    /**
+     * Invokes JS callback from watchRegion callback collection.
+     * @param headingData
+     */
+    private void sendHeadingResult(JSONObject headingData) {
+      if (headingUpdateCallbackContext != null) {
+        PluginResult pluginResult;
+        pluginResult = new PluginResult(PluginResult.Status.OK, headingData);
+        pluginResult.setKeepCallback(true);
+        headingUpdateCallbackContext.sendPluginResult(pluginResult);
+      }
+    }
+
+
+    /**
      * Invokes JS callback from watchRegion callback collection.
      * @param regionData
      */
@@ -251,6 +371,19 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     }
 
     /**
+     * Invokes JS callback from statusChanged callback.
+     * @param statusData
+     */
+    private void sendStatusResult(JSONObject statusData) {
+      if (statusUpdateCallbackContext != null) {
+        PluginResult pluginResult;
+        pluginResult = new PluginResult(PluginResult.Status.OK, statusData);
+        pluginResult.setKeepCallback(true);
+        statusUpdateCallbackContext.sendPluginResult(pluginResult);
+      }
+    }
+
+    /**
      * Notifies JS callbacks about service interuption
      */
     private void handleServiceInteruption() {
@@ -275,22 +408,25 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
      */
     @Override
     public void onStatusChanged(String provider, int status, Bundle bundle) {
+        JSONObject statusData;
+        statusData = new JSONObject();
         switch (status) {
-            case IALocationManager.STATUS_AVAILABLE:
-                Log.d(TAG, provider);
-                break;
-            case IALocationManager.STATUS_LIMITED:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
-            case IALocationManager.STATUS_OUT_OF_SERVICE:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
-            case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
-                Log.d(TAG, provider);
-                handleServiceInteruption();
-                break;
+          case IALocationManager.STATUS_AVAILABLE:
+              statusData = CurrentStatus.getStatusObject(CurrentStatus.STATUS_AVAILABLE);
+              sendStatusResult(statusData);
+              break;
+          case IALocationManager.STATUS_LIMITED:
+              statusData = CurrentStatus.getStatusObject(CurrentStatus.STATUS_LIMITED);
+              sendStatusResult(statusData);
+              break;
+          case IALocationManager.STATUS_OUT_OF_SERVICE:
+              statusData = CurrentStatus.getStatusObject(CurrentStatus.STATUS_OUT_OF_SERVICE);
+              sendStatusResult(statusData);
+              break;
+          case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
+              statusData = CurrentStatus.getStatusObject(CurrentStatus.STATUS_TEMPORARILY_UNAVAILABLE);
+              sendStatusResult(statusData);
+              break;
         }
     }
-}
+  }

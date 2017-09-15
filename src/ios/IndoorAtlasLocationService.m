@@ -27,7 +27,7 @@
 /**
  *  IndoorAtlas Navigation
  *
- *  @param apikey    Indoor atlas key
+ *  @param apikey    IndoorAtlas key
  *  @param apisecret IndoorAtlas secret
  *
  *  @return Object for indoor navigation
@@ -124,39 +124,32 @@
         [self.delegate location:self didUpdateLocation:loc];
     }
 }
+
 /**
- *  Error raised by Indooratlas SDK
+ *  Status Changed
  *
  *  @param manager
  *  @param status
  */
 - (void)indoorLocationManager:(nonnull IALocationManager *)manager statusChanged:(nonnull IAStatus *)status
 {
-    NSString *statusDisplay;
-    switch (status.type) {
-        case kIAStatusServiceAvailable:
-            statusDisplay = @"Connected";
-            break;
-        case kIAStatusServiceOutOfService:
-            statusDisplay = @"OutOfservice";
-            if ([self.delegate respondsToSelector:@selector(location:didFailWithError:)]) {
-                [self.delegate location:self didFailWithError:[NSError errorWithDomain:@"OutOfservice" code:kIAStatusServiceOutOfService userInfo:nil]];
-            }
-            break;
-        case kIAStatusServiceUnavailable:
-            if ([self.delegate respondsToSelector:@selector(location:didFailWithError:)]) {
-                [self.delegate location:self didFailWithError:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];
-            }
-            statusDisplay = @"Service Unavailable";
-            break;
-        case kIAStatusServiceLimited:
-            statusDisplay = @"Service Limited";
-            break;
-        default:
-            statusDisplay = @"Unknown";
-            break;
+    if([self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
+        [self.delegate location:self statusChanged:status];
     }
-    NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
+}
+
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateAttitude:(nonnull IAAttitude *)newAttitude
+{
+    if([self.delegate respondsToSelector:@selector(location:didUpdateAttitude:)]) {
+        [self.delegate location:self didUpdateAttitude:newAttitude];
+    }
+}
+
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateHeading:(nonnull IAHeading *)newHeading
+{
+    if([self.delegate respondsToSelector:@selector(location:didUpdateHeading:)]) {
+        [self.delegate location:self didUpdateHeading:newHeading];
+    }
 }
 
 // Gets coordinate to a given point
@@ -261,7 +254,7 @@
 
 - (void)valueForDistanceFilter:(float *)distance
 {
-    self.manager.distanceFilter = *(distance);
+    self.manager.distanceFilter = (CLLocationDistance) *(distance);
 }
 
 - (float)fetchFloorCertainty
@@ -273,6 +266,13 @@
 {
   return [[IALocationManager sharedInstance].extraInfo objectForKey:kIATraceId];
 }
+
+- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity
+{
+    self.manager.attitudeFilter = (CLLocationDegrees) *(orientationSensitivity);
+    self.manager.headingFilter = (CLLocationDegrees) *(headingSensitivity);
+}
+
 
 #pragma mark Supporting methods
 /**

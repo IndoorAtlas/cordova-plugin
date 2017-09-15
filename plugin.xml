@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.3.0">
+        version="1.4.0">
 
 	<name>IndoorAtlas</name>
 	<description>Cordova plugin using IndoorAtlas SDK.</description>
@@ -15,6 +15,9 @@
 	</js-module>
 	<js-module src="www/PositionError.js" name="PositionError">
 		<clobbers target="PositionError" />
+  </js-module>
+  <js-module src="www/CurrentStatus.js" name="CurrentStatus">
+    <clobbers target="CurrentStatus" />
 	</js-module>
 	<js-module src="www/Position.js" name="Position">
 		<clobbers target="Position" />
@@ -78,5 +81,6 @@
 		<source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
 		<source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
+    <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
 	</platform>
 </plugin>

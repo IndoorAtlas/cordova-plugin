@@ -49,6 +49,9 @@
 @property (nonatomic, strong) NSString *setDistanceFilterCallbackID;
 @property (nonatomic, strong) NSString *getFloorCertaintyCallbackID;
 @property (nonatomic, strong) NSString *getTraceIdCallbackID;
+@property (nonatomic, strong) NSString *addAttitudeUpdateCallbackID;
+@property (nonatomic, strong) NSString *addHeadingUpdateCallbackID;
+@property (nonatomic, strong) NSString *addStatusUpdateCallbackID;
 
 @end
 
@@ -252,6 +255,54 @@
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
 }
+
+- (void)returnAttitudeInformation:(double)x y:(double)y z:(double)z w:(double)w timestamp:(NSDate *)timestamp
+{
+    if (_addAttitudeUpdateCallbackID != nil) {
+        CDVPluginResult *pluginResult;
+        
+        NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:5];
+        [result setObject:secondsSinceRefDate forKey:@"timestamp"];
+        [result setObject:[NSNumber numberWithDouble:x] forKey:@"x"];
+        [result setObject:[NSNumber numberWithDouble:y] forKey:@"y"];
+        [result setObject:[NSNumber numberWithDouble:z] forKey:@"z"];
+        [result setObject:[NSNumber numberWithDouble:w] forKey:@"w"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addAttitudeUpdateCallbackID];
+    }
+}
+
+- (void)returnHeadingInformation:(double)heading timestamp:(NSDate *)timestamp
+{
+    if (_addHeadingUpdateCallbackID != nil) {
+        CDVPluginResult *pluginResult;
+        
+        NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
+        [result setObject:secondsSinceRefDate forKey:@"timestamp"];
+        [result setObject:[NSNumber numberWithDouble:heading] forKey:@"trueHeading"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addHeadingUpdateCallbackID];
+    }
+}
+
+- (void)returnStatusInformation:(NSString *)statusString code:(NSUInteger) code
+{
+    if (_addStatusUpdateCallbackID != nil) {
+        CDVPluginResult *pluginResult;
+        
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
+        [result setObject:statusString forKey:@"message"];
+        [result setObject:[NSNumber numberWithUnsignedInteger:code] forKey:@"code"];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addStatusUpdateCallbackID];
+    }
+}
+
 - (NSDictionary *)formatRegionInfo:(IARegion *)regionInfo andTransitionType:(IndoorLocationTransitionType)transitionType
 {
     NSMutableDictionary *result;
@@ -292,7 +343,7 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:result];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
-    else{
+    else {
         self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey hash:iasecret];
         self.IAlocationInfo.delegate = self;
 
@@ -482,6 +533,36 @@
     }
 }
 
+- (void)addAttitudeCallback:(CDVInvokedUrlCommand *)command
+{
+    _addAttitudeUpdateCallbackID = command.callbackId;
+}
+
+- (void)removeAttitudeCallback:(CDVInvokedUrlCommand *)command
+{
+    _addAttitudeUpdateCallbackID = nil;
+}
+
+- (void)addHeadingCallback:(CDVInvokedUrlCommand *)command
+{
+    _addHeadingUpdateCallbackID = command.callbackId;
+}
+
+- (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command
+{
+    _addHeadingUpdateCallbackID = nil;
+}
+
+- (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command
+{
+    _addStatusUpdateCallbackID = command.callbackId;
+}
+
+- (void)removeStatusCallback:(CDVInvokedUrlCommand *)command
+{
+    _addStatusUpdateCallbackID = nil;
+}
+
 - (void)stopLocation:(CDVInvokedUrlCommand *)command
 {
     [self _stopLocation];
@@ -568,8 +649,7 @@
     [self.IAlocationInfo valueForDistanceFilter: &d];
 
     CDVPluginResult *pluginResult;
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-    [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
     [result setObject:@"DistanceFilter set" forKey:@"message"];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.setDistanceFilterCallbackID];
@@ -599,6 +679,23 @@
 
   pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
   [self.commandDelegate sendPluginResult:pluginResult callbackId:self.getTraceIdCallbackID];
+}
+
+- (void)setSensitivities:(CDVInvokedUrlCommand *)command
+{
+    NSString *oSensitivity = [command argumentAtIndex:0];
+    NSString *hSensitivity = [command argumentAtIndex:1];
+    
+    double orientationSensitivity = [oSensitivity doubleValue];
+    double headingSensitivity = [hSensitivity doubleValue];
+    
+    [self.IAlocationInfo setSensitivities: &orientationSensitivity headingSensitivity:&headingSensitivity];
+    
+    CDVPluginResult *pluginResult;
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
+    [result setObject:@"Sensitivities set" forKey:@"message"];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 #pragma mark IndoorAtlas Location
@@ -656,6 +753,55 @@
         // No callbacks waiting on us anymore, turn off listening.
         [self _stopLocation];
     }
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateAttitude:(IAAttitude *)attitude
+{
+    double x = attitude.quaternion.x;
+    double y = attitude.quaternion.y;
+    double z = attitude.quaternion.z;
+    double w = attitude.quaternion.w;
+    NSDate *timestamp = attitude.timestamp;
+    
+    [self returnAttitudeInformation:x y:y z:z w:w timestamp:timestamp];
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)heading
+{
+    double direction = heading.trueHeading;
+    NSDate *timestamp = heading.timestamp;
+    
+    [self returnHeadingInformation:direction timestamp:timestamp];
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager statusChanged:(IAStatus *)status
+{
+    NSString *statusDisplay;
+    NSUInteger statusCode;
+    switch (status.type) {
+        case kIAStatusServiceAvailable:
+            statusDisplay = @"Available";
+            statusCode = STATUS_AVAILABLE;
+            break;
+        case kIAStatusServiceOutOfService:
+            statusDisplay = @"Out of Service";
+            statusCode = STATUS_OUT_OF_SERVICE;
+            break;
+        case kIAStatusServiceUnavailable:
+            statusDisplay = @"Service Unavailable";
+            statusCode = STATUS_TEMPORARILY_UNAVAILABLE;
+            break;
+        case kIAStatusServiceLimited:
+            statusDisplay = @"Service Limited";
+            statusCode = STATUS_LIMITED;
+            break;
+        default:
+            statusDisplay = @"Unspecified Status"
+            break;
+    }
+    
+    [self returnStatusInformation:statusDisplay code:statusCode];
+    NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan

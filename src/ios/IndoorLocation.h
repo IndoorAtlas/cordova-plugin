@@ -13,6 +13,13 @@ enum IndoorLocationStatus {
     FLOORPLAN_UNAVAILABLE,
     UNSPECIFIED_ERROR
 };
+
+enum IACurrentStatus {
+    STATUS_OUT_OF_SERVICE = 0,
+    STATUS_TEMPORARILY_UNAVAILABLE = 1,
+    STATUS_AVAILABLE = 2,
+    STATUS_LIMITED = 10
+};
 typedef NSUInteger IndoorLocationStatus;
 
 // simple object to keep track of location information
@@ -51,6 +58,12 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)clearWatch:(CDVInvokedUrlCommand *)command;
 - (void)addRegionWatch:(CDVInvokedUrlCommand *)command;
 - (void)clearRegionWatch:(CDVInvokedUrlCommand *)command;
+- (void)addAttitudeCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeAttitudeCallback:(CDVInvokedUrlCommand *)command;
+- (void)addHeadingCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command;
+- (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeStatusCallback:(CDVInvokedUrlCommand *)command;
 - (void)setPosition:(CDVInvokedUrlCommand *)command;
 - (void)fetchFloorplan:(CDVInvokedUrlCommand *)command;
 - (void)coordinateToPoint:(CDVInvokedUrlCommand *)command;
@@ -60,5 +73,6 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
+- (void)setSensitivities:(CDVInvokedUrlCommand *)command;
 
 @end
