@@ -15,9 +15,9 @@
 	</js-module>
 	<js-module src="www/PositionError.js" name="PositionError">
 		<clobbers target="PositionError" />
-  </js-module>
-  <js-module src="www/CurrentStatus.js" name="CurrentStatus">
-    <clobbers target="CurrentStatus" />
+  	</js-module>
+  	<js-module src="www/CurrentStatus.js" name="CurrentStatus">
+		<clobbers target="CurrentStatus" />
 	</js-module>
 	<js-module src="www/Position.js" name="Position">
 		<clobbers target="Position" />
@@ -28,9 +28,9 @@
 	<js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
 		<clobbers target="IndoorAtlas" />
 	</js-module>
-    <js-module src="www/FloorPlan.js" name="FloorPlan">
-        <clobbers target="FloorPlan" />
-    </js-module>
+    	<js-module src="www/FloorPlan.js" name="FloorPlan">
+		<clobbers target="FloorPlan" />
+    	</js-module>
 
 	<!-- ios -->
 	<platform name="ios">
@@ -40,7 +40,7 @@
 		<framework src="CFNetwork.framework" />
 		<framework src="CoreLocation.framework" />
 		<framework src="CoreMotion.framework" />
-    <framework src="CoreBluetooth.framework" />
+    		<framework src="CoreBluetooth.framework" />
 		<framework src="Security.framework" />
 		<framework src="SystemConfiguration.framework"/>
 		<framework src="libz.dylib" />
@@ -59,28 +59,28 @@
 
 	<!-- android -->
     <platform name="android">
-		<framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
+	    <framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
 
-		<config-file target="res/xml/config.xml" parent="/*">
-      <feature name="IndoorAtlas">
-        <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
-				<param name="onload" value="true" />
-      </feature>
-    </config-file>
-
-		<config-file target="AndroidManifest.xml" parent="/*">
-      <uses-permission android:name="android.permission.INTERNET" />
-      <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-      <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-      <uses-permission android:name="android.permission.BLUETOOTH" />
-      <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-      <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-      <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    </config-file>
-
-		<source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
-		<source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
-		<source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
-    <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
+	    <config-file target="res/xml/config.xml" parent="/*">
+		    <feature name="IndoorAtlas">
+			    <param name="android-package" value="com.ialocation.plugin.IALocationPlugin"/>
+			    <param name="onload" value="true" />
+		    </feature>
+	    </config-file>
+	    
+	    <config-file target="AndroidManifest.xml" parent="/*">
+		    <uses-permission android:name="android.permission.INTERNET" />
+		    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+		    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+		    <uses-permission android:name="android.permission.BLUETOOTH" />
+		    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+		    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+		    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	    </config-file>
+	    
+	    <source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
 	</platform>
 </plugin>
