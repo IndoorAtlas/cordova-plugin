@@ -796,7 +796,7 @@
             statusCode = STATUS_LIMITED;
             break;
         default:
-            statusDisplay = @"Unspecified Status"
+            statusDisplay = @"Unspecified Status";
             break;
     }
     
