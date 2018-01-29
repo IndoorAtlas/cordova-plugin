@@ -1,4 +1,3 @@
-
 var Coordinates = require('./Coordinates');
 var Region = require('./Region');
 
