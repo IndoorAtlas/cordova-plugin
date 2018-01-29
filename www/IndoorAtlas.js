@@ -465,6 +465,58 @@ var IndoorAtlas = {
           }
       };
       exec(win, fail, "IndoorAtlas", "getTraceId");
-    }
+    },
+
+      /**
+       * Initialize graph with the given graph JSON
+       */
+      initWithGraph: function(graphJson) {
+        return new Promise(function(resolve, reject) {
+          var success = function(result) {
+            resolve(new Wayfinder(result.wayfinderId));
+          };
+          var error = function(e) { reject(e) };
+          exec(success, error, "IndoorAtlasWayfinding", "initWithGraph", [graphJson]);
+        });
+      }
 };
+
+/**
+ * Wayfinder object
+ */
+var Wayfinder = function(wayfinderId) {
+  var id = wayfinderId;
+  var location = null;
+  var destination = null;
+
+  /**
+   * Set destination of the current wayfinding instance
+   */
+  this.setDestination = function(lat, lon, floor) {
+    destination = { lat: lat, lon: lon, floor: floor };
+  }
+
+  /**
+   * Set location of the current wayfinding instance
+   */
+  this.setLocation = function(lat, lon, floor) {
+    location = { lat: lat, lon: lon, floor: floor };
+  }
+
+  /**
+   * Get route between the given location and destination
+   */
+  this.getRoute = function() {
+    return new Promise(function(resolve, reject) {
+      var success = function(result) { resolve(result) };
+      var error = function(e) { reject(e) };
+      if (location == null || destination == null) {
+        resolve(result);
+      } else {
+        exec(success, error, "IndoorAtlasWayfinding", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
+      }
+    });
+  }
+};
+
 module.exports = IndoorAtlas;

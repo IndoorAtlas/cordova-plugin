@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.5.0">
+        version="1.6.0">
 
 	<name>IndoorAtlas</name>
 	<description>Cordova plugin using IndoorAtlas SDK.</description>
@@ -15,8 +15,8 @@
 	</js-module>
 	<js-module src="www/PositionError.js" name="PositionError">
 		<clobbers target="PositionError" />
-  	</js-module>
-  	<js-module src="www/CurrentStatus.js" name="CurrentStatus">
+  </js-module>
+  <js-module src="www/CurrentStatus.js" name="CurrentStatus">
 		<clobbers target="CurrentStatus" />
 	</js-module>
 	<js-module src="www/Position.js" name="Position">
@@ -28,9 +28,12 @@
 	<js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
 		<clobbers target="IndoorAtlas" />
 	</js-module>
-    	<js-module src="www/FloorPlan.js" name="FloorPlan">
+  <js-module src="www/FloorPlan.js" name="FloorPlan">
 		<clobbers target="FloorPlan" />
-    	</js-module>
+  </js-module>
+  <js-module src="www/Promise.js" name="Promise">
+    <clobbers target="Promise" />
+  </js-module>
 
 	<!-- ios -->
 	<platform name="ios">
@@ -51,15 +54,24 @@
 				<param name="ios-package" value="IndoorLocation" />
 			</feature>
 		</config-file>
-		<header-file src="src/ios/IndoorAtlasLocationService.h" />
-		<source-file src="src/ios/IndoorAtlasLocationService.m" />
-		<header-file src="src/ios/IndoorLocation.h" />
-		<source-file src="src/ios/IndoorLocation.m" />
+		<header-file src="src/ios/IndoorAtlas/IndoorAtlasLocationService.h" />
+		<source-file src="src/ios/IndoorAtlas/IndoorAtlasLocationService.m" />
+		<header-file src="src/ios/IndoorAtlas/IndoorLocation.h" />
+		<source-file src="src/ios/IndoorAtlas/IndoorLocation.m" />
+
+    <framework src="src/ios/IndoorAtlasWayfinding/IndoorAtlasWayfinding.framework" custom="true" embed="true"/>
+      <config-file target="config.xml" parent="/*">
+          <feature name="IndoorAtlasWayfinding">
+              <param name="ios-package" value="IAWayfinding"/>
+          </feature>
+      </config-file>
+    <header-file src="src/ios/IndoorAtlasWayfinding/IAWayfinding.h" />
+    <source-file src="src/ios/IndoorAtlasWayfinding/IAWayfinding.m" />
 	</platform>
 
 	<!-- android -->
     <platform name="android">
-	    <framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
+	    <framework src="src/android/IndoorAtlas/indooratlas.gradle" custom="true" type="gradleReference"/>
 
 	    <config-file target="res/xml/config.xml" parent="/*">
 		    <feature name="IndoorAtlas">
@@ -78,9 +90,18 @@
 		    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	    </config-file>
 
-	    <source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
-	    <source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
-	    <source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin" />
-	    <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/IndoorAtlas/IALocationPlugin.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/IndoorAtlas/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/IndoorAtlas/PositionError.java" target-dir="src/com/ialocation/plugin" />
+	    <source-file src="src/android/IndoorAtlas/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
+
+      <framework src="src/android/IndoorAtlasWayfinding/IAWayfinding.gradle" custom="true" type="gradleReference"/>
+      <config-file target="config.xml" parent="/*">
+        <feature name="IndoorAtlasWayfinding">
+            <param name="android-package" value="com.iawayfinding.plugin.IAWayfinding"/>
+            <param name="onload" value="true"/>
+        </feature>
+      </config-file>
+      <source-file src="src/android/IndoorAtlasWayfinding/IAWayfinding.java" target-dir="src/com/iawayfinding/plugin"/>
 	</platform>
 </plugin>

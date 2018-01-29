@@ -1,0 +1,15 @@
+repositories {
+    mavenCentral()
+    maven {
+        url "https://indooratlas-ltd.bintray.com/mvn-internal"
+        credentials {
+          username bintrayUsername
+          password bintrayKey
+        }
+    }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:27.0.2'
+    compile 'com.indooratlas.android:indooratlas-android-wayfinding-sdk:0.1.0-dev-8@aar'
+}
