@@ -1,11 +1,7 @@
 repositories {
     mavenCentral()
     maven {
-        url "https://indooratlas-ltd.bintray.com/mvn-internal"
-        credentials {
-          username bintrayUsername
-          password bintrayKey
-        }
+        url "https://indooratlas-ltd.bintray.com/mvn-public"
     }
 }
 
