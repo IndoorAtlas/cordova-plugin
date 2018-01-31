@@ -1,4 +1,4 @@
-package com.iawayfinding.plugin;
+package com.iacordovawayfinding.plugin;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;

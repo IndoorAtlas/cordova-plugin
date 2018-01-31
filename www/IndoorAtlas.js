@@ -340,7 +340,7 @@ var IndoorAtlas = {
         function(error) {
           console.log('Error while stopping service');
         },
-        "IndoorAtlas","clearWatch",[watchId]);
+        "IndoorAtlas", "clearWatch", [watchId]);
     }
     catch(error) { alert(error); };
   },
@@ -467,8 +467,8 @@ var IndoorAtlas = {
   },
 
   /**
-  * Initialize graph with the given graph JSON
-  */
+   * Initialize graph with the given graph JSON
+   */
   initWithGraph: function(graphJson) {
     return new Promise(function(resolve, reject) {
       var success = function(result) {
