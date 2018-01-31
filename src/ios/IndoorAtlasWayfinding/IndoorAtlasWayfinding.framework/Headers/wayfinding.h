@@ -14,7 +14,7 @@
  * Represents one point in the route
  */
  IA_WAYFINDING_API
-@interface RoutingPoint : NSObject
+@interface IARoutingPoint : NSObject
 -(id)initWithLatitude:(double)lat Longitude:(double)lon Floor:(int)floor NodeIndex:(int)index;
 
 /**
@@ -43,20 +43,20 @@
  * Represents one leg in the route.
  */
  IA_WAYFINDING_API
-@interface RoutingLeg : NSObject
--(id)initWithBegin:(RoutingPoint*)begin End:(RoutingPoint*)end Length:(double)length Direction:(double)direction EdgeIndex:(int)index;
+@interface IARoutingLeg : NSObject
+-(id)initWithBegin:(IARoutingPoint*)begin End:(IARoutingPoint*)end Length:(double)length Direction:(double)direction EdgeIndex:(int)index;
 
 
 /**
  * The beginning point of the route.
  */
-@property (readonly) RoutingPoint *begin;
+@property (readonly) IARoutingPoint *begin;
 
 
 /**
  * The end point of the route.
  */
-@property (readonly) RoutingPoint *end;
+@property (readonly) IARoutingPoint *end;
 
 
 /**
@@ -82,7 +82,7 @@ IA_WAYFINDING_API
 /**
  * Interface for doing wayfinding.
  */
-@interface Wayfinding : NSObject
+@interface IAWayfinding : NSObject
 
 /**
  * Constructor.
@@ -125,7 +125,7 @@ IA_WAYFINDING_API
  *
  * @return Array of routing legs. Array is empty, if route cannot be computed.
  */
--(NSArray<RoutingLeg*>*)getRoute;
+-(NSArray<IARoutingLeg*>*)getRoute;
 @end
 
 #undef IA_WAYFINDING_API

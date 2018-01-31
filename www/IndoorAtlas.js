@@ -510,7 +510,7 @@ var Wayfinder = function(wayfinderId) {
       var success = function(result) { resolve(result) };
       var error = function(e) { reject(e) };
       if (location == null || destination == null) {
-        resolve(result);
+        resolve({ route: [] });
       } else {
         exec(success, error, "IndoorAtlasWayfinding", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
       }

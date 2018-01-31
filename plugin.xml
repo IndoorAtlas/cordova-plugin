@@ -62,11 +62,11 @@
     <framework src="src/ios/IndoorAtlasWayfinding/IndoorAtlasWayfinding.framework" custom="true" embed="true"/>
       <config-file target="config.xml" parent="/*">
           <feature name="IndoorAtlasWayfinding">
-              <param name="ios-package" value="IAWayfinding"/>
+              <param name="ios-package" value="IACordovaWayfinding"/>
           </feature>
       </config-file>
-    <header-file src="src/ios/IndoorAtlasWayfinding/IAWayfinding.h" />
-    <source-file src="src/ios/IndoorAtlasWayfinding/IAWayfinding.m" />
+    <header-file src="src/ios/IndoorAtlasWayfinding/IACordovaWayfinding.h" />
+    <source-file src="src/ios/IndoorAtlasWayfinding/IACordovaWayfinding.m" />
 	</platform>
 
 	<!-- android -->
@@ -95,13 +95,13 @@
 	    <source-file src="src/android/IndoorAtlas/PositionError.java" target-dir="src/com/ialocation/plugin" />
 	    <source-file src="src/android/IndoorAtlas/CurrentStatus.java" target-dir="src/com/ialocation/plugin" />
 
-      <framework src="src/android/IndoorAtlasWayfinding/IAWayfinding.gradle" custom="true" type="gradleReference"/>
+      <framework src="src/android/IndoorAtlasWayfinding/IACordovaWayfinding.gradle" custom="true" type="gradleReference"/>
       <config-file target="config.xml" parent="/*">
         <feature name="IndoorAtlasWayfinding">
-            <param name="android-package" value="com.iawayfinding.plugin.IAWayfinding"/>
+            <param name="android-package" value="com.iacordovawayfinding.plugin.IACordovaWayfinding"/>
             <param name="onload" value="true"/>
         </feature>
       </config-file>
-      <source-file src="src/android/IndoorAtlasWayfinding/IAWayfinding.java" target-dir="src/com/iawayfinding/plugin"/>
+      <source-file src="src/android/IndoorAtlasWayfinding/IACordovaWayfinding.java" target-dir="src/com/iacordovawayfinding/plugin"/>
 	</platform>
 </plugin>

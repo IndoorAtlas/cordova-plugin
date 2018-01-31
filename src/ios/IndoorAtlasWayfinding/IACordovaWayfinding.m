@@ -1,18 +1,18 @@
 //
-//  IAWayfinding.m
+//  IACordovaWayfinding.m
 //
 //  Created by Toni on 27/11/2017.
 //
 
 #import <Foundation/Foundation.h>
 #import <Cordova/CDVPlugin.h>
-#import "IAWayfinding.h"
+#import "IACordovaWayfinding.h"
 #import <IndoorAtlasWayfinding/wayfinding.h>
 
 /**
- * IAWayfinding wrapper for iOS
+ * IACordovaWayfinding wrapper for iOS
  */
-@implementation IAWayfinding
+@implementation IACordovaWayfinding
 
 /**
  * Initialize the graph with the given graph JSON
@@ -28,7 +28,7 @@
     int wayfinderId = [self.wayfinderInstances count];
 
     @try {
-        Wayfinding *wf = [[Wayfinding alloc] initWithGraph:graphJson];
+        IAWayfinding *wf = [[IAWayfinding alloc] initWithGraph:graphJson];
         [self.wayfinderInstances addObject:wf];
     } @catch(NSException *exception) {
         NSLog(@"graph: %@", exception.reason);
@@ -77,7 +77,7 @@
     
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
-    NSArray<RoutingLeg *> *route = [NSArray array];
+    NSArray<IARoutingLeg *> *route = [NSArray array];
     
     @try {
         route = [self.wayfinder getRoute];
@@ -98,14 +98,14 @@
 /**
  * Create NSMutableDictionary from the RoutingLeg object
  */
-- (NSMutableDictionary *)dictionaryFromRoutingLeg:(RoutingLeg *)routingLeg {
+- (NSMutableDictionary *)dictionaryFromRoutingLeg:(IARoutingLeg *)routingLeg {
     return [NSMutableDictionary dictionaryWithObjectsAndKeys: [self dictionaryFromRoutingPoint:routingLeg.begin], @"begin", [self dictionaryFromRoutingPoint:routingLeg.end], @"end", [NSNumber numberWithDouble:routingLeg.length], @"length", [NSNumber numberWithDouble:routingLeg.direction], @"direction", routingLeg.edgeIndexInOriginalGraph, @"edgeIndex", nil];
 }
 
 /**
  * Create NSMutableDictionary from the RoutingPoint object
  */
-- (NSMutableDictionary *)dictionaryFromRoutingPoint:(RoutingPoint *)routingPoint {
+- (NSMutableDictionary *)dictionaryFromRoutingPoint:(IARoutingPoint *)routingPoint {
     return [NSMutableDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:routingPoint.latitude], @"latitude", [NSNumber numberWithDouble:routingPoint.longitude], @"longitude", [NSNumber numberWithInt:routingPoint.floor], @"floor", nil];
 }
 

@@ -23,7 +23,7 @@ import com.indooratlas.android.wayfinding.IAWayfinder;
 /**
  * IAWayfinding wrapper for Android
  */
-public class IAWayfinding extends CordovaPlugin {
+public class IACordovaWayfinding extends CordovaPlugin {
 
     private IAWayfinder wayfinder;
     private ArrayList<IAWayfinder> wayfinderInstances = new ArrayList<IAWayfinder>();
