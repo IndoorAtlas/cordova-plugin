@@ -54,24 +54,17 @@
         <param name="ios-package" value="IndoorLocation"/>
       </feature>
     </config-file>
-    <header-file src="src/ios/IndoorAtlas/IndoorAtlasLocationService.h"/>
-    <source-file src="src/ios/IndoorAtlas/IndoorAtlasLocationService.m"/>
-    <header-file src="src/ios/IndoorAtlas/IndoorLocation.h"/>
-    <source-file src="src/ios/IndoorAtlas/IndoorLocation.m"/>
+    <header-file src="src/ios/IndoorAtlasLocationService.h"/>
+    <source-file src="src/ios/IndoorAtlasLocationService.m"/>
+    <header-file src="src/ios/IndoorLocation.h"/>
+    <source-file src="src/ios/IndoorLocation.m"/>
 
-    <framework src="src/ios/IndoorAtlasWayfinding/IndoorAtlasWayfinding.framework" custom="true" embed="true"/>
-      <config-file target="config.xml" parent="/*">
-          <feature name="IndoorAtlasWayfinding">
-              <param name="ios-package" value="IACordovaWayfinding"/>
-          </feature>
-      </config-file>
-    <header-file src="src/ios/IndoorAtlasWayfinding/IACordovaWayfinding.h"/>
-    <source-file src="src/ios/IndoorAtlasWayfinding/IACordovaWayfinding.m"/>
+    <framework src="src/ios/IndoorAtlas/IndoorAtlasWayfinding.framework" custom="true" embed="true"/>
   </platform>
 
 	<!-- android -->
     <platform name="android">
-      <framework src="src/android/IndoorAtlas/indooratlas.gradle" custom="true" type="gradleReference"/>
+      <framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
 
       <config-file target="res/xml/config.xml" parent="/*">
         <feature name="IndoorAtlas">
@@ -90,18 +83,10 @@
         <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
       </config-file>
 
-      <source-file src="src/android/IndoorAtlas/IALocationPlugin.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/IndoorAtlas/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/IndoorAtlas/PositionError.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/IndoorAtlas/CurrentStatus.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin"/>
 
-      <framework src="src/android/IndoorAtlasWayfinding/IACordovaWayfinding.gradle" custom="true" type="gradleReference"/>
-      <config-file target="config.xml" parent="/*">
-        <feature name="IndoorAtlasWayfinding">
-            <param name="android-package" value="com.iacordovawayfinding.plugin.IACordovaWayfinding"/>
-            <param name="onload" value="true"/>
-        </feature>
-      </config-file>
-      <source-file src="src/android/IndoorAtlasWayfinding/IACordovaWayfinding.java" target-dir="src/com/iacordovawayfinding/plugin"/>
     </platform>
 </plugin>

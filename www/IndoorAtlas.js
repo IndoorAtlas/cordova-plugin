@@ -475,7 +475,7 @@ var IndoorAtlas = {
         resolve(new Wayfinder(result.wayfinderId));
       };
       var error = function(e) { reject(e) };
-      exec(success, error, "IndoorAtlasWayfinding", "initWithGraph", [graphJson]);
+      exec(success, error, "IndoorAtlas", "initWithGraph", [graphJson]);
     });
   }
 };
@@ -512,7 +512,7 @@ var Wayfinder = function(wayfinderId) {
       if (location == null || destination == null) {
         resolve({ route: [] });
       } else {
-        exec(success, error, "IndoorAtlasWayfinding", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
+        exec(success, error, "IndoorAtlas", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
       }
     });
   }

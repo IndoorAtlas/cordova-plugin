@@ -4,8 +4,11 @@ repositories {
         url "http://indooratlas-ltd.bintray.com/mvn-public"
     }
 }
+}
 
 
 dependencies {
+    compile 'com.android.support:appcompat-v7:27.0.2'
     compile 'com.indooratlas.android:indooratlas-android-sdk:2.6.0@aar'
+    compile 'com.indooratlas.android:indooratlas-android-wayfinding-sdk:0.1.1-dev-5@aar'
 }
