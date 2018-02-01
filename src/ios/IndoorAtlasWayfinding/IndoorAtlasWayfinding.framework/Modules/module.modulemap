@@ -1,0 +1,3 @@
+framework module IndoorAtlasWayfinding { umbrella header "IAWayfinding.h"
+header "wayfinding.h"
+export * module * { export * } }

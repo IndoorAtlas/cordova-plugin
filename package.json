@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-indooratlas",
-  "version": "1.5.0",
-  "description": "Cordova plugin using IndoorAtlas SDK.",
+  "version": "1.6.0",
+  "description": "IndoorAtlas Cordova Plugin.",
   "cordova": {
     "id": "cordova-plugin-indooratlas",
     "platforms": [
@@ -18,7 +18,9 @@
     "IndoorAtlas",
     "geolocation",
     "ecosystem:cordova",
-    "cordova-android"
+    "cordova-android",
+    "wayfinding",
+    "indoor positioning"
   ],
   "author": "IndoorAtlas",
   "license": "Apache 2.0"
