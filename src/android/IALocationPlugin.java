@@ -64,7 +64,6 @@ public class IALocationPlugin extends CordovaPlugin{
     private IndoorLocationListener mListener;
     private boolean mLocationServiceRunning = false;
     private Timer mTimer;
-    private String mApiKey, mApiSecret;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
     private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
 
@@ -142,8 +141,7 @@ public class IALocationPlugin extends CordovaPlugin{
                 if (validateIAKeys(args)) {
                     String apiKey = args.getString(0);
                     String apiSecret = args.getString(1);
-                    initializeIndoorAtlas(apiKey, apiSecret);
-                    callbackContext.success();
+                    initializeIndoorAtlas(apiKey, apiSecret, callbackContext);
                 }
                 else {
                     callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_ACCESS_TOKEN));
@@ -284,7 +282,7 @@ public class IALocationPlugin extends CordovaPlugin{
      * @param apiKey
      * @param apiSecret
      */
-    private void initializeIndoorAtlas(final String apiKey, final String apiSecret) {
+    private void initializeIndoorAtlas(final String apiKey, final String apiSecret, final CallbackContext callbackContext) {
         if (mLocationManager == null){
             cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -294,8 +292,7 @@ public class IALocationPlugin extends CordovaPlugin{
                     bundle.putString(IALocationManager.EXTRA_API_SECRET, apiSecret);
                     mLocationManager = IALocationManager.create(cordova.getActivity().getApplicationContext(), bundle);
                     mResourceManager = IAResourceManager.create(cordova.getActivity().getApplicationContext(), bundle);
-                    mApiKey = apiKey;
-                    mApiSecret = apiSecret;
+                    callbackContext.success();
                 }
             });
         }
@@ -642,15 +639,6 @@ public class IALocationPlugin extends CordovaPlugin{
        }
        callbackContext.success(successObject);
      }
-
-    /**
-     * Resets IndoorAtlas positioning session (NOT BEING USED)
-     */
-    public void resetIndoorAtlas() {
-        stopPositioning();
-        initializeIndoorAtlas(mApiKey, mApiSecret);
-        startPositioning();
-    }
 
     /**
      * Validates parameters passed by user before initializing IALocationManager
