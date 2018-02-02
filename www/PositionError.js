@@ -7,8 +7,8 @@
  */
 
 var PositionError = function(code, message) {
-  this.code = code || null;
-  this.message = message || '';
+  this.code = code;
+  this.message = message;
 };
 
 PositionError.PERMISSION_DENIED = 1;
