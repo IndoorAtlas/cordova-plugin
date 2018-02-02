@@ -701,7 +701,7 @@
 /**
  * Initialize the graph with the given graph JSON
  */
-- (void)initWithGraph:(CDVInvokedUrlCommand *)command
+- (void)buildWayfinder:(CDVInvokedUrlCommand *)command
 {
     NSString *graphJson = [command argumentAtIndex:0];
     

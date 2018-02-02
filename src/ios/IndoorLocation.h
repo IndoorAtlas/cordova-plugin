@@ -77,7 +77,7 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command;
-- (void)initWithGraph:(CDVInvokedUrlCommand *)command;
+- (void)buildWayfinder:(CDVInvokedUrlCommand *)command;
 - (void)computeRoute:(CDVInvokedUrlCommand *)command;
 
 @end

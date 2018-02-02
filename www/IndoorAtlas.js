@@ -469,13 +469,13 @@ var IndoorAtlas = {
   /**
    * Initialize graph with the given graph JSON
    */
-  initWithGraph: function(graphJson) {
+  buildWayfinder: function(graphJson) {
     return new Promise(function(resolve, reject) {
       var success = function(result) {
         resolve(new Wayfinder(result.wayfinderId));
       };
       var error = function(e) { reject(e) };
-      exec(success, error, "IndoorAtlas", "initWithGraph", [graphJson]);
+      exec(success, error, "IndoorAtlas", "buildWayfinder", [graphJson]);
     });
   }
 };
