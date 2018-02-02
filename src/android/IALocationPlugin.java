@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+import android.content.Context;
 
 import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationManager;
@@ -542,7 +543,7 @@ public class IALocationPlugin extends CordovaPlugin{
      */
     private void buildWayfinder(String graphJson, CallbackContext callbackContext) {
         int wayfinderId = wayfinderInstances.size();
-        wayfinder = IAWayfinder.create(graphJson);
+        wayfinder = IAWayfinder.create(this.cordova.getActivity().getApplicationContext(), graphJson);
         wayfinderInstances.add(wayfinder);
         
         JSONObject result = new JSONObject();
