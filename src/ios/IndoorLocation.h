@@ -3,6 +3,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <Cordova/CDVPlugin.h>
 #import "IndoorAtlasLocationService.h"
+#import <IndoorAtlasWayfinding/wayfinding.h>
 
 enum IndoorLocationStatus {
     PERMISSION_DENIED = 1,
@@ -51,6 +52,8 @@ typedef NSUInteger IndoorLocationStatus;
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) IndoorLocationInfo *locationData;
 @property (nonatomic, strong) IndoorRegionInfo *regionData;
+@property (nonatomic, strong) IAWayfinding *wayfinder;
+@property (nonatomic, strong) NSMutableArray *wayfinderInstances;
 
 - (void)initializeIndoorAtlas:(CDVInvokedUrlCommand *)command;
 - (void)getLocation:(CDVInvokedUrlCommand *)command;
@@ -74,5 +77,7 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command;
+- (void)buildWayfinder:(CDVInvokedUrlCommand *)command;
+- (void)computeRoute:(CDVInvokedUrlCommand *)command;
 
 @end
