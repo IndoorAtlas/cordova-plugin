@@ -7,8 +7,8 @@
  */
 
 var CurrentStatus = function(code, message) {
-  this.code = code || null;
-  this.message = message || '';
+  this.code = code;
+  this.message = message;
 };
 
 CurrentStatus.STATUS_OUT_OF_SERVICE = 0;
