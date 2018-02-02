@@ -226,7 +226,7 @@ public class IALocationPlugin extends CordovaPlugin{
               addStatusChangedCallback(callbackContext);
             } else if ("removeStatusCallback".equals(action)) {
               removeStatusCallback();
-            } else if ("initWithGraph".equals(action)) {
+            } else if ("buildWayfinder".equals(action)) {
                 String graphJson = args.getString(0);
                 buildWayfinder(graphJson, callbackContext);
             } else if ("computeRoute".equals(action)) {
@@ -541,10 +541,17 @@ public class IALocationPlugin extends CordovaPlugin{
     /**
      * Initialize the graph with the given graph JSON
      */
-    private void buildWayfinder(String graphJson, CallbackContext callbackContext) {
+    private void buildWayfinder(final String graphJson, CallbackContext callbackContext) {
         int wayfinderId = wayfinderInstances.size();
-        wayfinder = IAWayfinder.create(this.cordova.getActivity().getApplicationContext(), graphJson);
-        wayfinderInstances.add(wayfinder);
+
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Context context = cordova.getActivity().getApplicationContext();
+                wayfinder = IAWayfinder.create(context, graphJson);
+                wayfinderInstances.add(wayfinder);
+            }
+        });
         
         JSONObject result = new JSONObject();
         try {
