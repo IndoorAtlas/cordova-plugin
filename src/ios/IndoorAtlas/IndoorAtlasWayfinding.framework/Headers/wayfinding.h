@@ -36,7 +36,7 @@
 /**
  * Index (NSUinteger) of the node point in original graph. The value is null if not set.
  */
-@property (readonly) NSNumber *nodeIndexInOriginalGraph;
+@property (readonly) NSNumber *nodeIndex;
 @end
 
 /**
@@ -74,7 +74,7 @@
 /**
  * Index (NSUinteger) of the edge in the original graph. The value is null of edge not found from the graph.
  */
-@property (readonly) NSNumber *edgeIndexInOriginalGraph;
+@property (readonly) NSNumber *edgeIndex;
 @end
 
 

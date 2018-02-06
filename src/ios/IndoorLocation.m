@@ -783,14 +783,14 @@
  * Create NSMutableDictionary from the RoutingLeg object
  */
 - (NSMutableDictionary *)dictionaryFromRoutingLeg:(IARoutingLeg *)routingLeg {
-    return [NSMutableDictionary dictionaryWithObjectsAndKeys: [self dictionaryFromRoutingPoint:routingLeg.begin], @"begin", [self dictionaryFromRoutingPoint:routingLeg.end], @"end", [NSNumber numberWithDouble:routingLeg.length], @"length", [NSNumber numberWithDouble:routingLeg.direction], @"direction", routingLeg.edgeIndexInOriginalGraph, @"edgeIndex", nil];
+    return [NSMutableDictionary dictionaryWithObjectsAndKeys: [self dictionaryFromRoutingPoint:routingLeg.begin], @"begin", [self dictionaryFromRoutingPoint:routingLeg.end], @"end", [NSNumber numberWithDouble:routingLeg.length], @"length", [NSNumber numberWithDouble:routingLeg.direction], @"direction", routingLeg.edgeIndex, @"edgeIndex", nil];
 }
 
 /**
  * Create NSMutableDictionary from the RoutingPoint object
  */
 - (NSMutableDictionary *)dictionaryFromRoutingPoint:(IARoutingPoint *)routingPoint {
-    return [NSMutableDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:routingPoint.latitude], @"latitude", [NSNumber numberWithDouble:routingPoint.longitude], @"longitude", [NSNumber numberWithInt:routingPoint.floor], @"floor", nil];
+    return [NSMutableDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:routingPoint.latitude], @"latitude", [NSNumber numberWithDouble:routingPoint.longitude], @"longitude", [NSNumber numberWithInt:routingPoint.floor], @"floor", routingPoint.nodeIndex, @"nodeIndex", nil];
 }
 
 /**
