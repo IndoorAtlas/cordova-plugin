@@ -34,6 +34,12 @@
   <js-module src="www/Promise.js" name="Promise">
     <clobbers target="Promise"/>
   </js-module>
+  <js-module src="www/RoutingLeg.js" name="RoutingLeg">
+    <clobbers target="RoutingLeg"/>
+  </js-module>
+  <js-module src="www/RoutingPoint.js" name="RoutingPoint">
+    <clobbers target="RoutingPoint"/>
+  </js-module>
 
   <!-- ios -->
   <platform name="ios">

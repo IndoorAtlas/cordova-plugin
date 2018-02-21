@@ -507,7 +507,16 @@ var Wayfinder = function(wayfinderId) {
    */
   this.getRoute = function() {
     return new Promise(function(resolve, reject) {
-      var success = function(result) { resolve(result) };
+      var success = function(result) {
+
+        var arrayOfRoutes = result.route.map(function(route) {
+          var begin = new RoutingPoint(route.begin.latitude, route.begin.longitude, route.begin.floor, route.begin.nodeIndex);
+          var end = new RoutingPoint(route.end.latitude, route.end.longitude, route.end.floor, route.end.nodeIndex);
+          var leg = new RoutingLeg(begin, route.direction, route.edgeIndex, end, route.length);
+          return leg;
+        });
+        resolve({ route: arrayOfRoutes });
+       };
       var error = function(e) { reject(e) };
       if (location == null || destination == null) {
         resolve({ route: [] });
