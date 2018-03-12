@@ -204,6 +204,7 @@
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.coordinate.longitude] forKey:@"longitude"];
 
         [returnInfo setObject:lData.floorID forKey:@"flr"];
+        [returnInfo setObject:lData.floorCertainty forKey:@"floorCertainty"];
         if (lData.region != nil) {
             [returnInfo setObject:[self formatRegionInfo:lData.region andTransitionType:TRANSITION_TYPE_UNKNOWN] forKey:@"region"];
         }
@@ -810,6 +811,7 @@
 
     cData.locationInfo = [[CLLocation alloc] initWithCoordinate:newLocation.location.coordinate altitude:0 horizontalAccuracy:newLocation.location.horizontalAccuracy verticalAccuracy:0 course:newLocation.location.course speed:0 timestamp:[NSDate date]];
     cData.floorID = [NSString stringWithFormat:@"%ld", newLocation.floor.level];
+    cData.floorCertainty = [NSNumber numberWithFloat:newLocation.floor.certainty];
     cData.region = newLocation.region;
     if (self.locationData.locationCallbacks.count > 0) {
         for (NSString *callbackId in self.locationData.locationCallbacks) {

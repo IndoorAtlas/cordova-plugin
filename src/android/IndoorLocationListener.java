@@ -212,6 +212,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             locationData.put("accuracy", iaLocation.getAccuracy());
             locationData.put("altitude", iaLocation.getAltitude());
             locationData.put("heading", iaLocation.getBearing());
+            locationData.put("floorCertainty", iaLocation.getFloorCertainty());
             locationData.put("flr", iaLocation.getFloorLevel());
             locationData.put("latitude", iaLocation.getLatitude());
             locationData.put("longitude", iaLocation.getLongitude());

@@ -1,7 +1,7 @@
 var Coordinates = require('./Coordinates');
 var Region = require('./Region');
 
-var Position = function(coords, region, timestamp) {
+var Position = function(coords, region, timestamp, floorCertainty) {
   if (coords) {
     this.coords = new Coordinates(coords.latitude, coords.longitude,
                                   coords.altitude, coords.accuracy,
@@ -18,6 +18,7 @@ var Position = function(coords, region, timestamp) {
     this.region = null;
   }
   this.timestamp = (timestamp !== undefined) ? timestamp : Date.now();
+  this.floorCertainty = floorCertainty;
 };
 
 module.exports = Position;

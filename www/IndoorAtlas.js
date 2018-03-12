@@ -122,7 +122,8 @@ var IndoorAtlas = {
               flr: p.flr
             },
             p.region,
-            p.timestamp
+            p.timestamp,
+            p.floorCertainty
           );
           IndoorAtlas.lastPosition = pos;
           successCallback(pos);
@@ -322,7 +323,8 @@ var IndoorAtlas = {
           flr: p.flr
         },
         p.region,
-        p.timestamp
+        p.timestamp,
+        p.floorCertainty
       );
       IndoorAtlas.lastPosition = pos;
       successCallback(pos);

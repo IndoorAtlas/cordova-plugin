@@ -31,6 +31,7 @@ typedef NSUInteger IndoorLocationStatus;
 @property (nonatomic, strong) CLLocation *locationInfo;
 @property (nonatomic, strong) IARegion *region;
 @property (nonatomic, strong) NSString *floorID;
+@property (nonatomic, strong) NSNumber *floorCertainty;
 @property (nonatomic, strong) NSMutableArray *locationCallbacks;
 @property (nonatomic, strong) NSMutableDictionary *watchCallbacks;
 
