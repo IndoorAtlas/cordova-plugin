@@ -1,7 +1,7 @@
 repositories {
     mavenCentral()
     maven {
-        url "https://indooratlas-ltd.bintray.com/mvn-public-beta/"
+        url "https://indooratlas-ltd.bintray.com/mvn-public/"
     }
 }
 
