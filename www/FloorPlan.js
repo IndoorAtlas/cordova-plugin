@@ -1,3 +1,4 @@
+var CoordinateTransforms = require('./CoordinateTransforms');
 
 /**
  * This class contains position information.
@@ -65,6 +66,29 @@ var FloorPlan = function(id, name, url, floorLevel, bearing, bitmapHeight,
 
   // Top right coordinates of the floor plan
   this.topRight = topRight;
+
+  // Point to coordinate function
+  this.pointToCoordinate = function(x, y) {
+    return CoordinateTransforms.pixToWgs(
+      {
+        scale: [this.widthMeters, this.heightMeters],
+        location: [this.center[1], this.center[0]] ,
+        rotation: (this.bearing * Math.PI) / 180,
+        dimensions: [this.bitmapWidth, this.bitmapHeight]
+      }, [x, y]);
+  };
+
+  // Coordinate to point function
+  this.coordinateToPoint = function(lat, lon) {
+    return CoordinateTransforms.wgsToPix(
+      {
+        scale: [this.widthMeters, this.heightMeters],
+        location: [this.center[1], this.center[0]] ,
+        rotation: (this.bearing * Math.PI) / 180,
+        dimensions: [this.bitmapWidth, this.bitmapHeight]
+      }, [lat, lon]
+    );
+  };
 };
 
 module.exports = FloorPlan;

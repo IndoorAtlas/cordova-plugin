@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.7.0">
+        version="1.7.1">
 
   <name>IndoorAtlas</name>
   <description>IndoorAtlas Cordova Plugin.</description>
@@ -39,6 +39,9 @@
   </js-module>
   <js-module src="www/RoutingPoint.js" name="RoutingPoint">
     <clobbers target="RoutingPoint"/>
+  </js-module>
+  <js-module src="www/CoordinateTransforms.js" name="CoordinateTransforms">
+    <clobbers target="IndoorAtlas.CoordinateTransforms"/>
   </js-module>
 
   <!-- ios -->
