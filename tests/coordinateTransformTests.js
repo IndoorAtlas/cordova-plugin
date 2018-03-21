@@ -108,8 +108,8 @@ function precisionRound(number, precision) {
 
 /**
  * Compares that given point returns correct coordinate
- * @param boundingBox 
- * @param data 
+ * @param boundingBox
+ * @param data
  */
 function comparePointToCoordinate(boundingBox, data) {
   var x = data.point.x;
@@ -123,15 +123,15 @@ function comparePointToCoordinate(boundingBox, data) {
 
 /**
  * Compares that given coordinate returns correct pixel point
- * @param boundingBox 
- * @param data 
+ * @param boundingBox
+ * @param data
  */
 function compareCoordinateToPoint(boundingBox, data) {
   var lat = data.coordinates.lat;
   var lon = data.coordinates.lon;
 
   var point = CoordinateTransforms.wgsToPix(boundingBox, [lat, lon]);
-  
+
   expect(Math.round(point.x)).to.be.equal(Math.round(data.point.x));
   expect(Math.round(point.y)).to.be.equal(Math.round(data.point.y));
 };
