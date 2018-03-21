@@ -1,5 +1,3 @@
-var CoordinateTransforms = require('./CoordinateTransforms');
-
 /**
  * This class contains position information.
  * @param {Object} id

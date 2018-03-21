@@ -1,10 +1,8 @@
-var IndoorAtlas = require('./IndoorAtlas');
-
 /**
  * Coordinate transforms
  */
 
-IndoorAtlas.CoordinateTransforms = {
+var CoordinateTransforms = {
   boundingBoxToScalingFactor: function(bb) {
     var a = 6378137; // earth semimajor axis in meters
     var f = 1 / 298.257223563; // reciprocal flattening
@@ -61,10 +59,10 @@ IndoorAtlas.CoordinateTransforms = {
   enuToWgs: function(boundingBox, enuCoords) {
     var scale = this.boundingBoxToScalingFactor(boundingBox);
 
-    return [
-      enuCoords[1] / scale.dyDlat + boundingBox.location[0],
-      enuCoords[0] / scale.dxDlng + boundingBox.location[1]
-    ];
+    return {
+      latitude: enuCoords[1] / scale.dyDlat + boundingBox.location[0],
+      longitude: enuCoords[0] / scale.dxDlng + boundingBox.location[1]
+    };
   },
 
   // WGS coordinates to pixel coordinates
@@ -102,10 +100,10 @@ IndoorAtlas.CoordinateTransforms = {
 
   // Relative coordinates to pixel coordinates
   relToPix: function(boundingBox, relativeCoords) {
-    return [
-      relativeCoords[0] * (boundingBox.dimensions[0] / 2.0) + boundingBox.dimensions[0] / 2.0,
-      relativeCoords[1] * (boundingBox.dimensions[1] / 2.0) + boundingBox.dimensions[1] / 2.0
-    ];
+    return {
+      x: relativeCoords[0] * (boundingBox.dimensions[0] / 2.0) + boundingBox.dimensions[0] / 2.0,
+      y: relativeCoords[1] * (boundingBox.dimensions[1] / 2.0) + boundingBox.dimensions[1] / 2.0
+    };
   }
 }
-module.exports = IndoorAtlas.CoordinateTransforms;
+module.exports = CoordinateTransforms;
