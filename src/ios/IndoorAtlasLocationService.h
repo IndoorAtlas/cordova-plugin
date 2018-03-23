@@ -42,7 +42,7 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param manager   The location manager object that generated the event
  *  @param floorPlan Information about FloorPlan
  */
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan;
+- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId;
 
 /**
  *  Return Error Information if unable to fetch Floorplan Info from server
@@ -130,7 +130,7 @@ typedef NSUInteger IndoorLocationTransitionType;
  *
  *  @param floorplanId
  */
-- (void)fetchFloorplanWithId:(NSString *)floorplanId;
+- (void)fetchFloorplanWithId:(NSString *)floorplanId callbackId:(NSString *)callbackId;
 
 /**
  * Calculates point with the given coordinates

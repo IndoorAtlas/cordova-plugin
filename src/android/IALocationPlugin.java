@@ -303,10 +303,8 @@ public class IALocationPlugin extends CordovaPlugin{
      * @param floorplanId
      * @param callbackContext
      */
-    private void fetchFloorplan(String floorplanId, CallbackContext callbackContext) {
+    private void fetchFloorplan(final String floorplanId, final CallbackContext callbackContext) {
         if (mResourceManager != null) {
-            cancelPendingNetworkCalls();
-            mCbContext = callbackContext;
             mFetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
             mFetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
                 @Override
@@ -358,14 +356,14 @@ public class IALocationPlugin extends CordovaPlugin{
                             PluginResult pluginResult;
                             pluginResult = new PluginResult(PluginResult.Status.OK, floorplanInfo);
                             pluginResult.setKeepCallback(true);
-                            mCbContext.sendPluginResult(pluginResult);
+                            callbackContext.sendPluginResult(pluginResult);
 
                         }
                         else {
                           PluginResult pluginResult;
                           pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
                           pluginResult.setKeepCallback(true);
-                          mCbContext.sendPluginResult(pluginResult);
+                          callbackContext.sendPluginResult(pluginResult);
                         }
                     }
                     catch(JSONException ex) {
@@ -450,18 +448,6 @@ public class IALocationPlugin extends CordovaPlugin{
     }
 
     /**
-     * Helper method to cancel current task if any.
-     */
-    private void cancelPendingNetworkCalls() {
-        if (mFetchFloorplanTask != null) {
-            if (!mFetchFloorplanTask.isCancelled()) {
-                mFetchFloorplanTask.cancel();
-                mCbContext.sendPluginResult(new PluginResult(PluginResult.Status.NO_RESULT));
-            }
-        }
-    }
-
-    /**
      * Adds a new callback to the IndoorAtlas location listener
      * @param watchId
      * @param callbackContext
@@ -534,7 +520,7 @@ public class IALocationPlugin extends CordovaPlugin{
      private void removeStatusCallback() {
        getListener(this).removeStatusCallback();
      }
-    
+
     /**
      * Initialize the graph with the given graph JSON
      */
@@ -549,17 +535,17 @@ public class IALocationPlugin extends CordovaPlugin{
                 wayfinderInstances.add(wayfinder);
             }
         });
-        
+
         JSONObject result = new JSONObject();
         try {
             result.put("wayfinderId", wayfinderId);
             callbackContext.success(result);
-            
+
         } catch (JSONException e) {
             Log.e("IAWAYFINDER", "wayfinderId was not set");
         };
     }
-    
+
     /**
      * Compute route for the given values;
      * 1) Set location of the wayfinder instance
@@ -570,14 +556,14 @@ public class IALocationPlugin extends CordovaPlugin{
         wayfinder = wayfinderInstances.get(wayfinderId);
         wayfinder.setLocation(lat0, lon0, floor0);
         wayfinder.setDestination(lat1, lon1, floor1);
-        
+
         IARoutingLeg[] legs = wayfinder.getRoute();
         JSONArray jsonArray = new JSONArray();
         for (int i = 0; i < legs.length; i++) {
             jsonArray.put(jsonObjectFromRoutingLeg(legs[i]));
         }
         JSONObject result = new JSONObject();
-        
+
         try {
             result.put("route", jsonArray);
             callbackContext.success(result);
@@ -585,7 +571,7 @@ public class IALocationPlugin extends CordovaPlugin{
             Log.e("IAWAYFINDER", "json error with route");
         }
     }
-    
+
     /**
      * Create JSON object from the given RoutingLeg object
      */
@@ -598,11 +584,11 @@ public class IALocationPlugin extends CordovaPlugin{
             obj.put("direction", routingLeg.getDirection());
             obj.put("edgeIndex", routingLeg.getEdgeIndex());
         } catch(JSONException e) {
-            
+
         }
         return obj;
     }
-    
+
     /**
      * Create JSON object from RoutingPoint object
      */
@@ -613,7 +599,7 @@ public class IALocationPlugin extends CordovaPlugin{
             obj.put("longitude", routingPoint.getLongitude());
             obj.put("floor", routingPoint.getFloor());
         } catch(JSONException e) {
-            
+
         }
         return obj;
     }
@@ -842,62 +828,4 @@ public class IALocationPlugin extends CordovaPlugin{
         }
         return mListener;
     }
-
-    /**
-     * Cancels the timeout timer used in getCurrentPosition and addWatch methods.
-     */
-    public void cancelTimer() {
-        if (mTimer != null) {
-            mTimer.cancel();
-            mTimer.purge();
-            mTimer = null;
-        }
-    }
-
-    /**
-     * Creates timeout timer used in getCurrentPosition and addWatch methods.
-     * @param callbackContext
-     * @param timeout
-     */
-    private void scheduleTimer(CallbackContext callbackContext, int timeout) {
-        if (mTimer == null) {
-            mTimer = new Timer();
-        }
-        mTimer.schedule(new TimeoutTask(callbackContext, getListener(this)), timeout);
-    }
-    /**
-     * TimerTask which implements timeout logic when fetching position.
-     */
-    private class TimeoutTask extends TimerTask {
-        private CallbackContext mCallbackContext = null;
-        private IndoorLocationListener mListener = null;
-
-        public TimeoutTask(CallbackContext callbackContext, IndoorLocationListener listener) {
-            mCallbackContext = callbackContext;
-            mListener = listener;
-        }
-        @Override
-        public void run() {
-            PluginResult pluginResult;
-            JSONObject errorObject;
-            for (CallbackContext callbackContext : mListener.getCallbacks()) {
-                if (mCallbackContext == callbackContext) {
-                    callbackContext.error(PositionError.getErrorObject(PositionError.TIMEOUT));
-                    mListener.getCallbacks().remove(callbackContext);
-                    break;
-                }
-            }
-            Set<String> keys = mListener.getWatches().keySet();
-            for(String key: keys) {
-                if (mCallbackContext == mListener.getWatches().get(key)) {
-                    mListener.getWatches().get(key).error(PositionError.getErrorObject(PositionError.TIMEOUT));
-                    mListener.getWatches().remove(key);
-                }
-            }
-            if (mListener.size() == 0) {
-                stopPositioning();
-            }
-        }
-    }
-
 }
