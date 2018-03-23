@@ -241,7 +241,6 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
         locationData = getLocationJSONFromIALocation(iaLocation);
         lastKnownLocation = iaLocation;
         sendResult(locationData);
-        owner.cancelTimer();
     }
 
     /**
