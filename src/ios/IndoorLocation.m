@@ -569,10 +569,9 @@
     [self _stopLocation];
 }
 
-- (void)fetchFloorplan:(CDVInvokedUrlCommand *)command{
-    self.floorPlanCallbackID = command.callbackId;
-    NSString *floorplanid = [command argumentAtIndex:0];
-    [self.IAlocationInfo fetchFloorplanWithId:floorplanid];
+- (void)fetchFloorplan:(CDVInvokedUrlCommand *)command
+{
+    [self.IAlocationInfo fetchFloorplanWithId:[command argumentAtIndex:0] callbackId: command.callbackId];
 }
 
 // CoordinateToPoint Method
@@ -911,9 +910,10 @@
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
 
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan
+- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId
 {
-    if (self.floorPlanCallbackID != nil) {
+    if (callbackId != nil) {
+
         NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:17];
 
         NSNumber *timestamp = [NSNumber numberWithDouble:([[NSDate date] timeIntervalSince1970] * 1000)];
@@ -939,7 +939,7 @@
         [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topRight"];
 
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-        [self.commandDelegate sendPluginResult:result callbackId:self.floorPlanCallbackID];
+        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
 }
 

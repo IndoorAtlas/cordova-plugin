@@ -233,7 +233,7 @@
  * These methods are just wrappers around server requests.
  * You will need api key and secret to fetch resources.
  */
-- (void)fetchFloorplanWithId:(NSString *)floorplanId
+- (void)fetchFloorplanWithId:(NSString *)floorplanId callbackId:(NSString *)callbackId
 {
     __weak IndoorAtlasLocationService *weakSelf = self;
     [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
@@ -246,8 +246,8 @@
         }
 
         NSLog(@"fetched floorplan with id: %@", floorplanId);
-        if ([weakSelf.delegate respondsToSelector:@selector(location:withFloorPlan:)]) {
-            [weakSelf.delegate  location:weakSelf withFloorPlan:floorplan];
+        if ([weakSelf.delegate respondsToSelector:@selector(location:withFloorPlan: callbackId:)]) {
+            [weakSelf.delegate  location:weakSelf withFloorPlan:floorplan callbackId:callbackId];
         }
     }];
 }
