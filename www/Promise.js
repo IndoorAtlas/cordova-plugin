@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	(global.Promise = factory());
+	(global.IAPromise = factory());
 }(this, (function () { 'use strict';
 
 // Store setTimeout reference so promise-polyfill will be unaffected by
@@ -26,7 +26,7 @@ function handle(self, deferred) {
     return;
   }
   self._handled = true;
-  Promise._immediateFn(function() {
+  IAPromise._immediateFn(function() {
     var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
     if (cb === null) {
       (self._state === 1 ? resolve : reject)(deferred.promise, self._value);
@@ -53,7 +53,7 @@ function resolve(self, newValue) {
       (typeof newValue === 'object' || typeof newValue === 'function')
     ) {
       var then = newValue.then;
-      if (newValue instanceof Promise) {
+      if (newValue instanceof IAPromise) {
         self._state = 3;
         self._value = newValue;
         finale(self);
@@ -79,9 +79,9 @@ function reject(self, newValue) {
 
 function finale(self) {
   if (self._state === 2 && self._deferreds.length === 0) {
-    Promise._immediateFn(function() {
+    IAPromise._immediateFn(function() {
       if (!self._handled) {
-        Promise._unhandledRejectionFn(self._value);
+        IAPromise._unhandledRejectionFn(self._value);
       }
     });
   }
@@ -126,9 +126,9 @@ function doResolve(fn, self) {
   }
 }
 
-function Promise(fn) {
-  if (!(this instanceof Promise))
-    throw new TypeError('Promises must be constructed via new');
+function IAPromise(fn) {
+  if (!(this instanceof IAPromise))
+    throw new TypeError('IAPromises must be constructed via new');
   if (typeof fn !== 'function') throw new TypeError('not a function');
   this._state = 0;
   this._handled = false;
@@ -138,7 +138,7 @@ function Promise(fn) {
   doResolve(fn, this);
 }
 
-var _proto = Promise.prototype;
+var _proto = IAPromise.prototype;
 _proto.catch = function(onRejected) {
   return this.then(null, onRejected);
 };
@@ -150,10 +150,10 @@ _proto.then = function(onFulfilled, onRejected) {
   return prom;
 };
 
-Promise.all = function(arr) {
-  return new Promise(function(resolve, reject) {
+IAPromise.all = function(arr) {
+  return new IAPromise(function(resolve, reject) {
     if (!arr || typeof arr.length === 'undefined')
-      throw new TypeError('Promise.all accepts an array');
+      throw new TypeError('IAPromise.all accepts an array');
     var args = Array.prototype.slice.call(arr);
     if (args.length === 0) return resolve([]);
     var remaining = args.length;
@@ -188,24 +188,24 @@ Promise.all = function(arr) {
   });
 };
 
-Promise.resolve = function(value) {
-  if (value && typeof value === 'object' && value.constructor === Promise) {
+IAPromise.resolve = function(value) {
+  if (value && typeof value === 'object' && value.constructor === IAPromise) {
     return value;
   }
 
-  return new Promise(function(resolve) {
+  return new IAPromise(function(resolve) {
     resolve(value);
   });
 };
 
-Promise.reject = function(value) {
-  return new Promise(function(resolve, reject) {
+IAPromise.reject = function(value) {
+  return new IAPromise(function(resolve, reject) {
     reject(value);
   });
 };
 
-Promise.race = function(values) {
-  return new Promise(function(resolve, reject) {
+IAPromise.race = function(values) {
+  return new IAPromise(function(resolve, reject) {
     for (var i = 0, len = values.length; i < len; i++) {
       values[i].then(resolve, reject);
     }
@@ -213,7 +213,7 @@ Promise.race = function(values) {
 };
 
 // Use polyfill for setImmediate for performance gains
-Promise._immediateFn =
+IAPromise._immediateFn =
   (typeof setImmediate === 'function' &&
     function(fn) {
       setImmediate(fn);
@@ -222,12 +222,12 @@ Promise._immediateFn =
     setTimeoutFunc(fn, 0);
   };
 
-Promise._unhandledRejectionFn = function _unhandledRejectionFn(err) {
+IAPromise._unhandledRejectionFn = function _unhandledRejectionFn(err) {
   if (typeof console !== 'undefined' && console) {
-    console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
+    console.warn('Possible Unhandled IAPromise Rejection:', err); // eslint-disable-line no-console
   }
 };
 
-return Promise;
+return IAPromise;
 
 })));

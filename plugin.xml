@@ -31,8 +31,8 @@
   <js-module src="www/FloorPlan.js" name="FloorPlan">
     <clobbers target="FloorPlan"/>
   </js-module>
-  <js-module src="www/Promise.js" name="Promise">
-    <clobbers target="Promise"/>
+  <js-module src="www/Promise.js" name="IAPromise">
+    <clobbers target="IAPromise"/>
   </js-module>
   <js-module src="www/RoutingLeg.js" name="RoutingLeg">
     <clobbers target="RoutingLeg"/>
