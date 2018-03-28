@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="1.8.1">
+        version="1.8.2">
 
   <name>IndoorAtlas</name>
   <description>IndoorAtlas Cordova Plugin.</description>
@@ -31,8 +31,8 @@
   <js-module src="www/FloorPlan.js" name="FloorPlan">
     <clobbers target="FloorPlan"/>
   </js-module>
-  <js-module src="www/Promise.js" name="Promise">
-    <clobbers target="Promise"/>
+  <js-module src="www/Promise.js" name="IAPromise">
+    <clobbers target="IAPromise"/>
   </js-module>
   <js-module src="www/RoutingLeg.js" name="RoutingLeg">
     <clobbers target="RoutingLeg"/>

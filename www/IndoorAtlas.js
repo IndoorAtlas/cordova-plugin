@@ -472,7 +472,7 @@ var IndoorAtlas = {
    * Initialize graph with the given graph JSON
    */
   buildWayfinder: function(graphJson) {
-    return new Promise(function(resolve, reject) {
+    return new IAPromise(function(resolve, reject) {
       var success = function(result) {
         resolve(new Wayfinder(result.wayfinderId));
       };
@@ -508,7 +508,7 @@ var Wayfinder = function(wayfinderId) {
    * Get route between the given location and destination
    */
   this.getRoute = function() {
-    return new Promise(function(resolve, reject) {
+    return new IAPromise(function(resolve, reject) {
       var success = function(result) {
 
         var arrayOfRoutes = result.route.map(function(route) {
