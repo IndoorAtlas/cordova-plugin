@@ -645,22 +645,6 @@ public class IALocationPlugin extends CordovaPlugin{
     }
 
     /**
-     * Validates parameters passed by user before calling IALocationManager.setLocation
-     * @param args
-     * @return
-     * @throws JSONException
-     */
-    private boolean validatePositionArguments(JSONArray args) throws JSONException {
-        if (!args.getString(0).trim().equalsIgnoreCase("")) {
-            return true;
-        }
-        if (args.getJSONArray(1).length() == 2){
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Set explicit position of IALocationManager using either a region or geo-coordinates
      * @param args
      * @param callbackContext
@@ -668,36 +652,43 @@ public class IALocationPlugin extends CordovaPlugin{
      */
     private void setPosition(final JSONArray args,final CallbackContext callbackContext) throws Exception {
         final IALocation.Builder builder;
-        if (mLocationManager != null){
-            if (validatePositionArguments(args)) {
-                builder = new IALocation.Builder();
-                if (!args.getString(0).trim().equalsIgnoreCase("")) {
-                    builder.withRegion(IARegion.floorPlan(args.getString(0).trim()));
-                }
-                if (args.getJSONArray(1).length() == 2) {
-                    builder.withLatitude(args.getJSONArray(1).getDouble(0));
-                    builder.withLongitude(args.getJSONArray(1).getDouble(1));
-                }
-                cordova.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        IALocation iaLocation;
-                        iaLocation = builder.build();
-                        mLocationManager.setLocation(iaLocation);
-                        JSONObject successObject = new JSONObject();
-                        try {
-                            successObject.put("message","Position set");
-                        } catch (JSONException ex) {
-                            Log.e(TAG, ex.toString());
-                            throw new IllegalStateException(ex.getMessage());
-                        }
-                        callbackContext.success(successObject);
-                    }
-                });
+        if (mLocationManager != null) {
+          builder = new IALocation.Builder();
+          String region = args.getString(0).trim();
+          JSONArray location = args.getJSONArray(1);
+          String floorPlanId = args.getString(2).trim();
+          String venueId = args.getString(3).trim();
+
+          if (!venueId.equalsIgnoreCase("")) {
+            builder.withRegion(IARegion.venue(venueId));
+          } else if (!floorPlanId.equalsIgnoreCase("")) {
+            builder.withRegion(IARegion.floorPlan(floorPlanId));
+          } else if (!region.equalsIgnoreCase("")) {
+            builder.withRegion(IARegion.floorPlan(region));
+          } else if (location.length() == 2) {
+            builder.withLatitude(location.getDouble(0));
+            builder.withLongitude(location.getDouble(1));
+          }
+
+          cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              IALocation iaLocation;
+              iaLocation = builder.build();
+              mLocationManager.setLocation(iaLocation);
+              JSONObject successObject = new JSONObject();
+              try {
+                successObject.put("message","Position set");
+              } catch (JSONException ex) {
+                Log.e(TAG, ex.toString());
+                throw new IllegalStateException(ex.getMessage());
+              }
+              callbackContext.success(successObject);
             }
+          });
         }
         else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
+          callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
 
