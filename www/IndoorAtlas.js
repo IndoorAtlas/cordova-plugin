@@ -21,6 +21,10 @@ function parseSetPositionParameters(options) {
     venueId: ''
   };
   if (options) {
+    if (options.venueId !== undefined) {
+      opt.venueId = options.venueId;
+    }
+
     if (options.regionId !== undefined) {
       opt.regionId = options.regionId;
     }
@@ -33,9 +37,6 @@ function parseSetPositionParameters(options) {
       opt.floorPlanId = options.floorPlanId;
     }
 
-    if (options.venueId !== undefined) {
-      opt.venueId = options.venueId;
-    }
   }
   return opt;
 }
@@ -359,18 +360,22 @@ var IndoorAtlas = {
   },
 
   setPosition: function(successCallback, errorCallback, options) {
-    options = parseSetPositionParameters(options);
-    var win = function(p) {
-      successCallback(p);
+    if (Object.keys(options).length == 1) {
+      options = parseSetPositionParameters(options);
+      var win = function(p) {
+        successCallback(p);
+      };
+      var fail = function(e) {
+        var err = new PositionError(e.code, e.message);
+        if (errorCallback) {
+          errorCallback(err);
+        }
+      };
+      exec(win, fail, "IndoorAtlas", "setPosition",
+      [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
+    } else {
+      console.log("IndoorAtlas: SetPosition: Only one value is allowed");
     };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "setPosition",
-    [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
   },
 
   fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
