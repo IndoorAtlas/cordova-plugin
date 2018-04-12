@@ -56,28 +56,23 @@
 #pragma mark IALocationManager delegate methods
 
 /**
- *  Start IndoorAtlas service
- *
- *  @param floorid
+ *  Start positioning
  */
-- (void)startPositioning:(NSString *)floorid
+- (void)startPositioning
 {
     serviceStoped = NO;
-    self.graphicID = floorid;
-    [self setCriticalLog:[NSString stringWithFormat:@"Started service for floorid %@", self.graphicID]];
-    [self.manager stopUpdatingLocation];
-    if (self.graphicID != nil) {
-        IALocation *location = [IALocation locationWithFloorPlanId:self.graphicID];
-        self.manager.location = location;
-    }
     [self.manager startUpdatingLocation];
+    [self setCriticalLog:[NSString stringWithFormat:@"IndoorAtlas positioning started"]];
 }
 
+/**
+ *  Stop positioning
+ */
 - (void)stopPositioning
 {
     serviceStoped = YES;
     [self.manager stopUpdatingLocation];
-    [self setCriticalLog:@"IndoorAtlas service stopped"];
+    [self setCriticalLog:@"IndoorAtlas positioning stopped"];
 }
 
 #pragma mark IndoorAtlasPositionerDelegate methods
@@ -294,20 +289,37 @@
 {
     return !serviceStoped;
 }
-- (void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation
+
+/**
+ *  Set explicit floor plan
+ */
+- (void)setFloorPlan:(NSString *)floorPlanId
 {
-    BOOL isServiceResume = [self isServiceActive];
-    [self.manager stopUpdatingLocation];
-    if (floorPlan != nil) {
-        IALocation *location = [IALocation locationWithFloorPlanId:floorPlan];
+    if (floorPlanId != nil) {
+        IALocation *location = [IALocation locationWithFloorPlanId:floorPlanId];
         self.manager.location = location;
     }
-    if (newLocation != nil) {
-        IALocation *location = [IALocation locationWithCLLocation:newLocation];
+}
+
+/**
+ *  Set explicit location
+ */
+- (void)setLocation:(CLLocation *)location
+{
+    if (location != nil) {
+        IALocation *location = [IALocation locationWithCLLocation:location];
         self.manager.location = location;
     }
-    if (isServiceResume) {
-        [self.manager startUpdatingLocation];
+}
+
+/**
+ *  Set explicit venue
+ */
+- (void)setVenue:(NSString *)venueId
+{
+    if (venueId != nil) {
+        IALocation *location = [IALocation locationWithVenueId:venueId andFloor:nil];
+        self.manager.location = location;
     }
 }
 @end

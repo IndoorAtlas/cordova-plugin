@@ -42,7 +42,6 @@
 }
 
 @property (nonatomic, strong) IndoorAtlasLocationService *IAlocationInfo;
-@property (nonatomic, strong) NSString *watchingFloorPlanID;
 @property (nonatomic, strong) NSString *floorPlanCallbackID;
 @property (nonatomic, strong) NSString *coordinateToPointCallbackID;
 @property (nonatomic, strong) NSString *pointToCoordinateCallbackID;
@@ -145,15 +144,8 @@
     }
 #endif
 
-    // Tell the location manager to start notifying us of location updates. We
-    // first stop, and then start the updating to ensure we get at least one
-    // update, even if our location did not change.
-    //[self.locationManager stopUpdatingLocation];
-    //[self.locationManager startUpdatingLocation];
     __locationStarted = YES;
-    [self.locationManager stopUpdatingLocation];
-    [self.IAlocationInfo startPositioning:self.watchingFloorPlanID];
-
+    [self.IAlocationInfo startPositioning];
 }
 
 - (void)_stopLocation
@@ -372,14 +364,26 @@
     else {
         NSString *region = [command.arguments objectAtIndex:0];
         NSArray *location = [command.arguments objectAtIndex:1];
+        NSString *floorPlanId = [command.arguments objectAtIndex:2];
+        NSString *venueId = [command.arguments objectAtIndex:3];
+
         CLLocation *newLocation = nil;
         if([location count] == 2) {
             newLocation = [[CLLocation alloc] initWithLatitude:[location[0] doubleValue] longitude:[location[1] doubleValue]];
         }
 
-        [self.IAlocationInfo setFloorPlan:[region isEqualToString:@""]?nil:region orLocation:newLocation];
-        if(region != nil) {
-            self.watchingFloorPlanID = region;
+        if (venueId != nil && ![venueId isEqualToString:@""]) {
+            [self.IAlocationInfo setVenue: venueId];
+
+        } else if (floorPlanId != nil && ![floorPlanId isEqualToString:@""]) {
+            [self.IAlocationInfo setFloorPlan:floorPlanId];
+
+        // This is here just to support old API
+        } else if (region != nil && ![region isEqualToString:@""]) {
+            [self.IAlocationInfo setFloorPlan:region];
+
+        } else if (location != nil) {
+            [self.IAlocationInfo setLocation: newLocation];
         }
 
         CDVPluginResult *pluginResult;

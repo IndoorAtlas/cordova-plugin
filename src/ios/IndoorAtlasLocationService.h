@@ -101,14 +101,13 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 - (id)init:(NSString *)apikey hash:(NSString *)apisecret;
 /**
- *  Starting Service
+ *  Start positioning
  *
- *  @param floorid
  */
-- (void)startPositioning:(NSString *)floorid;
+- (void)startPositioning;
 
 /**
- *  Stops IndoorAtlas Service
+ *  Stop positioning
  */
 - (void)stopPositioning;
 
@@ -118,13 +117,22 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @return YES/NO
  */
 -(BOOL)isServiceActive;
+
 /**
- *  setLocation support
- *
- *  @param floorPlan   Reference FloorPlan
- *  @param newLocation Reference Location
+ *  Set explicit floor plan
  */
-- (void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation;
+- (void)setFloorPlan:(NSString *)floorPlanId;
+
+/**
+ *  Set explicit location
+ */
+- (void)setLocation:(CLLocation *)location;
+
+/**
+ *  Set explicit venue
+ */
+- (void)setVenue:(NSString *)venueId;
+
 /**
  *  Fetch Floorplan With Id
  *

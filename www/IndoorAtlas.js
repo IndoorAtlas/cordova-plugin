@@ -16,14 +16,25 @@ function getDeviceType() {
 function parseSetPositionParameters(options) {
   var opt = {
     regionId: '',
-    coordinates: []
+    coordinates: [],
+    floorPlanId: '',
+    venueId: ''
   };
   if (options) {
     if (options.regionId !== undefined) {
       opt.regionId = options.regionId;
     }
+
     if (options.coordinates !== undefined) {
       opt.coordinates = options.coordinates;
+    }
+
+    if (options.floorPlanId !== undefined) {
+      opt.floorPlanId = options.floorPlanId;
+    }
+
+    if (options.venueId !== undefined) {
+      opt.venueId = options.venueId;
     }
   }
   return opt;
@@ -359,7 +370,7 @@ var IndoorAtlas = {
       }
     };
     exec(win, fail, "IndoorAtlas", "setPosition",
-    [options.regionId, options.coordinates]);
+    [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
   },
 
   fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
