@@ -297,8 +297,7 @@
 - (void)setFloorPlan:(NSString *)floorPlanId
 {
     if (floorPlanId != nil) {
-        IALocation *location = [IALocation locationWithFloorPlanId:floorPlanId];
-        self.manager.location = location;
+        self.manager.location = [IALocation locationWithFloorPlanId:floorPlanId];
     }
 }
 
@@ -308,8 +307,7 @@
 - (void)setLocation:(CLLocation *)location
 {
     if (location != nil) {
-        IALocation *location = [IALocation locationWithCLLocation:location];
-        self.manager.location = location;
+        self.manager.location = [IALocation locationWithCLLocation:location];
     }
 }
 
@@ -319,8 +317,7 @@
 - (void)setVenue:(NSString *)venueId
 {
     if (venueId != nil) {
-        IALocation *location = [IALocation locationWithVenueId:venueId andFloor:nil];
-        self.manager.location = location;
+        self.manager.location = [IALocation locationWithVenueId:venueId andFloor:nil];
     }
 }
 @end
