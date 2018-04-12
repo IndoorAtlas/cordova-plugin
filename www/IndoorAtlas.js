@@ -16,15 +16,27 @@ function getDeviceType() {
 function parseSetPositionParameters(options) {
   var opt = {
     regionId: '',
-    coordinates: []
+    coordinates: [],
+    floorPlanId: '',
+    venueId: ''
   };
   if (options) {
+    if (options.venueId !== undefined) {
+      opt.venueId = options.venueId;
+    }
+
     if (options.regionId !== undefined) {
       opt.regionId = options.regionId;
     }
+
     if (options.coordinates !== undefined) {
       opt.coordinates = options.coordinates;
     }
+
+    if (options.floorPlanId !== undefined) {
+      opt.floorPlanId = options.floorPlanId;
+    }
+
   }
   return opt;
 }
@@ -348,18 +360,27 @@ var IndoorAtlas = {
   },
 
   setPosition: function(successCallback, errorCallback, options) {
+    var keys = Object.keys(options);
     options = parseSetPositionParameters(options);
+
     var win = function(p) {
       successCallback(p);
     };
+
     var fail = function(e) {
       var err = new PositionError(e.code, e.message);
       if (errorCallback) {
         errorCallback(err);
       }
     };
-    exec(win, fail, "IndoorAtlas", "setPosition",
-    [options.regionId, options.coordinates]);
+
+    if ((options.coordinates.length == 2 && keys.length == 2) || keys.length == 1) {
+
+      exec(win, fail, "IndoorAtlas", "setPosition",
+      [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
+    } else {
+      console.log("IndoorAtlas: SetPosition: Check values");
+    };
   },
 
   fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){

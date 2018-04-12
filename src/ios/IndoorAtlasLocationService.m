@@ -10,12 +10,11 @@
 @property (nonatomic, strong) IAResourceManager *resourceManager;
 @property (nonatomic, retain) NSString *apikey;
 @property (nonatomic, retain) NSString *apiSecret;
-@property (nonatomic, retain) NSString *graphicID;
 @property (nonatomic, strong) IAFloorPlan *previousFloorplan;
 @end
 
 @implementation IndoorAtlasLocationService {
-    BOOL serviceStoped;
+    BOOL serviceStopped;
 }
 
 - (id)init
@@ -45,7 +44,7 @@
         [self.manager setApiKey:self.apikey andSecret:self.apiSecret];
 
         self.manager.delegate = self;
-        serviceStoped = YES;
+        serviceStopped = YES;
 
         // Create floor plan manager
         self.resourceManager = [IAResourceManager resourceManagerWithLocationManager:self.manager];
@@ -56,28 +55,23 @@
 #pragma mark IALocationManager delegate methods
 
 /**
- *  Start IndoorAtlas service
- *
- *  @param floorid
+ *  Start positioning
  */
-- (void)startPositioning:(NSString *)floorid
+- (void)startPositioning
 {
-    serviceStoped = NO;
-    self.graphicID = floorid;
-    [self setCriticalLog:[NSString stringWithFormat:@"Started service for floorid %@", self.graphicID]];
-    [self.manager stopUpdatingLocation];
-    if (self.graphicID != nil) {
-        IALocation *location = [IALocation locationWithFloorPlanId:self.graphicID];
-        self.manager.location = location;
-    }
+    serviceStopped = NO;
     [self.manager startUpdatingLocation];
+    [self setCriticalLog:[NSString stringWithFormat:@"IndoorAtlas positioning started"]];
 }
 
+/**
+ *  Stop positioning
+ */
 - (void)stopPositioning
 {
-    serviceStoped = YES;
+    serviceStopped = YES;
     [self.manager stopUpdatingLocation];
-    [self setCriticalLog:@"IndoorAtlas service stopped"];
+    [self setCriticalLog:@"IndoorAtlas positioning stopped"];
 }
 
 #pragma mark IndoorAtlasPositionerDelegate methods
@@ -152,6 +146,7 @@
     }
 }
 
+// DEPRECATED
 // Gets coordinate to a given point
 - (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
 {
@@ -192,6 +187,7 @@
     };
 }
 
+// DEPRECATED
 // Gets point to a given coordinate
 - (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point
 {
@@ -292,22 +288,36 @@
  */
 - (BOOL)isServiceActive
 {
-    return !serviceStoped;
+    return !serviceStopped;
 }
-- (void)setFloorPlan:(NSString *)floorPlan orLocation:(CLLocation *)newLocation
+
+/**
+ *  Set explicit floor plan
+ */
+- (void)setFloorPlan:(NSString *)floorPlanId
 {
-    BOOL isServiceResume = [self isServiceActive];
-    [self.manager stopUpdatingLocation];
-    if (floorPlan != nil) {
-        IALocation *location = [IALocation locationWithFloorPlanId:floorPlan];
-        self.manager.location = location;
+    if (floorPlanId != nil) {
+        self.manager.location = [IALocation locationWithFloorPlanId:floorPlanId];
     }
-    if (newLocation != nil) {
-        IALocation *location = [IALocation locationWithCLLocation:newLocation];
-        self.manager.location = location;
+}
+
+/**
+ *  Set explicit location
+ */
+- (void)setLocation:(CLLocation *)location
+{
+    if (location != nil) {
+        self.manager.location = [IALocation locationWithCLLocation:location];
     }
-    if (isServiceResume) {
-        [self.manager startUpdatingLocation];
+}
+
+/**
+ *  Set explicit venue
+ */
+- (void)setVenue:(NSString *)venueId
+{
+    if (venueId != nil) {
+        self.manager.location = [IALocation locationWithVenueId:venueId andFloor:nil];
     }
 }
 @end
