@@ -10,12 +10,11 @@
 @property (nonatomic, strong) IAResourceManager *resourceManager;
 @property (nonatomic, retain) NSString *apikey;
 @property (nonatomic, retain) NSString *apiSecret;
-@property (nonatomic, retain) NSString *graphicID;
 @property (nonatomic, strong) IAFloorPlan *previousFloorplan;
 @end
 
 @implementation IndoorAtlasLocationService {
-    BOOL serviceStoped;
+    BOOL serviceStopped;
 }
 
 - (id)init
@@ -45,7 +44,7 @@
         [self.manager setApiKey:self.apikey andSecret:self.apiSecret];
 
         self.manager.delegate = self;
-        serviceStoped = YES;
+        serviceStopped = YES;
 
         // Create floor plan manager
         self.resourceManager = [IAResourceManager resourceManagerWithLocationManager:self.manager];
@@ -60,7 +59,7 @@
  */
 - (void)startPositioning
 {
-    serviceStoped = NO;
+    serviceStopped = NO;
     [self.manager startUpdatingLocation];
     [self setCriticalLog:[NSString stringWithFormat:@"IndoorAtlas positioning started"]];
 }
@@ -70,7 +69,7 @@
  */
 - (void)stopPositioning
 {
-    serviceStoped = YES;
+    serviceStopped = YES;
     [self.manager stopUpdatingLocation];
     [self setCriticalLog:@"IndoorAtlas positioning stopped"];
 }
@@ -147,6 +146,7 @@
     }
 }
 
+// DEPRECATED
 // Gets coordinate to a given point
 - (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
 {
@@ -187,6 +187,7 @@
     };
 }
 
+// DEPRECATED
 // Gets point to a given coordinate
 - (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point
 {
@@ -287,7 +288,7 @@
  */
 - (BOOL)isServiceActive
 {
-    return !serviceStoped;
+    return !serviceStopped;
 }
 
 /**

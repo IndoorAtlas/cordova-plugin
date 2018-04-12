@@ -578,6 +578,7 @@
     [self.IAlocationInfo fetchFloorplanWithId:[command argumentAtIndex:0] callbackId: command.callbackId];
 }
 
+// DEPRECATED
 // CoordinateToPoint Method
 // Gets the arguments from the function call that is done in the Javascript side, then calls IALocationService's getCoordinateToPoint function
 - (void)coordinateToPoint:(CDVInvokedUrlCommand *)command
@@ -596,6 +597,7 @@
     [self.IAlocationInfo getCoordinateToPoint:floorplanid andCoordinates:coords];
 }
 
+// DEPRECATED
 // Prepares the result for Cordova plugin and Javascript side. Point is stored in dictionary which is then passed to Javascript side with the Cordova functions
 - (void)sendCoordinateToPoint:(CGPoint) point
 {
@@ -610,6 +612,7 @@
     [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
 }
 
+// DEPRECATED
 // PointToCoordinate Method
 // Gets the arguments from the function call that is done in the Javascript side, then calls IALocationService's getPointToCoordinate function
 - (void)pointToCoordinate:(CDVInvokedUrlCommand *)command
@@ -629,6 +632,7 @@
     [self.IAlocationInfo getPointToCoordinate:floorplanid andPoint:point];
 }
 
+// DEPRECATED
 // Prepares the result for Cordova plugin and Javascript side. Point is stored in dictionary which is then passed to Javascript side with the Cordova functions
 - (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords
 {
