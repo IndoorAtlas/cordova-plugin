@@ -372,17 +372,18 @@
             newLocation = [[CLLocation alloc] initWithLatitude:[location[0] doubleValue] longitude:[location[1] doubleValue]];
         }
 
-        if (venueId != nil && ![venueId isEqualToString:@""]) {
-            [self.IAlocationInfo setVenue: venueId];
-
-        } else if (floorPlanId != nil && ![floorPlanId isEqualToString:@""]) {
+        if (floorPlanId != nil && ![floorPlanId isEqualToString:@""]) {
             [self.IAlocationInfo setFloorPlan:floorPlanId];
 
-        // This is here just to support old API
         } else if (region != nil && ![region isEqualToString:@""]) {
             [self.IAlocationInfo setFloorPlan:region];
 
-        } else if (location != nil) {
+        } else if (venueId != nil && ![venueId isEqualToString:@""]) {
+            [self.IAlocationInfo setVenue: venueId];
+
+        }
+
+        if (location != nil) {
             [self.IAlocationInfo setLocation: newLocation];
         }
 

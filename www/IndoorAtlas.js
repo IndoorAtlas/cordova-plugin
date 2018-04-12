@@ -360,21 +360,26 @@ var IndoorAtlas = {
   },
 
   setPosition: function(successCallback, errorCallback, options) {
-    if (Object.keys(options).length == 1) {
-      options = parseSetPositionParameters(options);
-      var win = function(p) {
-        successCallback(p);
-      };
-      var fail = function(e) {
-        var err = new PositionError(e.code, e.message);
-        if (errorCallback) {
-          errorCallback(err);
-        }
-      };
+    var keys = Object.keys(options);
+    options = parseSetPositionParameters(options);
+
+    var win = function(p) {
+      successCallback(p);
+    };
+
+    var fail = function(e) {
+      var err = new PositionError(e.code, e.message);
+      if (errorCallback) {
+        errorCallback(err);
+      }
+    };
+
+    if ((options.coordinates.length == 2 && keys.length == 2) || keys.length == 1) {
+
       exec(win, fail, "IndoorAtlas", "setPosition",
       [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
     } else {
-      console.log("IndoorAtlas: SetPosition: Only one value is allowed");
+      console.log("IndoorAtlas: SetPosition: Check values");
     };
   },
 

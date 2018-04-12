@@ -659,13 +659,15 @@ public class IALocationPlugin extends CordovaPlugin{
           String floorPlanId = args.getString(2).trim();
           String venueId = args.getString(3).trim();
 
-          if (!venueId.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.venue(venueId));
-          } else if (!floorPlanId.equalsIgnoreCase("")) {
+          if (!floorPlanId.equalsIgnoreCase("")) {
             builder.withRegion(IARegion.floorPlan(floorPlanId));
           } else if (!region.equalsIgnoreCase("")) {
             builder.withRegion(IARegion.floorPlan(region));
-          } else if (location.length() == 2) {
+          } else if (!venueId.equalsIgnoreCase("")) {
+            builder.withRegion(IARegion.venue(venueId));
+          }
+
+          if (location.length() == 2) {
             builder.withLatitude(location.getDouble(0));
             builder.withLongitude(location.getDouble(1));
           }
