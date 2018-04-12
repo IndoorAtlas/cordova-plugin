@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-indooratlas",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "Cordova plugin using IndoorAtlas SDK.",
   "cordova": {
     "id": "cordova-plugin-indooratlas",
