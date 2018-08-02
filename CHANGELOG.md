@@ -1,3 +1,7 @@
+Version 1.9.0 - August 2018
+------------------------------
+* IndoorAtlas SDK version 2.8
+
 Version 1.8.4 - April 2018
 ------------------------------
 * Add support for setting explicit venue ID
