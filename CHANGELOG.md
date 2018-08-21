@@ -1,3 +1,7 @@
+Version 1.10.0 - August 2018
+------------------------------
+* IndoorAtlas Wayfinding SDK version 2.8: directed edge support
+
 Version 1.9.0 - August 2018
 ------------------------------
 * IndoorAtlas SDK version 2.8
