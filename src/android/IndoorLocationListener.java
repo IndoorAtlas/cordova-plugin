@@ -7,12 +7,15 @@ import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IARegion;
+import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationListener;
+import com.indooratlas.android.sdk.IAWayfindingListener;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -21,7 +24,7 @@ import java.util.HashMap;
 /**
  * Handles events from IALocationListener and IARegion.Listener and relays them to Javascript callbacks.
  */
-public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener {
+public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener, IAWayfindingListener {
     private static final String TAG = "IndoorLocationListener";
 
     private static final int TRANSITION_TYPE_UNKNOWN = 0;
@@ -33,6 +36,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private CallbackContext attitudeUpdateCallbackContext;
     private CallbackContext headingUpdateCallbackContext;
     private CallbackContext statusUpdateCallbackContext;
+    private CallbackContext wayfindingUpdateCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -124,6 +128,10 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
       statusUpdateCallbackContext = callbackContext;
     }
 
+    public void requestWayfindingUpdates(CallbackContext callbackContext) {
+      wayfindingUpdateCallbackContext = callbackContext;
+    }
+
     /**
      * Returns the sum of the all callback collections
      * @return
@@ -156,6 +164,10 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
         if (size() == 0){
             owner.stopPositioning();
         }
+    }
+
+    public void removeWayfindingUpdates() {
+      wayfindingUpdateCallbackContext = null;
     }
 
     /**
@@ -228,6 +240,52 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             Log.e(TAG, ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
+    }
+
+    private JSONObject getRouteJSONFromIARoute(IARoute route) {
+      JSONObject obj = new JSONObject();
+      try {
+        JSONArray jsonArray = new JSONArray();
+        for (IARoute.Leg leg : route.getLegs()) {
+            jsonArray.put(jsonObjectFromRoutingLeg(leg));
+        }
+        obj.put("legs", jsonArray);
+      } catch(JSONException e) {
+          Log.e("IAWAYFINDER", "json error with route");
+      }
+      return obj;
+    }
+
+    /**
+     * Create JSON object from the given RoutingLeg object
+     */
+    private JSONObject jsonObjectFromRoutingLeg(IARoute.Leg routingLeg) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("begin", jsonObjectFromRoutingPoint(routingLeg.getBegin()));
+            obj.put("end", jsonObjectFromRoutingPoint(routingLeg.getEnd()));
+            obj.put("length", routingLeg.getLength());
+            obj.put("direction", routingLeg.getDirection());
+            obj.put("edgeIndex", routingLeg.getEdgeIndex());
+        } catch(JSONException e) {
+
+        }
+        return obj;
+    }
+
+    /**
+     * Create JSON object from RoutingPoint object
+     */
+    private JSONObject jsonObjectFromRoutingPoint(IARoute.Point routingPoint) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("latitude", routingPoint.getLatitude());
+            obj.put("longitude", routingPoint.getLongitude());
+            obj.put("floor", routingPoint.getFloor());
+        } catch(JSONException e) {
+
+        }
+        return obj;
     }
 
     /**
@@ -428,5 +486,15 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
               sendStatusResult(statusData);
               break;
         }
+    }
+
+    @Override
+    public void onWayfindingUpdate(IARoute route) {
+      if (wayfindingUpdateCallbackContext != null) {
+          PluginResult pluginResult;
+          pluginResult = new PluginResult(PluginResult.Status.OK, getRouteJSONFromIARoute(route));
+          pluginResult.setKeepCallback(true);
+          wayfindingUpdateCallbackContext.sendPluginResult(pluginResult);
+      }
     }
   }

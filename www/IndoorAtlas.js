@@ -1,6 +1,5 @@
 
-var argscheck = require('cordova/argscheck'),
-    utils = require('cordova/utils'),
+var utils = require('cordova/utils'),
     exec = require('cordova/exec')
 
 var timers = {};   // list of timers in use
@@ -383,6 +382,25 @@ var IndoorAtlas = {
     };
   },
 
+  requestWayfindingUpdates: function(destination, successCallback, errorCallback) {
+    var fail = function(e) {
+      var err = new PositionError(e.code, e.message);
+      if (errorCallback) {
+        errorCallback(err);
+      }
+    };
+
+    var win = function(route) {
+      successCallback(route);
+    };
+
+    exec(win, fail, "IndoorAtlas", "requestWayfindingUpdates", [destination.latitude, destination.longitude, destination.floor]);
+  },
+
+  removeWayfindingUpdates: function () {
+    exec(win, fail, "IndoorAtlas", "removeWayfindingUpdates", []);
+  },
+
   fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
     var win = function(p) {
       var floorplan = new FloorPlan(
@@ -487,66 +505,6 @@ var IndoorAtlas = {
       }
     };
     exec(win, fail, "IndoorAtlas", "getTraceId");
-  },
-
-  /**
-   * Initialize graph with the given graph JSON
-   */
-  buildWayfinder: function(graphJson) {
-    return new IAPromise(function(resolve, reject) {
-      var success = function(result) {
-        resolve(new Wayfinder(result.wayfinderId));
-      };
-      var error = function(e) { reject(e) };
-      exec(success, error, "IndoorAtlas", "buildWayfinder", [graphJson]);
-    });
-  }
-};
-
-/**
- * Wayfinder object
- */
-var Wayfinder = function(wayfinderId) {
-  var id = wayfinderId;
-  var location = null;
-  var destination = null;
-
-  /**
-   * Set destination of the current wayfinding instance
-   */
-  this.setDestination = function(lat, lon, floor) {
-    destination = { lat: lat, lon: lon, floor: floor };
-  }
-
-  /**
-   * Set location of the current wayfinding instance
-   */
-  this.setLocation = function(lat, lon, floor) {
-    location = { lat: lat, lon: lon, floor: floor };
-  }
-
-  /**
-   * Get route between the given location and destination
-   */
-  this.getRoute = function() {
-    return new IAPromise(function(resolve, reject) {
-      var success = function(result) {
-
-        var arrayOfRoutes = result.route.map(function(route) {
-          var begin = new RoutingPoint(route.begin.latitude, route.begin.longitude, route.begin.floor, route.begin.nodeIndex);
-          var end = new RoutingPoint(route.end.latitude, route.end.longitude, route.end.floor, route.end.nodeIndex);
-          var leg = new RoutingLeg(begin, route.direction, route.edgeIndex, end, route.length);
-          return leg;
-        });
-        resolve({ route: arrayOfRoutes });
-       };
-      var error = function(e) { reject(e) };
-      if (location == null || destination == null) {
-        resolve({ route: [] });
-      } else {
-        exec(success, error, "IndoorAtlas", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
-      }
-    });
   }
 };
 

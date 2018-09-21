@@ -7,6 +7,5 @@ repositories {
 
 dependencies {
     compile 'com.android.support:appcompat-v7:27.0.2'
-    compile 'com.indooratlas.android:indooratlas-android-sdk:2.8.2@aar'
-    compile 'com.indooratlas.android:indooratlas-android-wayfinding:2.8.0@aar'
+    compile 'com.indooratlas.android:indooratlas-android-sdk:2.9.0@aar'
 }

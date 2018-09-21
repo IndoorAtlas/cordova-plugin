@@ -1,4 +1,4 @@
-# IndoorAtlas Cordova Plugin 1.10 with IndoorAtlas SDK 2.8
+# IndoorAtlas Cordova Plugin 2.0 with IndoorAtlas SDK 2.9
 
 [IndoorAtlas](https://www.indooratlas.com/) provides a unique Platform-as-a-Service (PaaS) solution that runs a disruptive geomagnetic positioning in its full-stack hybrid technology for accurately pinpointing a location inside a building. The IndoorAtlas SDK enables app developers to use high-accuracy indoor positioning in venues that have been fingerprinted.
 

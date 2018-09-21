@@ -24,9 +24,7 @@ import com.indooratlas.android.sdk.resources.IAResultCallback;
 import com.indooratlas.android.sdk.resources.IATask;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
-import com.indooratlas.android.wayfinding.IARoutingLeg;
-import com.indooratlas.android.wayfinding.IARoutingPoint;
-import com.indooratlas.android.wayfinding.IAWayfinder;
+import com.indooratlas.android.sdk.IAWayfindingRequest;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -66,9 +64,6 @@ public class IALocationPlugin extends CordovaPlugin{
     private Timer mTimer;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
     private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
-
-    private IAWayfinder wayfinder;
-    private ArrayList<IAWayfinder> wayfinderInstances = new ArrayList<IAWayfinder>();
 
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
@@ -224,18 +219,13 @@ public class IALocationPlugin extends CordovaPlugin{
               addStatusChangedCallback(callbackContext);
             } else if ("removeStatusCallback".equals(action)) {
               removeStatusCallback();
-            } else if ("buildWayfinder".equals(action)) {
-                String graphJson = args.getString(0);
-                buildWayfinder(graphJson, callbackContext);
-            } else if ("computeRoute".equals(action)) {
-                int wayfinderId = args.getInt(0);
-                Double lat0 = args.getDouble(1);
-                Double lon0 = args.getDouble(2);
-                int floor0 = args.getInt(3);
-                Double lat1 = args.getDouble(4);
-                Double lon1 = args.getDouble(5);
-                int floor1 = args.getInt(6);
-                computeRoute(wayfinderId, lat0, lon0, floor0, lat1, lon1, floor1, callbackContext);
+            } else if ("requestWayfindingUpdates".equals(action)) {
+                Double lat = args.getDouble(0);
+                Double lon = args.getDouble(1);
+                int floor = args.getInt(2);
+                requestWayfindingUpdates(lat, lon, floor, callbackContext);
+            } else if ("removeWayfindingUpdates".equals(action)) {
+                removeWayfindingUpdates();
             }
         }
         catch(Exception ex) {
@@ -522,86 +512,35 @@ public class IALocationPlugin extends CordovaPlugin{
      }
 
     /**
-     * Initialize the graph with the given graph JSON
-     */
-    private void buildWayfinder(final String graphJson, CallbackContext callbackContext) {
-        int wayfinderId = wayfinderInstances.size();
-
-        cordova.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = cordova.getActivity().getApplicationContext();
-                wayfinder = IAWayfinder.create(context, graphJson);
-                wayfinderInstances.add(wayfinder);
-            }
-        });
-
-        JSONObject result = new JSONObject();
-        try {
-            result.put("wayfinderId", wayfinderId);
-            callbackContext.success(result);
-
-        } catch (JSONException e) {
-            Log.e("IAWAYFINDER", "wayfinderId was not set");
-        };
-    }
-
-    /**
      * Compute route for the given values;
      * 1) Set location of the wayfinder instance
      * 2) Set destination of the wayfinder instance
      * 3) Get route between the given location and destination
      */
-    private void computeRoute(int wayfinderId, Double lat0, Double lon0, int floor0, Double lat1, Double lon1, int floor1, CallbackContext callbackContext) {
-        wayfinder = wayfinderInstances.get(wayfinderId);
-        wayfinder.setLocation(lat0, lon0, floor0);
-        wayfinder.setDestination(lat1, lon1, floor1);
+    private void requestWayfindingUpdates(Double lat, Double lon, int floor, CallbackContext callbackContext) {
+        getListener(this).requestWayfindingUpdates(callbackContext);
+        final IAWayfindingRequest wayfindingRequest = new IAWayfindingRequest.Builder()
+            .withLatitude(lat)
+            .withLongitude(lon)
+            .withFloor(floor)
+            .build();
 
-        IARoutingLeg[] legs = wayfinder.getRoute();
-        JSONArray jsonArray = new JSONArray();
-        for (int i = 0; i < legs.length; i++) {
-            jsonArray.put(jsonObjectFromRoutingLeg(legs[i]));
-        }
-        JSONObject result = new JSONObject();
-
-        try {
-            result.put("route", jsonArray);
-            callbackContext.success(result);
-        } catch(JSONException e) {
-            Log.e("IAWAYFINDER", "json error with route");
-        }
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.requestWayfindingUpdates(wayfindingRequest, getListener(IALocationPlugin.this));
+            }
+        });
     }
 
-    /**
-     * Create JSON object from the given RoutingLeg object
-     */
-    private JSONObject jsonObjectFromRoutingLeg(IARoutingLeg routingLeg) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("begin", jsonObjectFromRoutingPoint(routingLeg.getBegin()));
-            obj.put("end", jsonObjectFromRoutingPoint(routingLeg.getEnd()));
-            obj.put("length", routingLeg.getLength());
-            obj.put("direction", routingLeg.getDirection());
-            obj.put("edgeIndex", routingLeg.getEdgeIndex());
-        } catch(JSONException e) {
-
-        }
-        return obj;
-    }
-
-    /**
-     * Create JSON object from RoutingPoint object
-     */
-    private JSONObject jsonObjectFromRoutingPoint(IARoutingPoint routingPoint) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("latitude", routingPoint.getLatitude());
-            obj.put("longitude", routingPoint.getLongitude());
-            obj.put("floor", routingPoint.getFloor());
-        } catch(JSONException e) {
-
-        }
-        return obj;
+    private void removeWayfindingUpdates() {
+        getListener(this).removeWayfindingUpdates();
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.removeWayfindingUpdates();
+            }
+        });
     }
 
     /**
