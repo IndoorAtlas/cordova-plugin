@@ -2,55 +2,36 @@ package com.ialocation.plugin;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Matrix;
-import android.graphics.Point;
-import android.graphics.PointF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 import android.content.Context;
 
 import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IALocationRequest;
 import com.indooratlas.android.sdk.IARegion;
-import com.indooratlas.android.sdk.resources.IAFloorPlan;
-import com.indooratlas.android.sdk.resources.IALatLng;
-import com.indooratlas.android.sdk.resources.IAResourceManager;
-import com.indooratlas.android.sdk.resources.IAResult;
-import com.indooratlas.android.sdk.resources.IAResultCallback;
-import com.indooratlas.android.sdk.resources.IATask;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
 import com.indooratlas.android.sdk.IAWayfindingRequest;
 
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.ArrayList;
-
 /**
  * Cordova Plugin which implements IndoorAtlas positioning service.
  * IndoorAtlas.initialize method should always be called before starting positioning session.
  */
-public class IALocationPlugin extends CordovaPlugin{
+public class IALocationPlugin extends CordovaPlugin {
     private static final String TAG = "IALocationPlugin";
     private static final int PERMISSION_REQUEST = 101;
 
     private IALocationManager mLocationManager;
-    private IAResourceManager mResourceManager;
-    private IATask<IAFloorPlan> mFetchFloorplanTask;
     private String[] permissions = new String[]{
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
@@ -61,7 +42,6 @@ public class IALocationPlugin extends CordovaPlugin{
     private CallbackContext mCbContext;
     private IndoorLocationListener mListener;
     private boolean mLocationServiceRunning = false;
-    private Timer mTimer;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
     private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
 
@@ -181,21 +161,6 @@ public class IALocationPlugin extends CordovaPlugin{
                 String watchId = args.getString(0);
                 clearRegionWatch(watchId);
                 callbackContext.success();
-            } else if("fetchFloorplan".equals(action)) {
-                if (!args.getString(0).isEmpty()) {
-                    String floorplanId = args.getString(0);
-                    fetchFloorplan(floorplanId, callbackContext);
-                } else {
-                    callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNDEFINED));
-                }
-            } else if ("coordinateToPoint".equals(action)) {
-                IALatLng coords = new IALatLng(args.getDouble(0), args.getDouble(1));
-                String floorplanId = args.getString(2);
-                coordinateToPoint(coords, floorplanId, callbackContext);
-            } else if ("pointToCoordinate".equals(action)) {
-                PointF point = new PointF(args.getInt(0), args.getInt(1));
-                String floorplanId = args.getString(2);
-                pointToCoordinate(point, floorplanId, callbackContext);
             } else if ("setDistanceFilter".equals(action)) {
                 float distance = (float) args.getDouble(0);
                 setDistanceFilter(distance, callbackContext);
@@ -281,159 +246,9 @@ public class IALocationPlugin extends CordovaPlugin{
                     bundle.putString(IALocationManager.EXTRA_API_KEY, apiKey);
                     bundle.putString(IALocationManager.EXTRA_API_SECRET, apiSecret);
                     mLocationManager = IALocationManager.create(cordova.getActivity().getApplicationContext(), bundle);
-                    mResourceManager = IAResourceManager.create(cordova.getActivity().getApplicationContext(), bundle);
                     callbackContext.success();
                 }
             });
-        }
-    }
-
-    /**
-     * Starts tasks to fetch floorplan from IA
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void fetchFloorplan(final String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            mFetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            mFetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    IAFloorPlan floorPlan;
-                    JSONObject floorplanInfo;
-                    JSONArray latlngArray;
-                    floorPlan = iaResult.getResult();
-                    IALatLng iaLatLng;
-                    try {
-                        if (floorPlan != null) {
-                            floorplanInfo = new JSONObject();
-                            floorplanInfo.put("id", floorPlan.getId());
-                            floorplanInfo.put("name", floorPlan.getName());
-                            floorplanInfo.put("url", floorPlan.getUrl());
-                            floorplanInfo.put("floorLevel", floorPlan.getFloorLevel());
-                            floorplanInfo.put("bearing", floorPlan.getBearing());
-                            floorplanInfo.put("bitmapHeight", floorPlan.getBitmapHeight());
-                            floorplanInfo.put("bitmapWidth", floorPlan.getBitmapWidth());
-                            floorplanInfo.put("heightMeters", floorPlan.getHeightMeters());
-                            floorplanInfo.put("widthMeters", floorPlan.getWidthMeters());
-                            floorplanInfo.put("metersToPixels", floorPlan.getMetersToPixels());
-                            floorplanInfo.put("pixelsToMeters", floorPlan.getPixelsToMeters());
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getBottomLeft();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("bottomLeft", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getCenter();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("center", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getTopLeft();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("topLeft", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getTopRight();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("topRight", latlngArray);
-
-                            PluginResult pluginResult;
-                            pluginResult = new PluginResult(PluginResult.Status.OK, floorplanInfo);
-                            pluginResult.setKeepCallback(true);
-                            callbackContext.sendPluginResult(pluginResult);
-
-                        }
-                        else {
-                          PluginResult pluginResult;
-                          pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                          pluginResult.setKeepCallback(true);
-                          callbackContext.sendPluginResult(pluginResult);
-                        }
-                    }
-                    catch(JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        }
-        else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
-        }
-    }
-
-    /**
-     * Calculates point based on given coordinates
-     * @param coords
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void coordinateToPoint(final IALatLng coords, String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    JSONObject pointInfo = new JSONObject();
-                    IAFloorPlan floorPlan = iaResult.getResult();
-                    try {
-                        if (floorPlan != null) {
-                            PointF point = floorPlan.coordinateToPoint(coords);
-                            pointInfo.put("x", point.x);
-                            pointInfo.put("y", point.y);
-                            callbackContext.success(pointInfo);
-                        } else {
-                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                        }
-
-                    } catch (JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        } else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
-        }
-    }
-
-    /**
-     * Calculates coordinates based on given point
-     * @param point
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void pointToCoordinate(final PointF point, String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    JSONObject coordsInfo = new JSONObject();
-                    IAFloorPlan floorPlan = iaResult.getResult();
-                    try {
-                        if (floorPlan != null) {
-                            IALatLng coords = floorPlan.pointToCoordinate(point);
-                            coordsInfo.put("latitude", coords.latitude);
-                            coordsInfo.put("longitude", coords.longitude);
-                            callbackContext.success(coordsInfo);
-                        } else {
-                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                        }
-                    } catch (JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        } else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
 
@@ -598,12 +413,10 @@ public class IALocationPlugin extends CordovaPlugin{
           String floorPlanId = args.getString(2).trim();
           String venueId = args.getString(3).trim();
 
-          if (!floorPlanId.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.floorPlan(floorPlanId));
-          } else if (!region.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.floorPlan(region));
-          } else if (!venueId.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.venue(venueId));
+          if (!floorPlanId.isEmpty() || !region.isEmpty() || !venueId.isEmpty()) {
+            // TODO: explicit region IDs are deprecated in SDK 2.9
+            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
+            return;
           }
 
           if (location.length() == 2) {

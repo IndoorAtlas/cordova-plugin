@@ -196,7 +196,37 @@ var IndoorAtlas = {
     };
 
     var win = function(r) {
-      var region = new Region(r.regionId, r.timestamp, r.regionType, r.transitionType);
+
+      function iaFloorPlanFromObject(fp) {
+        return new FloorPlan(
+          fp.id,
+          fp.name,
+          fp.url,
+          fp.floorLevel,
+          fp.bearing,
+          fp.bitmapHeight,
+          fp.bitmapWidth,
+          fp.heightMeters,
+          fp.widthMeters,
+          fp.metersToPixels,
+          fp.pixelsToMeters,
+          fp.bottomLeft,
+          fp.center,
+          fp.topLeft,
+          fp.topRight
+        );
+      }
+
+      var floorPlan = null, venue = null;
+      if (r.floorPlan) {
+        floorPlan = iaFloorPlanFromObject(r.floorPlan);
+      }
+      if (r.venue) {
+        venue = r.venue;
+        venue.floorPlans = venue.floorPlans.map(iaFloorPlanFromObject);
+      }
+
+      var region = new Region(r.regionId, r.timestamp, r.regionType, r.transitionType, floorPlan, venue);
       if (region.transitionType == Region.TRANSITION_TYPE_ENTER) {
         onEnterRegion(region);
       }
@@ -399,64 +429,6 @@ var IndoorAtlas = {
 
   removeWayfindingUpdates: function () {
     exec(win, fail, "IndoorAtlas", "removeWayfindingUpdates", []);
-  },
-
-  fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
-    var win = function(p) {
-      var floorplan = new FloorPlan(
-        p.id,
-        p.name,
-        p.url,
-        p.floorLevel,
-        p.bearing,
-        p.bitmapHeight,
-        p.bitmapWidth,
-        p.heightMeters,
-        p.widthMeters,
-        p.metersToPixels,
-        p.pixelsToMeters,
-        p.bottomLeft,
-        p.center,
-        p.topLeft,
-        p.topRight
-      );
-      successCallback(floorplan);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "fetchFloorplan", [floorplanId]);
-  },
-
-  coordinateToPoint: function(coords, floorplanId, successCallback, errorCallback){
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "coordinateToPoint",
-    [coords.latitude, coords.longitude, floorplanId]);
-  },
-
-  pointToCoordinate: function(point, floorplanId, successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "pointToCoordinate",
-    [point.x, point.y, floorplanId]);
   },
 
   setDistanceFilter: function(successCallback, errorCallback, distance) {
