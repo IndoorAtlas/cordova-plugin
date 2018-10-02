@@ -6,8 +6,10 @@
  * @param timestamp
  * @param regionType
  * @param transitionType
+ * @param floorPlan
+ * @param venue
  */
-var Region = function(regionId, timestamp, regionType, transitionType) {
+var Region = function(regionId, timestamp, regionType, transitionType, floorPlan, venue) {
 
   // Region ID
   this.regionId = regionId || '';
@@ -20,6 +22,12 @@ var Region = function(regionId, timestamp, regionType, transitionType) {
 
   // Transition type of the region; ENTER, EXIT, UNKNOWN
   this.transitionType = transitionType || null;
+
+  // Floor plan object
+  this.floorPlan = floorPlan || null;
+
+  // Venue object
+  this.venue = venue || null;
 };
 
 Region.TRANSITION_TYPE_UNKNOWN = 0;
