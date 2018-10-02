@@ -69,24 +69,22 @@ function createTimeout(errorCallback, timeout) {
   return t;
 }
 
+function buildIaErrorCallback(errorCallback) {
+  return function(error) {
+    var err = new PositionError(error.code, error.message);
+    errorCallback(err);
+  };
+}
+
 var IndoorAtlas = {
   lastPosition: null, // reference to last known (cached) position returned
   initializeAndroid: function(successCallback, errorCallback, options) {
+    var fail = buildIaErrorCallback(errorCallback);
     var requestWin = function(result) {
-      var win = function(result) {
-        successCallback(result);
-      };
-      var fail = function(error) {
-        var err = new PositionError(error.code, error.message);
-        errorCallback(err);
-      };
+      var win = successCallback;
       exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key, options.secret]);
     };
-    var requestFail = function(error) {
-      var err = new PositionError(error.code, error.message);
-      errorCallback(err);
-    };
-    exec(requestWin, requestFail, "IndoorAtlas", "getPermissions", []);
+    exec(requestWin, fail, "IndoorAtlas", "getPermissions", []);
   },
 
   initialize: function(successCallback, errorCallback, options) {
@@ -94,15 +92,8 @@ var IndoorAtlas = {
       IndoorAtlas.initializeAndroid(successCallback, errorCallback, options);
       return;
     }
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
     exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options]);
   },
 
@@ -188,13 +179,7 @@ var IndoorAtlas = {
   watchRegion: function(onEnterRegion, onExitRegion, errorCallback) {
     var id = utils.createUUID();
 
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-
+    var fail = buildIaErrorCallback(errorCallback);
     var win = function(r) {
 
       function iaFloorPlanFromObject(fp) {
@@ -254,42 +239,23 @@ var IndoorAtlas = {
   },
 
   didUpdateAttitude: function(onAttitudeUpdated, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-
-    var win = function(attitude) {
-      onAttitudeUpdated(attitude);
-    };
-
+    var fail = buildIaErrorCallback(errorCallback);
+    var win = onAttitudeUpdated;
     exec(win, fail, "IndoorAtlas", "addAttitudeCallback");
   },
 
   removeAttitudeCallback: function() {
     var fail = function(e) {
-      console.log("Error while removing attitude callbackk");
+      console.log("Error while removing attitude callback");
     };
 
-    var win = function(success) {
-      console.log("Attitude callback removed");
-    };
-
+    var win = function(success) {};
     exec(win, fail, "IndoorAtlas", "removeAttitudeCallback");
   },
 
   didUpdateHeading: function(onHeadingUpdated, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-
-    var win = function(heading) {
-      onHeadingUpdated(heading);
-    };
-
+    var fail = buildIaErrorCallback(errorCallback);
+    var win = onHeadingUpdated;
     exec(win, fail, "IndoorAtlas", "addHeadingCallback");
   },
 
@@ -298,19 +264,12 @@ var IndoorAtlas = {
       console.log("Error while removing heading callback");
     };
 
-    var win = function(success) {
-      console.log("Heading callback removed");
-    };
-
+    var win = function(success) {};
     exec(win, fail, "IndoorAtlas", "removeHeadingCallback");
   },
 
   onStatusChanged: function(onStatusChanged, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
+    var fail = buildIaErrorCallback(errorCallback);
 
     var win = function(status) {
       var newStatus = new CurrentStatus(status.code, status.message);
@@ -325,10 +284,7 @@ var IndoorAtlas = {
       console.log("Error while removing status callback");
     };
 
-    var win = function(success) {
-      console.log("Status callback removed");
-    };
-
+    var win = function(success) {};
     exec(win, fail, "IndoorAtlas", "removeStatusCallback");
   },
 
@@ -392,16 +348,8 @@ var IndoorAtlas = {
     var keys = Object.keys(options);
     options = parseSetPositionParameters(options);
 
-    var win = function(p) {
-      successCallback(p);
-    };
-
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
 
     if ((options.coordinates.length == 2 && keys.length == 2) || keys.length == 1) {
 
@@ -412,70 +360,40 @@ var IndoorAtlas = {
     };
   },
 
-  requestWayfindingUpdates: function(destination, successCallback, errorCallback) {
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-
-    var win = function(route) {
-      successCallback(route);
-    };
-
+  requestWayfindingUpdates: function(destination, onWayfindingUpdate, errorCallback) {
+    var fail = buildIaErrorCallback(errorCallback);
+    var win = onWayfindingUpdate;
     exec(win, fail, "IndoorAtlas", "requestWayfindingUpdates", [destination.latitude, destination.longitude, destination.floor]);
   },
 
   removeWayfindingUpdates: function () {
+    // never called on Android
+    var win = function (success) {};
+    var fail = buildIaErrorCallback(null);
     exec(win, fail, "IndoorAtlas", "removeWayfindingUpdates", []);
   },
 
   setDistanceFilter: function(successCallback, errorCallback, distance) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
     exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
   },
 
   setSensitivities: function(successCallback, errorCallback, sensitivity) {
-    var win = function(success) {
-      successCallback(success)
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
     exec(win, fail, "IndoorAtlas", "setSensitivities", [sensitivity.orientationSensitivity, sensitivity.headingSensitivity]);
   },
 
   getFloorCertainty: function(successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
     exec(win, fail, "IndoorAtlas", "getFloorCertainty");
   },
 
   getTraceId: function(successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
+    var win = successCallback;
+    var fail = buildIaErrorCallback(errorCallback);
     exec(win, fail, "IndoorAtlas", "getTraceId");
   }
 };
