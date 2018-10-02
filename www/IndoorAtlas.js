@@ -373,6 +373,40 @@ var IndoorAtlas = {
     exec(win, fail, "IndoorAtlas", "removeWayfindingUpdates", []);
   },
 
+  lockFloor: function (floorNumber) {
+    var win = function (success) {};
+    var fail = buildIaErrorCallback(null);
+
+    function iaIsInteger(value) {
+      // official Mozilla polyfill for Number.isInteger
+      return typeof value === 'number' &&  isFinite(value) && Math.floor(value) === value;
+    }
+
+    if (iaIsInteger(floorNumber)) {
+      exec(win, fail, "IndoorAtlas", "lockFloor", [floorNumber]);
+    } else {
+      // should use console.error, exception etc., but doing this for
+      // consistency with other methods
+      console.log("lockFloor(floorNumber) error: floorNumber must be an integer");
+    }
+  },
+
+  unlockFloor: function () {
+    var win = function (success) {};
+    var fail = buildIaErrorCallback(null);
+    exec(win, fail, "IndoorAtlas", "unlockFloor", []);
+  },
+
+  lockIndoors: function (locked) {
+    // notice that since all parameters are optional in JavaScript, we cannot
+    // avoid users calling .lockIndoors(). This is interpreted as enabling
+    // IndoorLock (instead of .lockIndoors(false)) to avoid confusion.
+    var isLocked = !!locked || locked === undefined;
+    var win = function (success) {};
+    var fail = buildIaErrorCallback(null);
+    exec(win, fail, "IndoorAtlas", "lockIndoors", [isLocked]);
+  },
+
   setDistanceFilter: function(successCallback, errorCallback, distance) {
     var win = successCallback;
     var fail = buildIaErrorCallback(errorCallback);

@@ -185,12 +185,20 @@ public class IALocationPlugin extends CordovaPlugin {
             } else if ("removeStatusCallback".equals(action)) {
               removeStatusCallback();
             } else if ("requestWayfindingUpdates".equals(action)) {
-                Double lat = args.getDouble(0);
-                Double lon = args.getDouble(1);
-                int floor = args.getInt(2);
-                requestWayfindingUpdates(lat, lon, floor, callbackContext);
+              double lat = args.getDouble(0);
+              double lon = args.getDouble(1);
+              int floor = args.getInt(2);
+              requestWayfindingUpdates(lat, lon, floor, callbackContext);
             } else if ("removeWayfindingUpdates".equals(action)) {
-                removeWayfindingUpdates();
+              removeWayfindingUpdates();
+            } else if ("lockFloor".equals(action)) {
+              int floorNumber = args.getInt(0);
+              lockFloor(floorNumber);
+            } else if ("unlockFloor".equals(action)) {
+              unlockFloor();
+            } else if ("lockIndoors".equals(action)) {
+              boolean locked = args.getBoolean(0);
+              lockIndoors(locked);
             }
         }
         catch(Exception ex) {
@@ -354,6 +362,33 @@ public class IALocationPlugin extends CordovaPlugin {
             @Override
             public void run() {
               mLocationManager.removeWayfindingUpdates();
+            }
+        });
+    }
+
+    private void lockFloor(final int floorNumber) {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.lockFloor(floorNumber);
+            }
+        });
+    }
+
+    private void unlockFloor() {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.unlockFloor();
+            }
+        });
+    }
+
+    private void lockIndoors(final boolean locked) {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.lockIndoors(locked);
             }
         });
     }
