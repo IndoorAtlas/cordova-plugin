@@ -2,6 +2,7 @@ Version 2.9.0 - September 2019
 ------------------------------
  * IndoorAtlas SDK version 2.9 with integrated wayfinding
  * New wayfinding API
+ * iOS bug fix: changed floor level number from string to integer
 
 Version 1.10.0 - August 2018
 ------------------------------

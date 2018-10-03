@@ -3,7 +3,6 @@
 #import <CoreLocation/CoreLocation.h>
 #import <Cordova/CDVPlugin.h>
 #import "IndoorAtlasLocationService.h"
-#import <IndoorAtlasWayfinding/wayfinding.h>
 
 enum IndoorLocationStatus {
     PERMISSION_DENIED = 1,
@@ -30,7 +29,7 @@ typedef NSUInteger IndoorLocationStatus;
 @property (nonatomic, assign) IndoorLocationStatus locationStatus;
 @property (nonatomic, strong) CLLocation *locationInfo;
 @property (nonatomic, strong) IARegion *region;
-@property (nonatomic, strong) NSString *floorID;
+@property (nonatomic, strong) NSNumber *floorID;
 @property (nonatomic, strong) NSNumber *floorCertainty;
 @property (nonatomic, strong) NSMutableArray *locationCallbacks;
 @property (nonatomic, strong) NSMutableDictionary *watchCallbacks;
@@ -53,7 +52,6 @@ typedef NSUInteger IndoorLocationStatus;
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) IndoorLocationInfo *locationData;
 @property (nonatomic, strong) IndoorRegionInfo *regionData;
-@property (nonatomic, strong) IAWayfinding *wayfinder;
 @property (nonatomic, strong) NSMutableArray *wayfinderInstances;
 
 - (void)initializeIndoorAtlas:(CDVInvokedUrlCommand *)command;
@@ -66,19 +64,18 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)removeAttitudeCallback:(CDVInvokedUrlCommand *)command;
 - (void)addHeadingCallback:(CDVInvokedUrlCommand *)command;
 - (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command;
+- (void)removeRouteCallback:(CDVInvokedUrlCommand *)command;
 - (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command;
 - (void)removeStatusCallback:(CDVInvokedUrlCommand *)command;
-- (void)setPosition:(CDVInvokedUrlCommand *)command;
-- (void)fetchFloorplan:(CDVInvokedUrlCommand *)command;
-- (void)coordinateToPoint:(CDVInvokedUrlCommand *)command;
-- (void)pointToCoordinate:(CDVInvokedUrlCommand *)command;
 - (void)sendCoordinateToPoint:(CGPoint)point;
 - (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command;
-- (void)buildWayfinder:(CDVInvokedUrlCommand *)command;
-- (void)computeRoute:(CDVInvokedUrlCommand *)command;
-
+- (void)requestWayfindingUpdates:(CDVInvokedUrlCommand *)command;
+- (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command;
+- (void)lockFloor:(CDVInvokedUrlCommand *)command;
+- (void)unlockFloor:(CDVInvokedUrlCommand *)command;
+- (void)lockIndoors:(CDVInvokedUrlCommand *)command;
 @end

@@ -146,6 +146,13 @@
     }
 }
 
+- (void)indoorLocationManager:(IALocationManager *)manager didUpdateRoute:(nonnull IARoute *)route
+{
+    if([self.delegate respondsToSelector:@selector(location:didUpdateRoute:)]) {
+        [self.delegate location:self didUpdateRoute:route];
+    }
+}
+
 // DEPRECATED
 // Gets coordinate to a given point
 - (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
@@ -292,32 +299,44 @@
 }
 
 /**
- *  Set explicit floor plan
+ *  Lock positioning to indoors
  */
-- (void)setFloorPlan:(NSString *)floorPlanId
+- (void)lockIndoors:(BOOL)lock
 {
-    if (floorPlanId != nil) {
-        self.manager.location = [IALocation locationWithFloorPlanId:floorPlanId];
-    }
+    [self.manager lockIndoors:lock];
 }
 
 /**
- *  Set explicit location
+ *  Lock positioning to a given floor
  */
-- (void)setLocation:(CLLocation *)location
+- (void)setFloorLock:(int)floor
 {
-    if (location != nil) {
-        self.manager.location = [IALocation locationWithCLLocation:location];
-    }
+    [self.manager lockFloor:floor];
 }
 
 /**
- *  Set explicit venue
+ *  Unlock floor lock
  */
-- (void)setVenue:(NSString *)venueId
+- (void)unlockFloor
 {
-    if (venueId != nil) {
-        self.manager.location = [IALocation locationWithVenueId:venueId andFloor:nil];
-    }
+    [self.manager unlockFloor];
+}
+
+/**
+ * Start monitoring wayfinding updates.
+ * @param request A wayfinding request to destination.
+ */
+- (void)startMonitoringForWayfinding:(IAWayfindingRequest*)request
+{
+    NSLog(@"startMonitoringForWayfinding: %f, %f, %ld", request.coordinate.latitude, request.coordinate.longitude, request.floor);
+    [self.manager startMonitoringForWayfinding:request];
+}
+
+/**
+ *  Stop monitoring wayfinding updates.
+ */
+- (void)stopMonitoringForWayfinding
+{
+    [self.manager stopMonitoringForWayfinding];
 }
 @end

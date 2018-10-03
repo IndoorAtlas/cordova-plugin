@@ -124,6 +124,21 @@ INDOORATLAS_API
  */
 - (nullable id)initWithId:(nullable NSString *)floorPlanId width:(NSUInteger)width height:(NSUInteger)height wgs2pix:(nullable NSArray*)wgsToPixel pix2wgs:(nullable NSArray*)pixelToWgs;
 
+/**
+ * Initializes <IAFloorPlan>
+ * @param floorPlanId is the identifier of floor plan
+ * @param width is the width of the floor plan image in pixels
+ * @param height is the height of the floor plan image in pixels
+ * @param wgsToPixel is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
+ * @param pixelToWgs is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
+ * @param url is a NSURL object containing the url address of the floor plan image
+ * @param name is the name of the floor plan
+ * @param floor is a IAFloor object containing the floor number and floor certainty of the floor plan
+ */
+- (nullable id)initWithId:(nullable NSString *)floorPlanId width:(NSUInteger)width height:(NSUInteger)height wgs2pix:(nullable NSArray*)wgsToPixel pix2wgs:(nullable NSArray*)pixelToWgs
+                 imageUrl:(nullable NSURL*)url name:(nullable NSString*)name
+                    floor:(nullable IAFloor*) floor;
+
 @end
 
 #undef INDOORATLAS_API

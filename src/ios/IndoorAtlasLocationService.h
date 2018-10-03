@@ -75,6 +75,14 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param newHeading
  */
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)newHeading;
+
+/**
+ * Updated when a wayfinding route update is available.
+ *
+ * @param route Updated wayfinding route.
+ */
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route;
+
 /**
  * Passes the calculated point to the Javascript side
  *
@@ -119,19 +127,30 @@ typedef NSUInteger IndoorLocationTransitionType;
 -(BOOL)isServiceActive;
 
 /**
- *  Set explicit floor plan
+ *  Lock positioning to indoors
  */
-- (void)setFloorPlan:(NSString *)floorPlanId;
+- (void)lockIndoors:(BOOL)lock;
 
 /**
- *  Set explicit location
+ *  Lock positioning to a given floor
  */
-- (void)setLocation:(CLLocation *)location;
+- (void)setFloorLock:(int)floor;
 
 /**
- *  Set explicit venue
+ *  Unlock floor lock
  */
-- (void)setVenue:(NSString *)venueId;
+- (void)unlockFloor;
+
+/**
+ * Start monitoring wayfinding updates.
+ * @param request A wayfinding request to destination.
+ */
+- (void)startMonitoringForWayfinding:(IAWayfindingRequest*)request;
+
+/**
+ *  Stop monitoring wayfinding updates.
+ */
+- (void)stopMonitoringForWayfinding;
 
 /**
  *  Fetch Floorplan With Id

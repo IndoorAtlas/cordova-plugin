@@ -5,6 +5,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
 #import <IndoorAtlas/IAFloor.h>
+#import <IndoorAtlas/IAFloorplan.h>
 
 #define INDOORATLAS_API __attribute__((visibility("default")))
 
@@ -102,6 +103,25 @@ typedef NS_ENUM(NSInteger, ia_location_accuracy) {
 };
 
 /**
+ * Represents a venue in IndoorAtlas system
+ */
+INDOORATLAS_API
+@interface IAVenue : NSObject
+/**
+ * Name of the venue
+ */
+@property (nonatomic, strong, nonnull) NSString *name;
+/**
+ * Mapped floors that the venue has
+ */
+@property (nonatomic, strong, nonnull) NSArray *floorplans;
+/**
+ * ID of the venue in IndoorAtlas developer console
+ */
+@property (nonatomic, strong, nonnull) NSString *id;
+@end
+
+/**
  * An IARegion object represents a region on Earth.
  */
 INDOORATLAS_API
@@ -124,6 +144,14 @@ INDOORATLAS_API
  * If there is an event related to region this is the timestamp of that event.
  */
 @property (nonatomic, strong, nullable) NSDate *timestamp;
+/**
+ * If there is a venue related to this region this is the venue of that.
+ */
+@property (nonatomic, strong, nullable) IAVenue *venue;
+/**
+ * If there is a floorplan related to this region this is the floorplan of that.
+ */
+@property (nonatomic, strong, nullable) IAFloorPlan *floorplan;
 @end
 
 /**
@@ -177,6 +205,90 @@ INDOORATLAS_API
  * The edges must be supplied in clockwise order for the polygon to be valid.
  */
 + (nonnull IAPolygonGeofence*)polygonGeofenceWithIdentifier:(nonnull NSString*)identifier andFloor:(nullable IAFloor*)floor edges:(nonnull NSArray<NSNumber*>*)edges;
+@end
+
+/**
+ * Provides wayfinding destination for the SDK.
+ */
+INDOORATLAS_API
+@interface IAWayfindingRequest : NSObject
+/**
+ * Wayfinding request's destination coordinate.
+ */
+@property (nonatomic, assign) CLLocationCoordinate2D coordinate;
+
+/**
+ * Wayfinding request's destination floor level.
+ */
+@property (nonatomic, assign) NSInteger floor;
+@end
+
+INDOORATLAS_API
+@interface IARoutePoint : NSObject
+/**
+ * Coordinate of this point.
+ */
+@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
+
+/**
+ * Floor number of this point.
+ */
+@property (nonatomic, readonly) NSInteger floor;
+
+/**
+ * Get the index of the point. This is the zero-based index of the node
+ * in the original JSON graph this point corresponds to. If this is a
+ * virtual wayfinding node, e.g., a starting point of the route outside
+ * the original graph, nodeIndex will be -1.
+ */
+@property (nonatomic, readonly) NSUInteger nodeIndex;
+@end
+
+/**
+ * Object representing the line segment between two <IARoutePoint>s.
+ * Includes the distance and direction of the segment as well as the start and end points.
+ */
+INDOORATLAS_API
+@interface IARouteLeg : NSObject
+/**
+ * The <IARoutePoint> representing the beginning of this leg.
+ */
+@property (nonatomic, readonly, nonnull) IARoutePoint *begin;
+
+/**
+ * The <IARoutePoint> representing the end of this leg.
+ */
+@property (nonatomic, readonly, nonnull) IARoutePoint *end;
+
+/**
+ * Length of the line segment in meters.
+ */
+@property (nonatomic, readonly) double length;
+
+/**
+ * Direction of the line segment in ENU coordinates in degrees.
+ * 0 is North and 90 is East.
+ */
+@property (nonatomic, readonly) double direction;
+
+/**
+ * Zero-based index of the edge corresponding to this leg in the
+ * original JSON graph. If this is a virtual leg, for example, a
+ * segment connecting an off-graph starting point to the graph,
+ * edgeIndex will be -1.
+ */
+@property (nonatomic, readonly) NSUInteger edgeIndex;
+@end
+
+/**
+ * Structure representing a route from user's location to destination.
+ */
+INDOORATLAS_API
+@interface IARoute : NSObject
+/**
+ * An array of <IARouteLeg>s connecting user's location to destination.
+ */
+@property (nonatomic, readonly, nonnull) NSArray<IARouteLeg*> *legs;
 @end
 
 /**
@@ -341,6 +453,13 @@ INDOORATLAS_API
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didExitRegion:(nonnull IARegion*)region;
 
 /**
+ * Tells the delegate that the wayfinding route was updated.
+ * @param manager The location manager object that generated the event.
+ * @param route The new route.
+ */
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager didUpdateRoute:(nonnull IARoute*)route;
+
+/**
  * Tells that <IALocationManager> status changed. This is used to signal network connection issues.
  * @param manager The location manager object that generated the event.
  * @param status The status at the time of the event.
@@ -483,6 +602,25 @@ INDOORATLAS_API
 + (nonnull IALocationManager *)sharedInstance;
 
 /**
+ * Locks positioning to specified floor level
+ * @param floorNumber Floor level where the positioning is restricted
+ */
+- (void)lockFloor:(int)floorNumber;
+
+/**
+ * Unlocks positioning from locked floor. If lockFloor has not been called before, this is
+ * no-op.
+ */
+- (void)unlockFloor;
+
+/**
+ * Lock or unlock positioning indoors. Disables indoor-outdoor detection as well as GPS scanning
+ * if locked.
+ * @param lockIndoor boolean value indicating whether to lock or unlock indoor positioning
+ */
+- (void)lockIndoors:(bool)lockIndoor;
+
+/**
  * @name Authenticate your session
  */
 
@@ -537,6 +675,26 @@ INDOORATLAS_API
  * @param geofence The geofence object currently being monitored.
  */
 - (void)stopMonitoringForGeofence:(nonnull IAGeofence*)geofence;
+
+/**
+ * Start monitoring for wayfinding updates.
+ * Calling this method causes the location manager to obtain a route from user's current location to destination defined in parameter "request" (this may take several seconds).
+ * Calling this method notify your delegate by calling its <indoorLocationManager:didUpdateRoute:> method. After that, the receiver generates update events whenever the route changes.
+ *
+ * Calling this method several times in succession overwrites the previously done requests.
+ * Calling <stopUpdatingLocation> in-between, however, does cause a new initial event to be sent the next time you call this method.
+ *
+ * @param request An <IAWayfindingRequest> specifying the type of wayfinding updates to monitor.
+ */
+- (void)startMonitoringForWayfinding:(nonnull IAWayfindingRequest*)request;
+
+/**
+ * Stops monitoring for wayfinding updates.
+ *
+ * Call this method whenever your code no longer needs to receive wayfinding route update events.
+ * You can always restart the generation of wayfinding route updates by calling the <startMonitoringForWayfinding> method again.
+ */
+- (void)stopMonitoringForWayfinding;
 
 /**
  * Marks init method as deprecated.

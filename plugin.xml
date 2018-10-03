@@ -58,8 +58,6 @@
     <source-file src="src/ios/IndoorAtlasLocationService.m"/>
     <header-file src="src/ios/IndoorLocation.h"/>
     <source-file src="src/ios/IndoorLocation.m"/>
-
-    <framework src="src/ios/IndoorAtlas/IndoorAtlasWayfinding.framework" custom="true" embed="true"/>
   </platform>
 
 	<!-- android -->
