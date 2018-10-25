@@ -2,6 +2,8 @@
 var utils = require('cordova/utils'),
     exec = require('cordova/exec')
 
+var cordovaPluginMetadata = require("cordova/plugin_list").metadata;
+
 var timers = {};   // list of timers in use
 
 function getDeviceType() {
@@ -78,18 +80,19 @@ function buildIaErrorCallback(errorCallback) {
 
 var IndoorAtlas = {
   lastPosition: null, // reference to last known (cached) position returned
-  initializeAndroid: function(successCallback, errorCallback, options) {
+  initializeAndroid: function(successCallback, errorCallback, options, pluginVersion) {
     var fail = buildIaErrorCallback(errorCallback);
     var requestWin = function(result) {
       var win = successCallback;
-      exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key, options.secret]);
+      exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key, options.secret, pluginVersion]);
     };
     exec(requestWin, fail, "IndoorAtlas", "getPermissions", []);
   },
 
   initialize: function(successCallback, errorCallback, options) {
     if (getDeviceType() == 'Android') {
-      IndoorAtlas.initializeAndroid(successCallback, errorCallback, options);
+      var pluginVersion = cordovaPluginMetadata['cordova-plugin-indooratlas'];
+      IndoorAtlas.initializeAndroid(successCallback, errorCallback, options, pluginVersion);
       return;
     }
     var win = successCallback;

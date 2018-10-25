@@ -116,7 +116,8 @@ public class IALocationPlugin extends CordovaPlugin {
                 if (validateIAKeys(args)) {
                     String apiKey = args.getString(0);
                     String apiSecret = args.getString(1);
-                    initializeIndoorAtlas(apiKey, apiSecret, callbackContext);
+                    String pluginVersion = args.getString(2);
+                    initializeIndoorAtlas(apiKey, apiSecret, pluginVersion, callbackContext);
                 }
                 else {
                     callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_ACCESS_TOKEN));
@@ -245,7 +246,7 @@ public class IALocationPlugin extends CordovaPlugin {
      * @param apiKey
      * @param apiSecret
      */
-    private void initializeIndoorAtlas(final String apiKey, final String apiSecret, final CallbackContext callbackContext) {
+    private void initializeIndoorAtlas(final String apiKey, final String apiSecret, final String pluginVersion, final CallbackContext callbackContext) {
         if (mLocationManager == null){
             cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -253,6 +254,10 @@ public class IALocationPlugin extends CordovaPlugin {
                     Bundle bundle = new Bundle(2);
                     bundle.putString(IALocationManager.EXTRA_API_KEY, apiKey);
                     bundle.putString(IALocationManager.EXTRA_API_SECRET, apiSecret);
+                    bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperName", "cordova");
+                    if (pluginVersion != null) {
+                        bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperVersion", pluginVersion);
+                    }
                     mLocationManager = IALocationManager.create(cordova.getActivity().getApplicationContext(), bundle);
                     callbackContext.success();
                 }
