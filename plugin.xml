@@ -40,6 +40,14 @@
     <config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
       <string>Platform location requested for better indoor positioning experience.</string>
     </config-file>
+    <config-file target="*-Info.plist" parent="IAWrapper">
+      <dict>
+        <key>name</key>
+        <string>cordova</string>
+        <key>version</key>
+        <string>2.9.0</string>
+      </dict>
+    </config-file>
     <framework src="CFNetwork.framework"/>
     <framework src="CoreLocation.framework"/>
     <framework src="CoreMotion.framework"/>
