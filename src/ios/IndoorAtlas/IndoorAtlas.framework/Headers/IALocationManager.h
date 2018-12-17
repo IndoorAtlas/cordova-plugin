@@ -5,7 +5,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
 #import <IndoorAtlas/IAFloor.h>
-#import <IndoorAtlas/IAFloorplan.h>
+#import <IndoorAtlas/IAFloorPlan.h>
 
 #define INDOORATLAS_API __attribute__((visibility("default")))
 
