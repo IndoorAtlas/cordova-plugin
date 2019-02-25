@@ -590,6 +590,29 @@
     [self _stopLocation];
 }
 
+- (void)setPosition:(CDVInvokedUrlCommand *)command
+{
+    NSString *region = [command argumentAtIndex:0];
+    NSArray *location = [command argumentAtIndex:1];
+    NSString *floorPlanId = [command argumentAtIndex:2];
+    NSString *venueId = [command argumentAtIndex:3];
+
+    if ([region length] != 0 || [floorPlanId length] != 0 || [venueId length] != 0) {
+        [self sendErrorCommand:command withMessage:@"An initialization error occured at setPosition"];
+        return;
+    }
+
+    if ([location count] != 2) {
+        [self sendErrorCommand:command withMessage:@"An invalid input location at setPosition: the size of the array must be 2."];
+        return;
+    }
+    double latitude = [(NSNumber *)[location objectAtIndex:0] doubleValue];
+    double longitude = [(NSNumber *)[location objectAtIndex:1] doubleValue];
+    CLLocation *loc = [[CLLocation alloc] initWithLatitude:latitude longitude:longitude];
+    IALocation *iaLoc = [IALocation locationWithCLLocation:loc];
+    [self.IAlocationInfo setPosition:iaLoc];
+}
+
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command
 {
     self.setDistanceFilterCallbackID = command.callbackId;

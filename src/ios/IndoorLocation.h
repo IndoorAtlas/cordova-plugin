@@ -69,6 +69,7 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)removeStatusCallback:(CDVInvokedUrlCommand *)command;
 - (void)sendCoordinateToPoint:(CGPoint)point;
 - (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
+- (void)setPosition:(CDVInvokedUrlCommand *)command;
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;

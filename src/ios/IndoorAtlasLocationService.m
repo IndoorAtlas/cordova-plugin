@@ -74,6 +74,15 @@
     [self setCriticalLog:@"IndoorAtlas positioning stopped"];
 }
 
+/**
+ * Sets explicit position
+ */
+- (void)setPosition:(IALocation *)position
+{
+    self.manager.location = position;
+}
+
+
 #pragma mark IndoorAtlasPositionerDelegate methods
 /**
  * Tells the delegate that the user entered the specified region.

@@ -120,6 +120,11 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)stopPositioning;
 
 /**
+ * Sets explicit position
+ */
+- (void)setPosition:(IALocation *)position;
+
+/**
  *  State is service active or not
  *
  *  @return YES/NO
