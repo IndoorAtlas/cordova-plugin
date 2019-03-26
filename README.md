@@ -1,4 +1,6 @@
-# IndoorAtlas Cordova Plugin 2.9
+# IndoorAtlas Cordova Plugin 2.10
+
+_Cordova plugin 2.10 is a compatibility release that uses IndoorAtlas SDK 3.0 with the old IndoorAtlas Cordova API. IndoorAtlas Cordova plugin 3.0 will include both the new IndoorAtlas SDK and a new, greatly simplified API. Upgrading to IndoorAtlas Cordova plugin version 3.x is recommended at earliest convenience._
 
 [IndoorAtlas](https://www.indooratlas.com/) provides a unique Platform-as-a-Service (PaaS) solution that runs a disruptive geomagnetic positioning in its full-stack hybrid technology for accurately pinpointing a location inside a building. The IndoorAtlas SDK enables app developers to use high-accuracy indoor positioning in venues that have been fingerprinted.
 
