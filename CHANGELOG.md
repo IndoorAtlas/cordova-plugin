@@ -1,4 +1,10 @@
-Version 2.9.0 - September 2019
+Version 2.9.1 - March 2019
+------------------------------
+ * Update IndoorAtlas iOS SDK to version 2.9.4
+ * Update IndoorAtlas Android SDK to version 2.9.3
+ * Implement missing setPosition on iOS
+
+Version 2.9.0 - September 2018
 ------------------------------
  * IndoorAtlas SDK version 2.9 with integrated wayfinding
  * New wayfinding API
