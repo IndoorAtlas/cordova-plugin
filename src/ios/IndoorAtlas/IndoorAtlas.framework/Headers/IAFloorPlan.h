@@ -99,6 +99,12 @@ INDOORATLAS_API
 @property (nonatomic, readonly) CLLocationCoordinate2D bottomLeft;
 
 /**
+ * Corresponding WGS84 coordinate of bottom right of floor plan bitmap placed
+ * on the surface of Earth.
+ */
+@property (nonatomic, readonly) CLLocationCoordinate2D bottomRight;
+
+/**
  * Converts coordinate to corresponding point.
  *
  * @param coord WGS84 coordinate
