@@ -51,6 +51,9 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 
     /**
      * Location service temporarily unavailable. This could be due to no network connectivity.
+     * This mostly happens in the beginning of a positioning session when the SDK need to
+     * authenticate itself in the IndoorAtlas cloud and download map data, if it has not been
+     * cached yet.
      */
     kIAStatusServiceUnavailable = 1,
 
@@ -61,6 +64,7 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 
     /**
      * Location service is running but with limited accuracy and functionality.
+     * This typically means that location permissions were not given to the application.
      */
     kIAStatusServiceLimited = 10,
 };
@@ -68,23 +72,27 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 /**
  * Defines the device calibration quality.
  * The quality of calibration affects location accuracy.
+ * @deprecated Deprecated since SDK 3.0
  */
 typedef NS_ENUM(NSInteger, ia_calibration) {
     /**
      * Quality is poor.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationPoor,
 
     /**
      * Quality is good.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationGood,
 
     /**
      * Quality is excellent.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationExcellent,
-};
+} __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * Defines the accuracy of location.
@@ -241,7 +249,7 @@ INDOORATLAS_API
  * virtual wayfinding node, e.g., a starting point of the route outside
  * the original graph, nodeIndex will be -1.
  */
-@property (nonatomic, readonly) NSUInteger nodeIndex;
+@property (nonatomic, readonly) NSInteger nodeIndex;
 @end
 
 /**
@@ -277,7 +285,7 @@ INDOORATLAS_API
  * segment connecting an off-graph starting point to the graph,
  * edgeIndex will be -1.
  */
-@property (nonatomic, readonly) NSUInteger edgeIndex;
+@property (nonatomic, readonly) NSInteger edgeIndex;
 @end
 
 /**
@@ -319,35 +327,25 @@ INDOORATLAS_API
 /**
  * @name Initializing a Location Object
  *
- * Indicate current location to positioning service. Can be used to set either the explicit location (latitude, longitude, accuracy, floor level) or the explicit region (venue or floorplan id)
+ * Indicate current location to positioning service. Can be used to set the explicit location (latitude, longitude, accuracy, floor level)
  */
+
+/**
+* Initializes and returns a location object with specified CoreLocation information.
+* @param location CLLocation object. Might be initialized in code or from CLLocationManager.
+*
+* An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
+*/
++ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location;
 
 /**
  * Initializes and returns a location object with specified CoreLocation information.
  * @param location CLLocation object. Might be initialized in code or from CLLocationManager.
+ * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
  *
  * An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
  */
-+ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location;
-
-/**
- * Initializes and returns a location object with specified floor plan id.
- * @param floorPlanId Identifier of the floor plan.
- *
- * An explicit floor plan is used for initialising and locking the positioning to a certain floor. This means that the position estimate is not free to leave the indicated floor.
- * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
- */
-+ (nonnull IALocation*)locationWithFloorPlanId:(nonnull NSString*)floorPlanId;
-
-/**
- * Initializes and returns a location object with specified venue id (and floor).
- * @param venueId Identifier of the venue.
- * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
- *
- * An explicit venue is used for locking the positioning to a certain venue context (if a NIL floor is set). This means that the position estimate is not free to leave the indicated venue, but can move between floors. If an explicit floor is also given, the estimate is locked to that floor.
- * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
- */
-+ (nonnull IALocation*)locationWithVenueId:(nonnull NSString*)venueId andFloor:(nullable IAFloor*)floor;
++ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location andFloor:(nullable IAFloor*)floor;
 
 /**
  * @name Location Attributes
@@ -415,8 +413,7 @@ INDOORATLAS_API
  *
  * Upon receiving a successful location update, you can use the result to update your user interface or perform other actions.
  *
- * The methods of your delegate object are called from the thread in which you started the corresponding location services.
- * That thread must itself have an active run loop, like the one found in your application's main thread.
+ * The methods of your delegate object are called from the main thread.
  */
 INDOORATLAS_API
 @protocol IALocationManagerDelegate <NSObject>
@@ -470,8 +467,9 @@ INDOORATLAS_API
  * Tells that calibration quality changed.
  * @param manager The location manager object that generated the event.
  * @param quality The calibration quality at the time of the event.
+ * @deprecated Deprecated since SDK 3.0
  */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager calibrationQualityChanged:(enum ia_calibration)quality;
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager calibrationQualityChanged:(enum ia_calibration)quality __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * Tells that extra information dictionary was received. This dictionary contains
@@ -500,6 +498,7 @@ INDOORATLAS_API
  * The IALocationManager class is central point for configuring the delivery of indoor location related events to your app.
  * You use and instance of this class to establish the parameters that determine when location events should be delivered and to start and stop the actual delivery of those events.
  * You can also use a location manager object to retrieve the most recent location data.
+ * The shared instance, property changes and methods of this class must be called from the application main thread only
  */
 INDOORATLAS_API
 @interface IALocationManager : NSObject
@@ -507,8 +506,9 @@ INDOORATLAS_API
  * The latest calibration quality value
  *
  * @param calibration See possible values at [ia_calibration](/Constants/ia_calibration.html)
+ * @deprecated Deprecated since SDK 3.0
  */
-@property (nonatomic, readonly) enum ia_calibration calibration;
+@property (nonatomic, readonly) enum ia_calibration calibration __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * The latest location update.
@@ -698,6 +698,7 @@ INDOORATLAS_API
 
 /**
  * Marks init method as deprecated.
+* @deprecated
  */
 - (_Nullable id)init __attribute__((deprecated("[[IALocationManager alloc] init] is depreated. Use [IALocationManager sharedInstance] instead.")));
 @end

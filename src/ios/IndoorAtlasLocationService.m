@@ -1,13 +1,11 @@
 
 #import <UIKit/UIKit.h>
 #import "IndoorAtlasLocationService.h"
-#import <IndoorAtlas/IAResourceManager.h>
 
 @interface IndoorAtlasLocationService()<IALocationManagerDelegate> {
 }
 
 @property (nonatomic, strong) IALocationManager *manager;
-@property (nonatomic, strong) IAResourceManager *resourceManager;
 @property (nonatomic, retain) NSString *apikey;
 @property (nonatomic, retain) NSString *apiSecret;
 @property (nonatomic, strong) IAFloorPlan *previousFloorplan;
@@ -45,9 +43,6 @@
 
         self.manager.delegate = self;
         serviceStopped = YES;
-
-        // Create floor plan manager
-        self.resourceManager = [IAResourceManager resourceManagerWithLocationManager:self.manager];
     }
     return self;
 }
@@ -160,108 +155,6 @@
     if([self.delegate respondsToSelector:@selector(location:didUpdateRoute:)]) {
         [self.delegate location:self didUpdateRoute:route];
     }
-}
-
-// DEPRECATED
-// Gets coordinate to a given point
-- (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords
-{
-    NSLog(@"getCoordinateToPoint: previousFloorplanName %@", _previousFloorplan.name);
-    NSLog(@"getCoordinateToPoint: longitude %f", coords.longitude);
-    NSLog(@"getCoordinateToPoint: latitude %f", coords.latitude);
-
-    __weak IndoorAtlasLocationService *weakSelf = self;
-
-    // New floorplan information is not fetched if current and previous ids are the same
-    // Finally, sendCoordinateToPoint function is called which prepares the data for Cordova and Javascript
-    if ([floorplanId isEqualToString:self.previousFloorplan.floorPlanId]) {
-
-        CGPoint points = [self.previousFloorplan coordinateToPoint:coords];
-        [weakSelf.delegate sendCoordinateToPoint:points];
-
-    } else {
-
-        // Fetches new floorplan information and calls sendCoordinateToPoint to send the data to Cordova and Javcascript.
-        [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
-            if (error) {
-                NSLog(@"Error during floorplan fetch: %@", error);
-                if ([weakSelf.delegate respondsToSelector:@selector(errorInCoordinateToPoint:)]) {
-                    [weakSelf.delegate errorInCoordinateToPoint:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];};
-
-                /*if ([weakSelf.delegate respondsToSelector:@selector(location:didFloorPlanFailedWithError:)]) {
-                    [weakSelf.delegate  location:weakSelf didFloorPlanFailedWithError:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];
-                }*/
-                return;
-            }
-
-            NSLog(@"getCoordinateToPoint: fetched floorplan with id: %@", floorplan.floorPlanId);
-            CGPoint points = [floorplan coordinateToPoint:coords];
-            NSLog(@"getCoordinateToPoint: point %@", NSStringFromCGPoint(points));
-            self.previousFloorplan = floorplan;
-            [weakSelf.delegate sendCoordinateToPoint:points];
-        }];
-    };
-}
-
-// DEPRECATED
-// Gets point to a given coordinate
-- (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point
-{
-    NSLog(@"getPointToCoordinate: previousFloorplanName %@", _previousFloorplan.name);
-    NSLog(@"getPointToCoordinate: point %@", NSStringFromCGPoint(point));
-
-    __weak IndoorAtlasLocationService *weakSelf = self;
-
-    // New floorplan information is not fetched if current and previous ids are the same
-    // Finally, sendCoordinateToPoint function is called which prepares the data for Cordova and Javascript
-    if (floorplanId == self.previousFloorplan.floorPlanId) {
-
-        CLLocationCoordinate2D coords = [self.previousFloorplan pointToCoordinate:point];
-        [weakSelf.delegate sendPointToCoordinate:coords];
-    } else {
-
-        // Fetches new floorplan information and calls sendPointToCoordinate to send the data to Cordova and Javcascript.
-        [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
-            if (error) {
-                NSLog(@"Error during floorplan fetch: %@", error);
-                if ([weakSelf.delegate respondsToSelector:@selector(errorInPointToCoordinate:)]) {
-                    [weakSelf.delegate errorInPointToCoordinate:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];};
-                return;
-            }
-
-            NSLog(@"getPointToCoordinate: fetched floorplan with id: %@", floorplan.floorPlanId);
-            CLLocationCoordinate2D coords = [floorplan pointToCoordinate:point];
-            self.previousFloorplan = floorplan;
-            NSLog(@"getPointToCoordinate: latitude %f", coords.latitude);
-            NSLog(@"getPointToCoordinate: longitude %f", coords.longitude);
-            [weakSelf.delegate sendPointToCoordinate:coords];
-        }];
-    };
-}
-
-#pragma mark Resource Manager
-/**
- * Fetch floor plan and image with ID
- * These methods are just wrappers around server requests.
- * You will need api key and secret to fetch resources.
- */
-- (void)fetchFloorplanWithId:(NSString *)floorplanId callbackId:(NSString *)callbackId
-{
-    __weak IndoorAtlasLocationService *weakSelf = self;
-    [self.resourceManager fetchFloorPlanWithId:floorplanId andCompletion:^(IAFloorPlan *floorplan, NSError *error) {
-        if (error) {
-            NSLog(@"Error during floorplan fetch: %@", error);
-            if ([weakSelf.delegate respondsToSelector:@selector(location:didFloorPlanFailedWithError:)]) {
-                [weakSelf.delegate  location:weakSelf didFloorPlanFailedWithError:[NSError errorWithDomain:@"Service Unavailable" code:kIAStatusServiceUnavailable userInfo:nil]];
-            }
-            return;
-        }
-
-        NSLog(@"fetched floorplan with id: %@", floorplanId);
-        if ([weakSelf.delegate respondsToSelector:@selector(location:withFloorPlan: callbackId:)]) {
-            [weakSelf.delegate  location:weakSelf withFloorPlan:floorplan callbackId:callbackId];
-        }
-    }];
 }
 
 - (void)valueForDistanceFilter:(float *)distance
