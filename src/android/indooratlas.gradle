@@ -3,6 +3,9 @@ repositories {
     maven {
         url "https://indooratlas-ltd.bintray.com/mvn-public/"
     }
+    maven {
+        url "https://indooratlas-ltd.bintray.com/mvn-public-beta/"
+    }
 }
 
 dependencies {

@@ -29,17 +29,16 @@
  *
  *  @return Object for indoor navigation
  */
-- (id)init:(NSString *)apikey hash:(NSString *)apisecret
+- (id)init:(NSString *)apikey
 {
     self = [super init];
     if (self) {
         self.apikey = apikey;
-        self.apiSecret = apisecret;
         // Create IALocationManager and point delegate to receiver
         self.manager = [IALocationManager new];
 
-        // Set IndoorAtlas API key and secret
-        [self.manager setApiKey:self.apikey andSecret:self.apiSecret];
+        // Set IndoorAtlas API key
+        [self.manager setApiKey:self.apikey andSecret:@" "];
 
         self.manager.delegate = self;
         serviceStopped = YES;

@@ -74,7 +74,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
 
-- (id)init:(NSString *)apikey hash:(NSString *)apisecret;
+- (id)init:(NSString *)apikey;
 /**
  *  Start positioning
  *

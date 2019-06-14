@@ -383,11 +383,9 @@
 {
     NSString *callbackId = command.callbackId;
     CDVPluginResult *pluginResult;
-    NSDictionary *options = [command.arguments objectAtIndex:0];
+    NSString *iakey = [command.arguments objectAtIndex:0];
 
-    NSString *iakey = [options objectForKey:@"key"];
-    NSString *iasecret = [options objectForKey:@"secret"];
-    if (iakey == nil || iasecret == nil) {
+    if (iakey == nil) {
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
         [result setObject:@"Invalid access token" forKey:@"message"];
@@ -395,7 +393,7 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
     else {
-        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey hash:iasecret];
+        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey];
         self.IAlocationInfo.delegate = self;
 
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];

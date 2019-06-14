@@ -1,3 +1,7 @@
+Version 3.0.0 - June 2019
+----------------
+ * new API
+
 Version 2.10.3 - June 2019
 ------------------------------
  * Update IndoorAtlas SDKs to 3.0.3
@@ -12,6 +16,8 @@ Version 2.10.1 - May 2019
 
 Version 2.10.0 - April 2019
 ------------------------------
+ * Backwards compatibility release: The 2.x IndoorAtlas Cordova API will not
+   be maintained after the 2.10.x versions
  * Update IndoorAtlas iOS SDK to 3.0 while keeping the current Cordova API
  * Minumum supported Android minSdkVersion raised to 21
 
