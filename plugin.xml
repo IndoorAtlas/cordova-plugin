@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="2.10.2">
+        version="2.10.3">
 
   <name>IndoorAtlas</name>
   <description>IndoorAtlas Cordova Plugin.</description>
@@ -45,7 +45,7 @@
         <key>name</key>
         <string>cordova</string>
         <key>version</key>
-        <string>2.10.2</string>
+        <string>2.10.3</string>
       </dict>
     </config-file>
     <framework src="CFNetwork.framework"/>

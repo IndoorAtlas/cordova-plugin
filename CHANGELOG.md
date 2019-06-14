@@ -1,3 +1,7 @@
+Version 2.10.3 - June 2019
+------------------------------
+ * Update IndoorAtlas SDKs to 3.0.3
+
 Version 2.10.2 - June 2019
 ------------------------------
  * Update IndoorAtlas SDKs to 3.0.2
