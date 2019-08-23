@@ -1,3 +1,4 @@
+var CoordinateTransforms = require('./CoordinateTransforms');
 /**
  * A data object describing a floor plan.
  * Can be obtained with {@link #watchFloorPlan} or as the
@@ -128,7 +129,7 @@ var FloorPlan = function(data) {
    * // returns { latitude: 63.1234, longitude: 24.1234 }
    */
   this.pointToCoordinate = function(x, y) {
-    return IndoorAtlas.CoordinateTransforms.pixToWgs(
+    return CoordinateTransforms.pixToWgs(
       {
         scale: [this.widthMeters, this.heightMeters],
         location: [this.center[1], this.center[0]] ,
@@ -149,7 +150,7 @@ var FloorPlan = function(data) {
    * // returns { x: 405, y: 185 }
    */
   this.coordinateToPoint = function(lat, lon) {
-    return IndoorAtlas.CoordinateTransforms.wgsToPix(
+    return CoordinateTransforms.wgsToPix(
       {
         scale: [this.widthMeters, this.heightMeters],
         location: [this.center[1], this.center[0]] ,

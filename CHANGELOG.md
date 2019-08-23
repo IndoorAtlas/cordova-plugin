@@ -1,3 +1,8 @@
+Version 3.0.1 - August 2019
+----------------
+ * Fix FloorPlan.coordinateToPoint & pointToCoordinate. Both methods
+   crashed with a JavaScript error before this fix
+
 Version 3.0.0 - June 2019
 ----------------
  * new API
