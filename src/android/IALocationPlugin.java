@@ -2,57 +2,36 @@ package com.ialocation.plugin;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Matrix;
-import android.graphics.Point;
-import android.graphics.PointF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 import android.content.Context;
 
 import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IALocationRequest;
 import com.indooratlas.android.sdk.IARegion;
-import com.indooratlas.android.sdk.resources.IAFloorPlan;
-import com.indooratlas.android.sdk.resources.IALatLng;
-import com.indooratlas.android.sdk.resources.IAResourceManager;
-import com.indooratlas.android.sdk.resources.IAResult;
-import com.indooratlas.android.sdk.resources.IAResultCallback;
-import com.indooratlas.android.sdk.resources.IATask;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
-import com.indooratlas.android.wayfinding.IARoutingLeg;
-import com.indooratlas.android.wayfinding.IARoutingPoint;
-import com.indooratlas.android.wayfinding.IAWayfinder;
+import com.indooratlas.android.sdk.IAWayfindingRequest;
 
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.ArrayList;
-
 /**
  * Cordova Plugin which implements IndoorAtlas positioning service.
  * IndoorAtlas.initialize method should always be called before starting positioning session.
  */
-public class IALocationPlugin extends CordovaPlugin{
+public class IALocationPlugin extends CordovaPlugin {
     private static final String TAG = "IALocationPlugin";
     private static final int PERMISSION_REQUEST = 101;
 
     private IALocationManager mLocationManager;
-    private IAResourceManager mResourceManager;
-    private IATask<IAFloorPlan> mFetchFloorplanTask;
     private String[] permissions = new String[]{
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
@@ -63,12 +42,8 @@ public class IALocationPlugin extends CordovaPlugin{
     private CallbackContext mCbContext;
     private IndoorLocationListener mListener;
     private boolean mLocationServiceRunning = false;
-    private Timer mTimer;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
     private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
-
-    private IAWayfinder wayfinder;
-    private ArrayList<IAWayfinder> wayfinderInstances = new ArrayList<IAWayfinder>();
 
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
@@ -140,7 +115,8 @@ public class IALocationPlugin extends CordovaPlugin{
                 if (validateIAKeys(args)) {
                     String apiKey = args.getString(0);
                     String apiSecret = args.getString(1);
-                    initializeIndoorAtlas(apiKey, apiSecret, callbackContext);
+                    String pluginVersion = args.getString(2);
+                    initializeIndoorAtlas(apiKey, apiSecret, pluginVersion, callbackContext);
                 }
                 else {
                     callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_ACCESS_TOKEN));
@@ -185,21 +161,6 @@ public class IALocationPlugin extends CordovaPlugin{
                 String watchId = args.getString(0);
                 clearRegionWatch(watchId);
                 callbackContext.success();
-            } else if("fetchFloorplan".equals(action)) {
-                if (!args.getString(0).isEmpty()) {
-                    String floorplanId = args.getString(0);
-                    fetchFloorplan(floorplanId, callbackContext);
-                } else {
-                    callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNDEFINED));
-                }
-            } else if ("coordinateToPoint".equals(action)) {
-                IALatLng coords = new IALatLng(args.getDouble(0), args.getDouble(1));
-                String floorplanId = args.getString(2);
-                coordinateToPoint(coords, floorplanId, callbackContext);
-            } else if ("pointToCoordinate".equals(action)) {
-                PointF point = new PointF(args.getInt(0), args.getInt(1));
-                String floorplanId = args.getString(2);
-                pointToCoordinate(point, floorplanId, callbackContext);
             } else if ("setDistanceFilter".equals(action)) {
                 float distance = (float) args.getDouble(0);
                 setDistanceFilter(distance, callbackContext);
@@ -223,18 +184,21 @@ public class IALocationPlugin extends CordovaPlugin{
               addStatusChangedCallback(callbackContext);
             } else if ("removeStatusCallback".equals(action)) {
               removeStatusCallback();
-            } else if ("buildWayfinder".equals(action)) {
-                String graphJson = args.getString(0);
-                buildWayfinder(graphJson, callbackContext);
-            } else if ("computeRoute".equals(action)) {
-                int wayfinderId = args.getInt(0);
-                Double lat0 = args.getDouble(1);
-                Double lon0 = args.getDouble(2);
-                int floor0 = args.getInt(3);
-                Double lat1 = args.getDouble(4);
-                Double lon1 = args.getDouble(5);
-                int floor1 = args.getInt(6);
-                computeRoute(wayfinderId, lat0, lon0, floor0, lat1, lon1, floor1, callbackContext);
+            } else if ("requestWayfindingUpdates".equals(action)) {
+              double lat = args.getDouble(0);
+              double lon = args.getDouble(1);
+              int floor = args.getInt(2);
+              requestWayfindingUpdates(lat, lon, floor, callbackContext);
+            } else if ("removeWayfindingUpdates".equals(action)) {
+              removeWayfindingUpdates();
+            } else if ("lockFloor".equals(action)) {
+              int floorNumber = args.getInt(0);
+              lockFloor(floorNumber);
+            } else if ("unlockFloor".equals(action)) {
+              unlockFloor();
+            } else if ("lockIndoors".equals(action)) {
+              boolean locked = args.getBoolean(0);
+              lockIndoors(locked);
             }
         }
         catch(Exception ex) {
@@ -281,7 +245,7 @@ public class IALocationPlugin extends CordovaPlugin{
      * @param apiKey
      * @param apiSecret
      */
-    private void initializeIndoorAtlas(final String apiKey, final String apiSecret, final CallbackContext callbackContext) {
+    private void initializeIndoorAtlas(final String apiKey, final String apiSecret, final String pluginVersion, final CallbackContext callbackContext) {
         if (mLocationManager == null){
             cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -289,160 +253,14 @@ public class IALocationPlugin extends CordovaPlugin{
                     Bundle bundle = new Bundle(2);
                     bundle.putString(IALocationManager.EXTRA_API_KEY, apiKey);
                     bundle.putString(IALocationManager.EXTRA_API_SECRET, apiSecret);
+                    bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperName", "cordova");
+                    if (pluginVersion != null) {
+                        bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperVersion", pluginVersion);
+                    }
                     mLocationManager = IALocationManager.create(cordova.getActivity().getApplicationContext(), bundle);
-                    mResourceManager = IAResourceManager.create(cordova.getActivity().getApplicationContext(), bundle);
                     callbackContext.success();
                 }
             });
-        }
-    }
-
-    /**
-     * Starts tasks to fetch floorplan from IA
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void fetchFloorplan(final String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            mFetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            mFetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    IAFloorPlan floorPlan;
-                    JSONObject floorplanInfo;
-                    JSONArray latlngArray;
-                    floorPlan = iaResult.getResult();
-                    IALatLng iaLatLng;
-                    try {
-                        if (floorPlan != null) {
-                            floorplanInfo = new JSONObject();
-                            floorplanInfo.put("id", floorPlan.getId());
-                            floorplanInfo.put("name", floorPlan.getName());
-                            floorplanInfo.put("url", floorPlan.getUrl());
-                            floorplanInfo.put("floorLevel", floorPlan.getFloorLevel());
-                            floorplanInfo.put("bearing", floorPlan.getBearing());
-                            floorplanInfo.put("bitmapHeight", floorPlan.getBitmapHeight());
-                            floorplanInfo.put("bitmapWidth", floorPlan.getBitmapWidth());
-                            floorplanInfo.put("heightMeters", floorPlan.getHeightMeters());
-                            floorplanInfo.put("widthMeters", floorPlan.getWidthMeters());
-                            floorplanInfo.put("metersToPixels", floorPlan.getMetersToPixels());
-                            floorplanInfo.put("pixelsToMeters", floorPlan.getPixelsToMeters());
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getBottomLeft();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("bottomLeft", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getCenter();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("center", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getTopLeft();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("topLeft", latlngArray);
-
-                            latlngArray = new JSONArray();
-                            iaLatLng = floorPlan.getTopRight();
-                            latlngArray.put(iaLatLng.longitude);
-                            latlngArray.put(iaLatLng.latitude);
-                            floorplanInfo.put("topRight", latlngArray);
-
-                            PluginResult pluginResult;
-                            pluginResult = new PluginResult(PluginResult.Status.OK, floorplanInfo);
-                            pluginResult.setKeepCallback(true);
-                            callbackContext.sendPluginResult(pluginResult);
-
-                        }
-                        else {
-                          PluginResult pluginResult;
-                          pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                          pluginResult.setKeepCallback(true);
-                          callbackContext.sendPluginResult(pluginResult);
-                        }
-                    }
-                    catch(JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        }
-        else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
-        }
-    }
-
-    /**
-     * Calculates point based on given coordinates
-     * @param coords
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void coordinateToPoint(final IALatLng coords, String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    JSONObject pointInfo = new JSONObject();
-                    IAFloorPlan floorPlan = iaResult.getResult();
-                    try {
-                        if (floorPlan != null) {
-                            PointF point = floorPlan.coordinateToPoint(coords);
-                            pointInfo.put("x", point.x);
-                            pointInfo.put("y", point.y);
-                            callbackContext.success(pointInfo);
-                        } else {
-                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                        }
-
-                    } catch (JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        } else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
-        }
-    }
-
-    /**
-     * Calculates coordinates based on given point
-     * @param point
-     * @param floorplanId
-     * @param callbackContext
-     */
-    private void pointToCoordinate(final PointF point, String floorplanId, final CallbackContext callbackContext) {
-        if (mResourceManager != null) {
-            IATask<IAFloorPlan> fetchFloorplanTask = mResourceManager.fetchFloorPlanWithId(floorplanId);
-            fetchFloorplanTask.setCallback(new IAResultCallback<IAFloorPlan>() {
-                @Override
-                public void onResult(IAResult<IAFloorPlan> iaResult) {
-                    JSONObject coordsInfo = new JSONObject();
-                    IAFloorPlan floorPlan = iaResult.getResult();
-                    try {
-                        if (floorPlan != null) {
-                            IALatLng coords = floorPlan.pointToCoordinate(point);
-                            coordsInfo.put("latitude", coords.latitude);
-                            coordsInfo.put("longitude", coords.longitude);
-                            callbackContext.success(coordsInfo);
-                        } else {
-                            callbackContext.error(PositionError.getErrorObject(PositionError.FLOOR_PLAN_UNAVAILABLE));
-                        }
-                    } catch (JSONException ex) {
-                        Log.e(TAG, ex.toString());
-                        throw new IllegalStateException(ex.getMessage());
-                    }
-                }
-            }, Looper.getMainLooper());
-        } else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
 
@@ -521,86 +339,62 @@ public class IALocationPlugin extends CordovaPlugin{
      }
 
     /**
-     * Initialize the graph with the given graph JSON
-     */
-    private void buildWayfinder(final String graphJson, CallbackContext callbackContext) {
-        int wayfinderId = wayfinderInstances.size();
-
-        cordova.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = cordova.getActivity().getApplicationContext();
-                wayfinder = IAWayfinder.create(context, graphJson);
-                wayfinderInstances.add(wayfinder);
-            }
-        });
-
-        JSONObject result = new JSONObject();
-        try {
-            result.put("wayfinderId", wayfinderId);
-            callbackContext.success(result);
-
-        } catch (JSONException e) {
-            Log.e("IAWAYFINDER", "wayfinderId was not set");
-        };
-    }
-
-    /**
      * Compute route for the given values;
      * 1) Set location of the wayfinder instance
      * 2) Set destination of the wayfinder instance
      * 3) Get route between the given location and destination
      */
-    private void computeRoute(int wayfinderId, Double lat0, Double lon0, int floor0, Double lat1, Double lon1, int floor1, CallbackContext callbackContext) {
-        wayfinder = wayfinderInstances.get(wayfinderId);
-        wayfinder.setLocation(lat0, lon0, floor0);
-        wayfinder.setDestination(lat1, lon1, floor1);
+    private void requestWayfindingUpdates(Double lat, Double lon, int floor, CallbackContext callbackContext) {
+        getListener(this).requestWayfindingUpdates(callbackContext);
+        final IAWayfindingRequest wayfindingRequest = new IAWayfindingRequest.Builder()
+            .withLatitude(lat)
+            .withLongitude(lon)
+            .withFloor(floor)
+            .build();
 
-        IARoutingLeg[] legs = wayfinder.getRoute();
-        JSONArray jsonArray = new JSONArray();
-        for (int i = 0; i < legs.length; i++) {
-            jsonArray.put(jsonObjectFromRoutingLeg(legs[i]));
-        }
-        JSONObject result = new JSONObject();
-
-        try {
-            result.put("route", jsonArray);
-            callbackContext.success(result);
-        } catch(JSONException e) {
-            Log.e("IAWAYFINDER", "json error with route");
-        }
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.requestWayfindingUpdates(wayfindingRequest, getListener(IALocationPlugin.this));
+            }
+        });
     }
 
-    /**
-     * Create JSON object from the given RoutingLeg object
-     */
-    private JSONObject jsonObjectFromRoutingLeg(IARoutingLeg routingLeg) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("begin", jsonObjectFromRoutingPoint(routingLeg.getBegin()));
-            obj.put("end", jsonObjectFromRoutingPoint(routingLeg.getEnd()));
-            obj.put("length", routingLeg.getLength());
-            obj.put("direction", routingLeg.getDirection());
-            obj.put("edgeIndex", routingLeg.getEdgeIndex());
-        } catch(JSONException e) {
-
-        }
-        return obj;
+    private void removeWayfindingUpdates() {
+        getListener(this).removeWayfindingUpdates();
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.removeWayfindingUpdates();
+            }
+        });
     }
 
-    /**
-     * Create JSON object from RoutingPoint object
-     */
-    private JSONObject jsonObjectFromRoutingPoint(IARoutingPoint routingPoint) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("latitude", routingPoint.getLatitude());
-            obj.put("longitude", routingPoint.getLongitude());
-            obj.put("floor", routingPoint.getFloor());
-        } catch(JSONException e) {
+    private void lockFloor(final int floorNumber) {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.lockFloor(floorNumber);
+            }
+        });
+    }
 
-        }
-        return obj;
+    private void unlockFloor() {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.unlockFloor();
+            }
+        });
+    }
+
+    private void lockIndoors(final boolean locked) {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              mLocationManager.lockIndoors(locked);
+            }
+        });
     }
 
     /**
@@ -658,12 +452,10 @@ public class IALocationPlugin extends CordovaPlugin{
           String floorPlanId = args.getString(2).trim();
           String venueId = args.getString(3).trim();
 
-          if (!floorPlanId.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.floorPlan(floorPlanId));
-          } else if (!region.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.floorPlan(region));
-          } else if (!venueId.equalsIgnoreCase("")) {
-            builder.withRegion(IARegion.venue(venueId));
+          if (!floorPlanId.isEmpty() || !region.isEmpty() || !venueId.isEmpty()) {
+            // TODO: explicit region IDs are deprecated in SDK 2.9
+            callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
+            return;
           }
 
           if (location.length() == 2) {
@@ -707,7 +499,8 @@ public class IALocationPlugin extends CordovaPlugin{
     }
 
     private void setDistanceFilter(float distance, CallbackContext callbackContext) {
-        stopPositioning();
+        final boolean wasRunning = mLocationServiceRunning;
+        if (wasRunning) stopPositioning();
         if (distance >= 0) {
             mLocationRequest.setSmallestDisplacement(distance);
             JSONObject successObject = new JSONObject();
@@ -718,7 +511,7 @@ public class IALocationPlugin extends CordovaPlugin{
                 throw new IllegalStateException(ex.getMessage());
             }
             callbackContext.success(successObject);
-            startPositioning();
+            if (wasRunning) startPositioning();
         } else {
             callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_VALUE));
         }

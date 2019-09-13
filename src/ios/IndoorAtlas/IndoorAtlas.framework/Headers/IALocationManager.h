@@ -5,6 +5,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
 #import <IndoorAtlas/IAFloor.h>
+#import <IndoorAtlas/IAFloorPlan.h>
 
 #define INDOORATLAS_API __attribute__((visibility("default")))
 
@@ -50,6 +51,9 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 
     /**
      * Location service temporarily unavailable. This could be due to no network connectivity.
+     * This mostly happens in the beginning of a positioning session when the SDK need to
+     * authenticate itself in the IndoorAtlas cloud and download map data, if it has not been
+     * cached yet.
      */
     kIAStatusServiceUnavailable = 1,
 
@@ -60,6 +64,7 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 
     /**
      * Location service is running but with limited accuracy and functionality.
+     * This typically means that location permissions were not given to the application.
      */
     kIAStatusServiceLimited = 10,
 };
@@ -67,23 +72,27 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 /**
  * Defines the device calibration quality.
  * The quality of calibration affects location accuracy.
+ * @deprecated Deprecated since SDK 3.0
  */
 typedef NS_ENUM(NSInteger, ia_calibration) {
     /**
      * Quality is poor.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationPoor,
 
     /**
      * Quality is good.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationGood,
 
     /**
      * Quality is excellent.
+     * @deprecated Deprecated since SDK 3.0
      */
     kIACalibrationExcellent,
-};
+} __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * Defines the accuracy of location.
@@ -100,6 +109,25 @@ typedef NS_ENUM(NSInteger, ia_location_accuracy) {
      */
     kIALocationAccuracyLow,
 };
+
+/**
+ * Represents a venue in IndoorAtlas system
+ */
+INDOORATLAS_API
+@interface IAVenue : NSObject
+/**
+ * Name of the venue
+ */
+@property (nonatomic, strong, nonnull) NSString *name;
+/**
+ * Mapped floors that the venue has
+ */
+@property (nonatomic, strong, nonnull) NSArray *floorplans;
+/**
+ * ID of the venue in IndoorAtlas developer console
+ */
+@property (nonatomic, strong, nonnull) NSString *id;
+@end
 
 /**
  * An IARegion object represents a region on Earth.
@@ -124,6 +152,14 @@ INDOORATLAS_API
  * If there is an event related to region this is the timestamp of that event.
  */
 @property (nonatomic, strong, nullable) NSDate *timestamp;
+/**
+ * If there is a venue related to this region this is the venue of that.
+ */
+@property (nonatomic, strong, nullable) IAVenue *venue;
+/**
+ * If there is a floorplan related to this region this is the floorplan of that.
+ */
+@property (nonatomic, strong, nullable) IAFloorPlan *floorplan;
 @end
 
 /**
@@ -180,6 +216,90 @@ INDOORATLAS_API
 @end
 
 /**
+ * Provides wayfinding destination for the SDK.
+ */
+INDOORATLAS_API
+@interface IAWayfindingRequest : NSObject
+/**
+ * Wayfinding request's destination coordinate.
+ */
+@property (nonatomic, assign) CLLocationCoordinate2D coordinate;
+
+/**
+ * Wayfinding request's destination floor level.
+ */
+@property (nonatomic, assign) NSInteger floor;
+@end
+
+INDOORATLAS_API
+@interface IARoutePoint : NSObject
+/**
+ * Coordinate of this point.
+ */
+@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
+
+/**
+ * Floor number of this point.
+ */
+@property (nonatomic, readonly) NSInteger floor;
+
+/**
+ * Get the index of the point. This is the zero-based index of the node
+ * in the original JSON graph this point corresponds to. If this is a
+ * virtual wayfinding node, e.g., a starting point of the route outside
+ * the original graph, nodeIndex will be -1.
+ */
+@property (nonatomic, readonly) NSInteger nodeIndex;
+@end
+
+/**
+ * Object representing the line segment between two <IARoutePoint>s.
+ * Includes the distance and direction of the segment as well as the start and end points.
+ */
+INDOORATLAS_API
+@interface IARouteLeg : NSObject
+/**
+ * The <IARoutePoint> representing the beginning of this leg.
+ */
+@property (nonatomic, readonly, nonnull) IARoutePoint *begin;
+
+/**
+ * The <IARoutePoint> representing the end of this leg.
+ */
+@property (nonatomic, readonly, nonnull) IARoutePoint *end;
+
+/**
+ * Length of the line segment in meters.
+ */
+@property (nonatomic, readonly) double length;
+
+/**
+ * Direction of the line segment in ENU coordinates in degrees.
+ * 0 is North and 90 is East.
+ */
+@property (nonatomic, readonly) double direction;
+
+/**
+ * Zero-based index of the edge corresponding to this leg in the
+ * original JSON graph. If this is a virtual leg, for example, a
+ * segment connecting an off-graph starting point to the graph,
+ * edgeIndex will be -1.
+ */
+@property (nonatomic, readonly) NSInteger edgeIndex;
+@end
+
+/**
+ * Structure representing a route from user's location to destination.
+ */
+INDOORATLAS_API
+@interface IARoute : NSObject
+/**
+ * An array of <IARouteLeg>s connecting user's location to destination.
+ */
+@property (nonatomic, readonly, nonnull) NSArray<IARouteLeg*> *legs;
+@end
+
+/**
  * <IAStatus> specifies the current status of locationing service.
  */
 INDOORATLAS_API
@@ -207,35 +327,25 @@ INDOORATLAS_API
 /**
  * @name Initializing a Location Object
  *
- * Indicate current location to positioning service. Can be used to set either the explicit location (latitude, longitude, accuracy, floor level) or the explicit region (venue or floorplan id)
+ * Indicate current location to positioning service. Can be used to set the explicit location (latitude, longitude, accuracy, floor level)
  */
+
+/**
+* Initializes and returns a location object with specified CoreLocation information.
+* @param location CLLocation object. Might be initialized in code or from CLLocationManager.
+*
+* An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
+*/
++ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location;
 
 /**
  * Initializes and returns a location object with specified CoreLocation information.
  * @param location CLLocation object. Might be initialized in code or from CLLocationManager.
+ * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
  *
  * An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
  */
-+ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location;
-
-/**
- * Initializes and returns a location object with specified floor plan id.
- * @param floorPlanId Identifier of the floor plan.
- *
- * An explicit floor plan is used for initialising and locking the positioning to a certain floor. This means that the position estimate is not free to leave the indicated floor.
- * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
- */
-+ (nonnull IALocation*)locationWithFloorPlanId:(nonnull NSString*)floorPlanId;
-
-/**
- * Initializes and returns a location object with specified venue id (and floor).
- * @param venueId Identifier of the venue.
- * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
- *
- * An explicit venue is used for locking the positioning to a certain venue context (if a NIL floor is set). This means that the position estimate is not free to leave the indicated venue, but can move between floors. If an explicit floor is also given, the estimate is locked to that floor.
- * Using explicit location or venue id inputs is generally not recommended, and should only be used in difficult signal environments where getting first fix is not possible otherwise.
- */
-+ (nonnull IALocation*)locationWithVenueId:(nonnull NSString*)venueId andFloor:(nullable IAFloor*)floor;
++ (nonnull IALocation*)locationWithCLLocation:(nonnull CLLocation*)location andFloor:(nullable IAFloor*)floor;
 
 /**
  * @name Location Attributes
@@ -303,8 +413,7 @@ INDOORATLAS_API
  *
  * Upon receiving a successful location update, you can use the result to update your user interface or perform other actions.
  *
- * The methods of your delegate object are called from the thread in which you started the corresponding location services.
- * That thread must itself have an active run loop, like the one found in your application's main thread.
+ * The methods of your delegate object are called from the main thread.
  */
 INDOORATLAS_API
 @protocol IALocationManagerDelegate <NSObject>
@@ -341,6 +450,13 @@ INDOORATLAS_API
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didExitRegion:(nonnull IARegion*)region;
 
 /**
+ * Tells the delegate that the wayfinding route was updated.
+ * @param manager The location manager object that generated the event.
+ * @param route The new route.
+ */
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager didUpdateRoute:(nonnull IARoute*)route;
+
+/**
  * Tells that <IALocationManager> status changed. This is used to signal network connection issues.
  * @param manager The location manager object that generated the event.
  * @param status The status at the time of the event.
@@ -351,8 +467,9 @@ INDOORATLAS_API
  * Tells that calibration quality changed.
  * @param manager The location manager object that generated the event.
  * @param quality The calibration quality at the time of the event.
+ * @deprecated Deprecated since SDK 3.0
  */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager calibrationQualityChanged:(enum ia_calibration)quality;
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager calibrationQualityChanged:(enum ia_calibration)quality __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * Tells that extra information dictionary was received. This dictionary contains
@@ -381,6 +498,7 @@ INDOORATLAS_API
  * The IALocationManager class is central point for configuring the delivery of indoor location related events to your app.
  * You use and instance of this class to establish the parameters that determine when location events should be delivered and to start and stop the actual delivery of those events.
  * You can also use a location manager object to retrieve the most recent location data.
+ * The shared instance, property changes and methods of this class must be called from the application main thread only
  */
 INDOORATLAS_API
 @interface IALocationManager : NSObject
@@ -388,8 +506,9 @@ INDOORATLAS_API
  * The latest calibration quality value
  *
  * @param calibration See possible values at [ia_calibration](/Constants/ia_calibration.html)
+ * @deprecated Deprecated since SDK 3.0
  */
-@property (nonatomic, readonly) enum ia_calibration calibration;
+@property (nonatomic, readonly) enum ia_calibration calibration __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * The latest location update.
@@ -483,6 +602,25 @@ INDOORATLAS_API
 + (nonnull IALocationManager *)sharedInstance;
 
 /**
+ * Locks positioning to specified floor level
+ * @param floorNumber Floor level where the positioning is restricted
+ */
+- (void)lockFloor:(int)floorNumber;
+
+/**
+ * Unlocks positioning from locked floor. If lockFloor has not been called before, this is
+ * no-op.
+ */
+- (void)unlockFloor;
+
+/**
+ * Lock or unlock positioning indoors. Disables indoor-outdoor detection as well as GPS scanning
+ * if locked.
+ * @param lockIndoor boolean value indicating whether to lock or unlock indoor positioning
+ */
+- (void)lockIndoors:(bool)lockIndoor;
+
+/**
  * @name Authenticate your session
  */
 
@@ -539,7 +677,28 @@ INDOORATLAS_API
 - (void)stopMonitoringForGeofence:(nonnull IAGeofence*)geofence;
 
 /**
+ * Start monitoring for wayfinding updates.
+ * Calling this method causes the location manager to obtain a route from user's current location to destination defined in parameter "request" (this may take several seconds).
+ * Calling this method notify your delegate by calling its <indoorLocationManager:didUpdateRoute:> method. After that, the receiver generates update events whenever the route changes.
+ *
+ * Calling this method several times in succession overwrites the previously done requests.
+ * Calling <stopUpdatingLocation> in-between, however, does cause a new initial event to be sent the next time you call this method.
+ *
+ * @param request An <IAWayfindingRequest> specifying the type of wayfinding updates to monitor.
+ */
+- (void)startMonitoringForWayfinding:(nonnull IAWayfindingRequest*)request;
+
+/**
+ * Stops monitoring for wayfinding updates.
+ *
+ * Call this method whenever your code no longer needs to receive wayfinding route update events.
+ * You can always restart the generation of wayfinding route updates by calling the <startMonitoringForWayfinding> method again.
+ */
+- (void)stopMonitoringForWayfinding;
+
+/**
  * Marks init method as deprecated.
+* @deprecated
  */
 - (_Nullable id)init __attribute__((deprecated("[[IALocationManager alloc] init] is depreated. Use [IALocationManager sharedInstance] instead.")));
 @end

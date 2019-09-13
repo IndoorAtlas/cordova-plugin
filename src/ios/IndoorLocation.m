@@ -51,6 +51,7 @@
 @property (nonatomic, strong) NSString *addAttitudeUpdateCallbackID;
 @property (nonatomic, strong) NSString *addHeadingUpdateCallbackID;
 @property (nonatomic, strong) NSString *addStatusUpdateCallbackID;
+@property (nonatomic, strong) NSString *addRouteUpdateCallbackID;
 
 @end
 
@@ -282,6 +283,24 @@
     }
 }
 
+- (void)returnRouteInformation:(IARoute *)route
+{
+    if (_addRouteUpdateCallbackID == nil) {
+        NSLog(@"No wayfinding callback found");
+        return;
+    }
+
+    NSMutableArray<NSDictionary *>* routingLegs = [[NSMutableArray alloc] init];
+    for (int i = 0; i < [route.legs count]; i++) {
+        [routingLegs addObject:[self dictionaryFromRouteLeg:route.legs[i]]];
+    }
+    NSDictionary *result = @{@"legs": routingLegs};
+
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addRouteUpdateCallbackID];
+}
+
 - (void)returnStatusInformation:(NSString *)statusString code:(NSUInteger) code
 {
     if (_addStatusUpdateCallbackID != nil) {
@@ -298,15 +317,54 @@
 
 - (NSDictionary *)formatRegionInfo:(IARegion *)regionInfo andTransitionType:(IndoorLocationTransitionType)transitionType
 {
-    NSMutableDictionary *result;
-    result = [[NSMutableDictionary alloc] init];
-    [result setObject:regionInfo.identifier forKey:@"regionId"];
-    NSNumber *timestamp = [NSNumber numberWithDouble:([regionInfo.timestamp timeIntervalSince1970] * 1000)];
-    [result setObject:timestamp forKey:@"timestamp"];
-    [result setObject:[NSNumber numberWithInt:regionInfo.type] forKey:@"regionType"];
-    [result setObject:[NSNumber numberWithInteger:transitionType] forKey:@"transitionType"];
+    NSMutableDictionary *result = [@{@"regionId": regionInfo.identifier,
+                                     @"timestamp": [NSNumber numberWithDouble:([regionInfo.timestamp timeIntervalSince1970] * 1000)],
+                                     @"regionType": [NSNumber numberWithInt:regionInfo.type],
+                                     @"transitionType": [NSNumber numberWithInteger:transitionType]
+                                     } mutableCopy];
+
+    if (regionInfo.venue != nil) {
+        NSMutableDictionary *venue = [@{@"id": regionInfo.venue.id,
+                                        @"name": regionInfo.venue.name
+                                        } mutableCopy];
+
+        NSMutableArray *floorplans = [[NSMutableArray alloc] initWithCapacity:regionInfo.venue.floorplans.count];
+        for (size_t i = 0; i < regionInfo.venue.floorplans.count; i++) {
+            [floorplans addObject:[self floorPlanToDictionary:[regionInfo.venue.floorplans objectAtIndex:i]]];
+        }
+        [venue setObject:floorplans forKey:@"floorPlans"];
+        [result setObject:venue forKey:@"venue"];
+    }
+    if (regionInfo.floorplan != nil) {
+        [result setObject:[self floorPlanToDictionary:regionInfo.floorplan] forKey:@"floorPlan"];
+    }
     return result;
 }
+
+- (NSDictionary *)floorPlanToDictionary:(IAFloorPlan *)floorplan
+{
+    NSMutableDictionary *dict = [@{@"id": floorplan.floorPlanId,
+                           @"name": floorplan.name,
+                           @"url": floorplan.imageUrl.absoluteString,
+                           @"bearing": @(floorplan.bearing),
+                           @"bitmapHeight": @(floorplan.height),
+                           @"bitmapWidth": @(floorplan.width),
+                           @"heightMeters": @(floorplan.heightMeters),
+                           @"widthMeters": @(floorplan.widthMeters),
+                           @"metersToPixels": @(floorplan.meterToPixelConversion),
+                           @"pixelsToMeters": @(floorplan.pixelToMeterConversion),
+                           @"bottomLeft": @[@(floorplan.bottomLeft.longitude), @(floorplan.bottomLeft.latitude)],
+                           @"center": @[@(floorplan.center.longitude), @(floorplan.center.latitude)],
+                           @"topLeft": @[@(floorplan.topLeft.longitude), @(floorplan.topLeft.latitude)],
+                           @"topRight": @[@(floorplan.topRight.longitude), @(floorplan.topRight.latitude)],
+                           } mutableCopy];
+    if (floorplan.floor) {
+        [dict setObject:[NSNumber numberWithInteger:floorplan.floor.level] forKey:@"floorLevel"];
+    }
+
+    return dict;
+}
+
 - (void)dealloc
 {
     self.locationManager.delegate = nil;
@@ -325,11 +383,9 @@
 {
     NSString *callbackId = command.callbackId;
     CDVPluginResult *pluginResult;
-    NSDictionary *options = [command.arguments objectAtIndex:0];
+    NSString *iakey = [command.arguments objectAtIndex:0];
 
-    NSString *iakey = [options objectForKey:@"key"];
-    NSString *iasecret = [options objectForKey:@"secret"];
-    if (iakey == nil || iasecret == nil) {
+    if (iakey == nil) {
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
         [result setObject:@"Invalid access token" forKey:@"message"];
@@ -337,7 +393,7 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
     else {
-        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey hash:iasecret];
+        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey];
         self.IAlocationInfo.delegate = self;
 
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -347,53 +403,6 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
 
-}
-
-- (void)setPosition:(CDVInvokedUrlCommand *)command
-{
-    NSString *callbackId = command.callbackId;
-
-    if (self.IAlocationInfo == nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
-        [posError setObject:@"Invalid access token" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-
-    }
-    else {
-        NSString *region = [command.arguments objectAtIndex:0];
-        NSArray *location = [command.arguments objectAtIndex:1];
-        NSString *floorPlanId = [command.arguments objectAtIndex:2];
-        NSString *venueId = [command.arguments objectAtIndex:3];
-
-        CLLocation *newLocation = nil;
-        if([location count] == 2) {
-            newLocation = [[CLLocation alloc] initWithLatitude:[location[0] doubleValue] longitude:[location[1] doubleValue]];
-        }
-
-        if (floorPlanId != nil && ![floorPlanId isEqualToString:@""]) {
-            [self.IAlocationInfo setFloorPlan:floorPlanId];
-
-        } else if (region != nil && ![region isEqualToString:@""]) {
-            [self.IAlocationInfo setFloorPlan:region];
-
-        } else if (venueId != nil && ![venueId isEqualToString:@""]) {
-            [self.IAlocationInfo setVenue: venueId];
-
-        }
-
-        if (location != nil) {
-            [self.IAlocationInfo setLocation: newLocation];
-        }
-
-        CDVPluginResult *pluginResult;
-        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-        [result setObject:[NSNumber numberWithInt:0] forKey:@"code"];
-        [result setObject:@"service Initialize" forKey:@"message"];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
-    }
 }
 
 - (void)getLocation:(CDVInvokedUrlCommand *)command
@@ -559,6 +568,11 @@
     _addHeadingUpdateCallbackID = nil;
 }
 
+- (void)removeRouteCallback:(CDVInvokedUrlCommand *)command
+{
+    _addRouteUpdateCallbackID = nil;
+}
+
 - (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command
 {
     _addStatusUpdateCallbackID = command.callbackId;
@@ -574,79 +588,27 @@
     [self _stopLocation];
 }
 
-- (void)fetchFloorplan:(CDVInvokedUrlCommand *)command
+- (void)setPosition:(CDVInvokedUrlCommand *)command
 {
-    [self.IAlocationInfo fetchFloorplanWithId:[command argumentAtIndex:0] callbackId: command.callbackId];
-}
+    NSString *region = [command argumentAtIndex:0];
+    NSArray *location = [command argumentAtIndex:1];
+    NSString *floorPlanId = [command argumentAtIndex:2];
+    NSString *venueId = [command argumentAtIndex:3];
 
-// DEPRECATED
-// CoordinateToPoint Method
-// Gets the arguments from the function call that is done in the Javascript side, then calls IALocationService's getCoordinateToPoint function
-- (void)coordinateToPoint:(CDVInvokedUrlCommand *)command
-{
-    // Callback id of the call from Javascript side
-    self.coordinateToPointCallbackID = command.callbackId;
+    if ([region length] != 0 || [floorPlanId length] != 0 || [venueId length] != 0) {
+        [self sendErrorCommand:command withMessage:@"An initialization error occured at setPosition"];
+        return;
+    }
 
-    NSString *floorplanid = [command argumentAtIndex:2];
-    NSString *latitude = [command argumentAtIndex:0];
-    NSString *longitude = [command argumentAtIndex:1];
-
-    CLLocationCoordinate2D coords = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
-    NSLog(@"coordinateToPoint: latitude %f", coords.latitude);
-    NSLog(@"coordinateToPoint: longitude %f", coords.longitude);
-
-    [self.IAlocationInfo getCoordinateToPoint:floorplanid andCoordinates:coords];
-}
-
-// DEPRECATED
-// Prepares the result for Cordova plugin and Javascript side. Point is stored in dictionary which is then passed to Javascript side with the Cordova functions
-- (void)sendCoordinateToPoint:(CGPoint) point
-{
-    NSLog(@"sendCoordinateToPoint: point %@", NSStringFromCGPoint(point));
-
-    NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:2];
-    [returnInfo setObject:[NSNumber numberWithDouble:point.x] forKey:@"x"];
-    [returnInfo setObject:[NSNumber numberWithDouble:point.y] forKey:@"y"];
-
-    // Cordova plugin functions
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-    [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
-}
-
-// DEPRECATED
-// PointToCoordinate Method
-// Gets the arguments from the function call that is done in the Javascript side, then calls IALocationService's getPointToCoordinate function
-- (void)pointToCoordinate:(CDVInvokedUrlCommand *)command
-{
-    // Callback id of the call from Javascript side
-    self.pointToCoordinateCallbackID = command.callbackId;
-
-    NSString *floorplanid = [command argumentAtIndex:2];
-    NSString *x = [command argumentAtIndex:0];
-    NSString *y = [command argumentAtIndex:1];
-
-    NSLog(@"pointToCoordinate: x %@", x);
-    NSLog(@"pointToCoordinate: y %@", y);
-
-    CGPoint point = CGPointMake([x floatValue], [y floatValue]);
-
-    [self.IAlocationInfo getPointToCoordinate:floorplanid andPoint:point];
-}
-
-// DEPRECATED
-// Prepares the result for Cordova plugin and Javascript side. Point is stored in dictionary which is then passed to Javascript side with the Cordova functions
-- (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords
-{
-    NSLog(@"sendPointToCoordinate: latitude %f", coords.latitude);
-    NSLog(@"sendPointToCoordinate: longitude %f", coords.longitude);
-
-    NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:2];
-    [returnInfo setObject:[NSNumber numberWithDouble:coords.latitude] forKey:@"latitude"];
-    [returnInfo setObject:[NSNumber numberWithDouble:coords.longitude] forKey:@"longitude"];
-
-    // Cordova plugin functions
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-    [self.commandDelegate sendPluginResult:result callbackId:self.pointToCoordinateCallbackID];
+    if ([location count] != 2) {
+        [self sendErrorCommand:command withMessage:@"An invalid input location at setPosition: the size of the array must be 2."];
+        return;
+    }
+    double latitude = [(NSNumber *)[location objectAtIndex:0] doubleValue];
+    double longitude = [(NSNumber *)[location objectAtIndex:1] doubleValue];
+    CLLocation *loc = [[CLLocation alloc] initWithLatitude:latitude longitude:longitude];
+    IALocation *iaLoc = [IALocation locationWithCLLocation:loc];
+    [self.IAlocationInfo setPosition:iaLoc];
 }
 
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command
@@ -707,99 +669,69 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-/**
- * Initialize the graph with the given graph JSON
- */
-- (void)buildWayfinder:(CDVInvokedUrlCommand *)command
+- (void)requestWayfindingUpdates:(CDVInvokedUrlCommand *)command
 {
-    NSString *graphJson = [command argumentAtIndex:0];
+    NSString *oLat = [command argumentAtIndex:0];
+    NSString *oLon = [command argumentAtIndex:1];
+    NSString *oFloor = [command argumentAtIndex:2];
+    self.addRouteUpdateCallbackID = command.callbackId;
+
+    const double lat = [oLat doubleValue];
+    const double lon = [oLon doubleValue];
+    const int floor = [oFloor intValue];
     
-    if (self.wayfinderInstances == nil) {
-        self.wayfinderInstances = [[NSMutableArray alloc] init];
-    }
-    
-    int wayfinderId = [self.wayfinderInstances count];
-    
-    @try {
-        IAWayfinding *wf = [[IAWayfinding alloc] initWithGraph:graphJson];
-        [self.wayfinderInstances addObject:wf];
-    } @catch(NSException *exception) {
-        NSLog(@"graph: %@", exception.reason);
-        [self sendErrorCommand:command withMessage:@"Error: graph"];
-    }
-    
-    CDVPluginResult *pluginResult;
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
-    [result setObject: [NSNumber numberWithInteger:wayfinderId] forKey:@"wayfinderId"];
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
-    
+    NSLog(@"locationManager::requestWayfindingUpdates %f, %f, %d", lat, lon, floor);
+    IAWayfindingRequest *req = [IAWayfindingRequest alloc];
+    req.coordinate = CLLocationCoordinate2DMake(lat, lon);
+    req.floor = floor;
+    [self.IAlocationInfo startMonitoringForWayfinding:req];
 }
 
-/**
- * Compute route for the given values;
- * 1) Set location of the wayfinder instance
- * 2) Set destination of the wayfinder instance
- * 3) Get route between the given location and destination
- */
-- (void)computeRoute:(CDVInvokedUrlCommand *)command
+- (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command
 {
-    NSString *wayfinderId = [command argumentAtIndex:0];
-    NSString *lat0 = [command argumentAtIndex:1];
-    NSString *lon0 = [command argumentAtIndex:2];
-    NSString *floor0 = [command argumentAtIndex:3];
-    NSString *lat1 = [command argumentAtIndex:4];
-    NSString *lon1 = [command argumentAtIndex:5];
-    NSString *floor1 = [command argumentAtIndex:6];
-    
-    self.wayfinder = self.wayfinderInstances[[wayfinderId intValue]];
-    
-    @try {
-        [self.wayfinder setLocationWithLatitude:[lat0 doubleValue] Longitude:[lon0 doubleValue] Floor:[floor0 intValue]];
-    } @catch(NSException *exception) {
-        NSLog(@"loc: %@", exception.reason);
-        [self sendErrorCommand:command withMessage:@"Error: loc"];
-    }
-    
-    @try {
-        [self.wayfinder setDestinationWithLatitude:[lat1 doubleValue] Longitude:[lon1 doubleValue] Floor:[floor1 intValue]];
-    } @catch(NSException *exception) {
-        NSLog(@"dest: %@", exception.reason);
-        [self sendErrorCommand:command withMessage:@"Error: dest"];
-    }
-    
-    CDVPluginResult *pluginResult;
-    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
-    NSArray<IARoutingLeg *> *route = [NSArray array];
-    
-    @try {
-        route = [self.wayfinder getRoute];
-    } @catch(NSException *exception) {
-        NSLog(@"route: %@", exception.reason);
-    }
-    
-    NSMutableArray<NSMutableDictionary *>* routingLegs = [[NSMutableArray alloc] init];
-    for (int i=0; i < [route count]; i++) {
-        [routingLegs addObject:[self dictionaryFromRoutingLeg:route[i]]];
-    }
-    
-    [result setObject:routingLegs forKey:@"route"];
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
+    [self.IAlocationInfo stopMonitoringForWayfinding];
+}
+
+- (void)lockFloor:(CDVInvokedUrlCommand *)command
+{
+    NSString *oFloor = [command argumentAtIndex:0];
+    NSInteger floor = [oFloor integerValue];
+    [self.IAlocationInfo setFloorLock:(int)floor];
+}
+
+- (void)unlockFloor:(CDVInvokedUrlCommand *)command
+{
+    [self.IAlocationInfo unlockFloor];
+}
+
+- (void)lockIndoors:(CDVInvokedUrlCommand *)command
+{
+    NSString *oIndoors = [command argumentAtIndex:0];
+    bool indoors = [oIndoors boolValue];
+    [self.IAlocationInfo lockIndoors:indoors];
 }
 
 /**
- * Create NSMutableDictionary from the RoutingLeg object
+ * Create NSMutableDictionary from the RouteLeg object
  */
-- (NSMutableDictionary *)dictionaryFromRoutingLeg:(IARoutingLeg *)routingLeg {
-    return [NSMutableDictionary dictionaryWithObjectsAndKeys: [self dictionaryFromRoutingPoint:routingLeg.begin], @"begin", [self dictionaryFromRoutingPoint:routingLeg.end], @"end", [NSNumber numberWithDouble:routingLeg.length], @"length", [NSNumber numberWithDouble:routingLeg.direction], @"direction", routingLeg.edgeIndex, @"edgeIndex", nil];
+- (NSDictionary *)dictionaryFromRouteLeg:(IARouteLeg *)routeLeg {
+    return @{@"begin": [self dictionaryFromRoutePoint:routeLeg.begin],
+             @"end": [self dictionaryFromRoutePoint:routeLeg.end],
+             @"length": @(routeLeg.length),
+             @"direction": @(routeLeg.direction),
+             @"edgeIndex": @(routeLeg.edgeIndex)
+             };
 }
 
 /**
- * Create NSMutableDictionary from the RoutingPoint object
+ * Create NSMutableDictionary from the RoutePoint object
  */
-- (NSMutableDictionary *)dictionaryFromRoutingPoint:(IARoutingPoint *)routingPoint {
-    return [NSMutableDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:routingPoint.latitude], @"latitude", [NSNumber numberWithDouble:routingPoint.longitude], @"longitude", [NSNumber numberWithInt:routingPoint.floor], @"floor", routingPoint.nodeIndex, @"nodeIndex", nil];
+- (NSDictionary *)dictionaryFromRoutePoint:(IARoutePoint *)routePoint {
+    return @{@"latitude": @(routePoint.coordinate.latitude),
+             @"longitude": @(routePoint.coordinate.longitude),
+             @"floor": @(routePoint.floor),
+             @"nodeIndex": @(routePoint.nodeIndex)
+             };
 }
 
 /**
@@ -818,7 +750,7 @@
     IndoorLocationInfo *cData = self.locationData;
 
     cData.locationInfo = [[CLLocation alloc] initWithCoordinate:newLocation.location.coordinate altitude:0 horizontalAccuracy:newLocation.location.horizontalAccuracy verticalAccuracy:0 course:newLocation.location.course speed:0 timestamp:[NSDate date]];
-    cData.floorID = [NSString stringWithFormat:@"%ld", newLocation.floor.level];
+    cData.floorID = [NSNumber numberWithInteger:newLocation.floor.level];
     cData.floorCertainty = [NSNumber numberWithFloat:newLocation.floor.certainty];
     cData.region = newLocation.region;
     if (self.locationData.locationCallbacks.count > 0) {
@@ -836,6 +768,11 @@
         // No callbacks waiting on us anymore, turn off listening.
         [self _stopLocation];
     }
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route
+{
+    [self returnRouteInformation:route];
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager didFailWithError:(NSError *)error
@@ -917,76 +854,5 @@
     
     [self returnStatusInformation:statusDisplay code:statusCode];
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
-}
-
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId
-{
-    if (callbackId != nil) {
-
-        NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:17];
-
-        NSNumber *timestamp = [NSNumber numberWithDouble:([[NSDate date] timeIntervalSince1970] * 1000)];
-        [returnInfo setObject:timestamp forKey:@"timestamp"];
-        [returnInfo setObject:floorPlan.floorPlanId forKey:@"id"];
-        [returnInfo setObject:floorPlan.name forKey:@"name"];
-        [returnInfo setObject:[floorPlan.imageUrl absoluteString] forKey:@"url"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.floor.level] forKey:@"floorLevel"];
-        [returnInfo setObject:[NSNumber numberWithDouble: floorPlan.bearing] forKey:@"bearing"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.height] forKey:@"bitmapHeight"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.width] forKey:@"bitmapWidth"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.heightMeters] forKey:@"heightMeters"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.widthMeters] forKey:@"widthMeters"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.meterToPixelConversion] forKey:@"metersToPixels"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.pixelToMeterConversion] forKey:@"pixelsToMeters"];
-        CLLocationCoordinate2D locationPoint = floorPlan.bottomLeft;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"bottomLeft"];
-        locationPoint = floorPlan.center;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"center"];
-        locationPoint = floorPlan.topLeft;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topLeft"];
-        locationPoint = floorPlan.topRight;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topRight"];
-
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    }
-}
-
-- (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.floorPlanCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.floorPlanCallbackID];
-    }
-}
-
-- (void)errorInCoordinateToPoint:(NSError *) error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.coordinateToPointCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
-    }
-}
-- (void)errorInPointToCoordinate:(NSError *) error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.pointToCoordinateCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.pointToCoordinateCallbackID];
-    }
 }
 @end

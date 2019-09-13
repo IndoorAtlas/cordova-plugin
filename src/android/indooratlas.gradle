@@ -3,10 +3,12 @@ repositories {
     maven {
         url "https://indooratlas-ltd.bintray.com/mvn-public/"
     }
+    maven {
+        url "https://indooratlas-ltd.bintray.com/mvn-public-beta/"
+    }
 }
 
 dependencies {
     compile 'com.android.support:appcompat-v7:27.0.2'
-    compile 'com.indooratlas.android:indooratlas-android-sdk:2.8.2@aar'
-    compile 'com.indooratlas.android:indooratlas-android-wayfinding:2.8.0@aar'
+    compile 'com.indooratlas.android:indooratlas-android-sdk:3.0.3'
 }

@@ -1,9 +1,59 @@
+/**
+ * # IndoorAtlas Cordova plugin v3
+ *
+ * All functions that are part of the IndoorAtlas Cordova plugin are scoped
+ * under the `IndoorAtlas` singleton object. For example the function
+ *  {@link #initialize} can be used in code as `IndoorAtlas.initialize(...)`.
+ *
+ * The classes returned by the plugin, such as {@link FloorPlan}
+ * (= `IndoorAtlas.FloorPlan`) are not supposed to be constructed by the user
+ * directly.
+ *
+ * ## Basic usage
+ *
+ * _Before you start, make sure you are familiar with the
+ * [main phases](https://indooratlas.freshdesk.com/support/solutions/articles/36000079590-indooratlas-positioning-overview)
+ * of deploying IndoorAtlas technology. In particular, your physical location
+ * must be fingeprinted with the IndoorAtlas Map Creator 2 application before
+ * any of the below APIs will return meaningful values._
+ *
+ * First, add IndoorAtlas plugin to the `config.xml` file of your project
+ * ```xml
+ * <plugin name="cordova-plugin-indooratlas" spec="git+https://github.com/IndoorAtlas/cordova-plugin.git" />
+ * ```
+ * Then you can initialize in Cordova's "deviceready" callback or later, e.g.,
+ * ```javascript
+ * document.addEventListener('deviceready', () => {
+ *   // start positioning
+ *   IndoorAtlas.initialize({ apiKey: YOUR_IA_API_KEY })
+ *    .watchPosition(position => {
+ *      console.log(
+ *        "latitude: " + position.coords.latitude + ", " +
+ *        "longitude: " + position.coords.longitude + ", " +
+ *        "floor: " + position.coords.floor);
+ *   });
+ *
+ *   // auto-stop positioning after 60 seconds
+ *   setTimeout(() => IndoorAtlas.clearWatch(), 60000);
+ * }, false);
+ * ```
+ * All methods return the `IndoorAtlas` singleton object to allow chaining
+ * like in the above example.
+ */
+var ___; // this dummy variable helps with automatic docs generation
 
-var argscheck = require('cordova/argscheck'),
-    utils = require('cordova/utils'),
-    exec = require('cordova/exec')
+var cordovaExec = require('cordova/exec');
+var cordovaPluginMetadata = require("cordova/plugin_list").metadata;
+var Position = require('./Position');
+var RegionChangeObserver = require('./RegionChangeObserver');
+var CurrentStatus = require('./CurrentStatus');
+var Orientation = require('./Orientation');
+var Route = require('./Route');
 
-var timers = {};   // list of timers in use
+// --- Helper functions and constants (*not* in the global scope)
+
+var DEFAULT_WATCH_ID = 'default-watch';
+var DEFAULT_REGION_WATCH_ID = 'default-region-watch';
 
 function getDeviceType() {
   var deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" :
@@ -13,541 +63,520 @@ function getDeviceType() {
   return deviceType;
 }
 
-function parseSetPositionParameters(options) {
-  var opt = {
-    regionId: '',
-    coordinates: [],
-    floorPlanId: '',
-    venueId: ''
-  };
-  if (options) {
-    if (options.venueId !== undefined) {
-      opt.venueId = options.venueId;
-    }
-
-    if (options.regionId !== undefined) {
-      opt.regionId = options.regionId;
-    }
-
-    if (options.coordinates !== undefined) {
-      opt.coordinates = options.coordinates;
-    }
-
-    if (options.floorPlanId !== undefined) {
-      opt.floorPlanId = options.floorPlanId;
-    }
-
-  }
-  return opt;
+function isInteger(value) {
+  // official Mozilla polyfill for Number.isInteger
+  return typeof value === 'number' &&  isFinite(value) && Math.floor(value) === value;
 }
 
-function parseParameters(options) {
-  var opt = {
-    timeout: Infinity
-  };
+function IndoorAtlas() {
 
-  if (options) {
-    if (options.timeout !== undefined && !isNaN(options.timeout)) {
-      if (options.timeout < 0) {
-        opt.timeout = 0;
-      } else {
-        opt.timeout = options.timeout;
+  // --- Private state variables
+
+  var callbacks = {};
+  var initialized = false;
+  var indoorLock = false;
+  var floorLock = null;
+  var wayfindingDestination = null;
+  var distanceFilter = null;
+  var orientationFilter = null;
+  var regionChangeObserver = null;
+  var statusHasBeenAvailable = false;
+
+  var self = this;
+  var debug = false;
+
+  // --- Private methods
+
+  function warning(message) {
+    console.warn('IndoorAtlas WARNING: ' + message);
+    return self;
+  }
+
+  // none of the Cordova callbacks are supposed to fail, always report
+  // as status OUT_OF_SERVICE if something like this happens
+  function error(result) {
+    var message = 'internal error' + methodName + ' failed ' + JSON.stringify(result);
+    console.error('IndoorAtlas ERROR: ' + message);
+    if (callbacks.onStatus) {
+      callbacks.onStatus(CurrentStatus.OUT_OF_SERVICE, message);
+    }
+  }
+
+  function native(methodName, options, onSuccess) {
+      function successCallback(result) {
+        if (debug) debug(methodName + " completed " + JSON.stringify(result));
+        if (onSuccess) onSuccess(result);
       }
-    }
-  }
-  return opt;
-}
 
-function createTimeout(errorCallback, timeout) {
-  var t = setTimeout(function() {
-    clearTimeout(t);
-    t = null;
-    errorCallback({
-      code: PositionError.TIMEOUT,
-      message: "Position retrieval timed out."
+      if (debug) debug('executing '+methodName+'(' + JSON.stringify(options) + ')');
+      cordovaExec(successCallback, error, 'IndoorAtlas', methodName, options);
+  }
+
+  function requestWayfinding() {
+    var destination = wayfindingDestination;
+    native('requestWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor], function (route) {
+      // this check causes the updates to stop instantly when wayfinding is stopped,
+      // even if some updates would be pending in some native thread
+      if (callbacks.onWayfindingRoute) callbacks.onWayfindingRoute(new Route(route));
     });
-  }, timeout);
-  return t;
-}
+  }
 
-var IndoorAtlas = {
-  lastPosition: null, // reference to last known (cached) position returned
-  initializeAndroid: function(successCallback, errorCallback, options) {
-    var requestWin = function(result) {
-      var win = function(result) {
-        successCallback(result);
-      };
-      var fail = function(error) {
-        var err = new PositionError(error.code, error.message);
-        errorCallback(err);
-      };
-      exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options.key, options.secret]);
-    };
-    var requestFail = function(error) {
-      var err = new PositionError(error.code, error.message);
-      errorCallback(err);
-    };
-    exec(requestWin, requestFail, "IndoorAtlas", "getPermissions", []);
-  },
+  function stopWayfinding() {
+    native('removeWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor]);
+  }
 
-  initialize: function(successCallback, errorCallback, options) {
-    if (getDeviceType() == 'Android') {
-      IndoorAtlas.initializeAndroid(successCallback, errorCallback, options);
-      return;
-    }
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
+  function startPositioning() {
+    if (debug) debug('starting positioning');
+
+    regionChangeObserver = new RegionChangeObserver(function (newFloorPlan, oldFloorPlan) {
+      if (callbacks.onFloorPlanChange) {
+        callbacks.onFloorPlanChange(newFloorPlan, oldFloorPlan);
       }
-    };
-    exec(win, fail, "IndoorAtlas", "initializeIndoorAtlas", [options]);
-  },
+    }, function (newVenue, oldVenue) {
+      if (callbacks.onVenueChange) {
+        callbacks.onVenueChange(newVenue, oldVenue);
+      }
+    }, error);
 
-  getCurrentPosition: function(successCallback, errorCallback, options) {
-    try {
-      options = parseParameters(options);
+    // before addWatch to avoid unnecessary pos restart
+    if (distanceFilter && distanceFilter.minChangeMeters > 0) {
+      native('setDistanceFilter', [distanceFilter.minChangeMeters]);
+    }
 
-      // Timer var that will fire an error callback if no position is retrieved from native
-      // before the "timeout" param provided expires
-      var timeoutTimer = { timer: null };
-      var win = function(p) {
-        try {
-          clearTimeout(timeoutTimer.timer);
-          if (!(timeoutTimer.timer)) {
-            // Timeout already happened, or native fired error callback for
-            // this geo request.
-            // Don't continue with success callback.
-            return;
+    native('addWatch', [DEFAULT_WATCH_ID, null], function (data) {
+      if (callbacks.onLocation) {
+        data.floorPlan = regionChangeObserver.getCurrentFloorPlan();
+        data.venue = regionChangeObserver.getCurrentVenue();
+        callbacks.onLocation(new Position(data));
+      }
+    });
+
+    native('addRegionWatch', [DEFAULT_REGION_WATCH_ID], function (r) {
+      regionChangeObserver.onRegionEvent(r);
+    });
+
+    // handle floor and indoor locks if set before initialized
+    if (indoorLock) self.lockIndoors(true);
+    if (floorLock !== null) self.lockFloor(floorLock);
+
+    if (callbacks.onWayfindingRoute) {
+      requestWayfinding();
+    }
+
+    // automatically request, but just don't use the results if not wanted
+    // in JS. Simplifies the code
+    native('addAttitudeCallback', [], function (orientation) {
+      if (callbacks.onOrientation) callbacks.onOrientation(new Orientation(orientation));
+    });
+
+    // after addAttitudeCallback on purpose
+    if (orientationFilter && orientationFilter.minChangeDegrees > 0) {
+      var orientationSensitivity = orientationFilter.minChangeDegrees;
+      var headingSensitivity = 1000; // no heading callbacks needed
+      native('setSensitivities', [orientationSensitivity, headingSensitivity]);
+    }
+  }
+
+  function stopPositioning() {
+    if (debug) debug('stopping positioning');
+    native('clearWatch', [DEFAULT_WATCH_ID]);
+    native('clearRegionWatch', [DEFAULT_REGION_WATCH_ID]);
+    native('removeAttitudeCallback', []);
+    native('removeHeadingCallback', []);
+    native('removeStatusCallback', []);
+    native('removeWayfindingUpdates', []); // just in case
+
+    distanceFilter = null;
+    orientationFilter = null;
+
+    // reset locks
+    indoorLock = false;
+    floorLock = null;
+  }
+
+  // ################ PUBLIC API ################
+
+  // --- Error and status reporting
+
+  // undocumented helper method for enabling internal debug logs
+  this._debug = function(enabled) {
+    function debugPrint(msg) {
+      console.log('IndoorAtlas DEBUG: ' + msg);
+    }
+    debug = (enabled === undefined || enabled) ? debugPrint : null;
+    return self;
+  };
+
+  // --- Configuration
+
+  /**
+   * Initializes IndoorAtlas location manager object with provided API key.
+   * Must be called before using other methods. Should be called in Cordova's
+   * [deviceready](https://cordova.apache.org/docs/en/9.x/cordova/events/events.html#deviceready)
+   * callback or later.
+   *
+   * @param {object} configuration
+   * @param {string} configuration.apiKey IndoorAtlas API key
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.initialize({ apiKey: "3795eee9-efaf-47db-8347-316b6bb0c834" })
+   */
+  this.initialize = function (configuration) {
+    var apiKey = configuration.apiKey;
+    if (!apiKey) throw new Error('Invalid configuration: no API key');
+
+    function initSuccess() {
+      if (debug) debug('init success');
+      initialized = true;
+
+      native('addStatusChangedCallback', [], function (status) {
+        lastStatus = new CurrentStatus(status.code, status.message);
+        if (lastStatus.name === 'AVAILABLE') {
+          if (debug) debug('status available');
+          var wasAvailable = statusHasBeenAvailable;
+          statusHasBeenAvailable = true;
+          if (!wasAvailable && callbacks.onTraceId) {
+            // trace ID is available if the status has been "available" at
+            if (debug) debug('get trace ID after first available status');
+            self.getTraceId(callbacks.onTraceId);
           }
-          var pos = new Position(
-            {
-              latitude: p.latitude,
-              longitude: p.longitude,
-              altitude: p.altitude,
-              accuracy: p.accuracy,
-              heading: p.heading,
-              velocity: p.velocity,
-              flr: p.flr
-            },
-            p.region,
-            p.timestamp,
-            p.floorCertainty
-          );
-          IndoorAtlas.lastPosition = pos;
-          successCallback(pos);
+          statusHasBeenAvailable = true;
         }
-        catch(error) {
-          alert(error);
+        if (callbacks.onStatus) {
+          callbacks.onStatus(lastStatus);
         }
-      };
+      });
 
-      var fail = function(e) {
-        clearTimeout(timeoutTimer.timer);
-        timeoutTimer.timer = null;
-        var err = new PositionError(e.code, e.message);
-        if (errorCallback) {
-          errorCallback(err);
-        }
-      };
-
-      // Check our cached position, if its timestamp difference with current time is less than the maximumAge, then just
-      // fire the success callback with the cached position.
-      if (IndoorAtlas.lastPosition && options.maximumAge && (((new Date()).getTime() - IndoorAtlas.lastPosition.timestamp) <= options.maximumAge)) {
-        successCallback(IndoorAtlas.lastPosition);
-
-        // If the cached position check failed and the timeout was set to 0, error out with a TIMEOUT error object.
-      } else if (options.timeout === 0) {
-        fail({
-          code: PositionError.TIMEOUT,
-          message: "timeout value in PositionOptions set to 0 and no cached Position object available, or cached Position object's age exceeds provided PositionOptions' maximumAge parameter."
-        });
-
-        // Otherwise we have to call into native to retrieve a position.
-      } else {
-        if (options.timeout !== Infinity) {
-          // If the timeout value was not set to Infinity (default), then
-          // set up a timeout function that will fire the error callback
-          // if no successful position was retrieved before timeout expired.
-          timeoutTimer.timer = createTimeout(fail, options.timeout);
-        } else {
-          // This is here so the check in the win function doesn't mess stuff up
-          // may seem weird but this guarantees timeoutTimer is
-          // always truthy before we call into native
-          timeoutTimer.timer = true;
-        }
-        exec(win, fail, "IndoorAtlas", "getLocation", [options.floorPlan]);
-      }
-      return timeoutTimer;
+      if (callbacks.onLocation) startPositioning();
     }
-    catch(error) { alert(error); }
-  },
 
-  watchRegion: function(onEnterRegion, onExitRegion, errorCallback) {
-    var id = utils.createUUID();
+    var config = [apiKey, 'dummy-secret'];
+    if (getDeviceType() == 'Android') {
+      // get permission
+      config.push(cordovaPluginMetadata['cordova-plugin-indooratlas']);
 
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-
-    var win = function(r) {
-      var region = new Region(r.regionId, r.timestamp, r.regionType, r.transitionType);
-      if (region.transitionType == Region.TRANSITION_TYPE_ENTER) {
-        onEnterRegion(region);
-      }
-      if (region.transitionType == Region.TRANSITION_TYPE_EXIT) {
-        onExitRegion(region);
-      }
-    };
-
-    exec(win, fail, "IndoorAtlas", "addRegionWatch", [id]);
-    return id;
-  },
-
-  clearRegionWatch: function(watchId) {
-    try {
-      exec(
-        function(success) {
-          console.log('Service stopped');
-        },
-        function(error) {
-          console.log('Error while stopping service');
-        },
-        "IndoorAtlas", "clearRegionWatch", [watchId]);
-    }
-    catch(error) { alert(error); }
-  },
-
-  didUpdateAttitude: function(onAttitudeUpdated, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-
-    var win = function(attitude) {
-      onAttitudeUpdated(attitude);
-    };
-
-    exec(win, fail, "IndoorAtlas", "addAttitudeCallback");
-  },
-
-  removeAttitudeCallback: function() {
-    var fail = function(e) {
-      console.log("Error while removing attitude callbackk");
-    };
-
-    var win = function(success) {
-      console.log("Attitude callback removed");
-    };
-
-    exec(win, fail, "IndoorAtlas", "removeAttitudeCallback");
-  },
-
-  didUpdateHeading: function(onHeadingUpdated, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-
-    var win = function(heading) {
-      onHeadingUpdated(heading);
-    };
-
-    exec(win, fail, "IndoorAtlas", "addHeadingCallback");
-  },
-
-  removeHeadingCallback: function() {
-    var fail = function(e) {
-      console.log("Error while removing heading callback");
-    };
-
-    var win = function(success) {
-      console.log("Heading callback removed");
-    };
-
-    exec(win, fail, "IndoorAtlas", "removeHeadingCallback");
-  },
-
-  onStatusChanged: function(onStatusChanged, errorCallback) {
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-
-    var win = function(status) {
-      var newStatus = new CurrentStatus(status.code, status.message);
-      onStatusChanged(newStatus);
-    };
-
-    exec(win, fail, "IndoorAtlas", "addStatusChangedCallback");
-  },
-
-  removeStatusCallback: function() {
-    var fail = function(e) {
-      console.log("Error while removing status callback");
-    };
-
-    var win = function(success) {
-      console.log("Status callback removed");
-    };
-
-    exec(win, fail, "IndoorAtlas", "removeStatusCallback");
-  },
-
-  watchPosition: function(successCallback, errorCallback, options) {
-    options = parseParameters(options);
-
-    var id = utils.createUUID();
-
-    // Tell device to get a position ASAP, and also retrieve a reference to the timeout timer generated in getCurrentPosition
-    timers[id] = IndoorAtlas.getCurrentPosition(successCallback, errorCallback, options);
-
-    var fail = function(e) {
-      clearTimeout(timers[id].timer);
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-
-    var win = function(p) {
-      clearTimeout(timers[id].timer);
-      if (options.timeout !== Infinity) {
-        timers[id].timer = createTimeout(fail, options.timeout);
-      }
-      var pos = new Position(
-        {
-          latitude: p.latitude,
-          longitude: p.longitude,
-          altitude: p.altitude,
-          accuracy: p.accuracy,
-          heading: p.heading,
-          velocity: p.velocity,
-          flr: p.flr
-        },
-        p.region,
-        p.timestamp,
-        p.floorCertainty
-      );
-      IndoorAtlas.lastPosition = pos;
-      successCallback(pos);
-    };
-    exec(win, fail, "IndoorAtlas", "addWatch", [id, options.floorPlan]);
-    return id;
-  },
-
-  clearWatch: function(watchId) {
-    try {
-      exec(
-        function(success) {
-          console.log('Service stopped');
-        },
-        function(error) {
-          console.log('Error while stopping service');
-        },
-        "IndoorAtlas", "clearWatch", [watchId]);
-    }
-    catch(error) { alert(error); };
-  },
-
-  setPosition: function(successCallback, errorCallback, options) {
-    var keys = Object.keys(options);
-    options = parseSetPositionParameters(options);
-
-    var win = function(p) {
-      successCallback(p);
-    };
-
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-
-    if ((options.coordinates.length == 2 && keys.length == 2) || keys.length == 1) {
-
-      exec(win, fail, "IndoorAtlas", "setPosition",
-      [options.regionId, options.coordinates, options.floorPlanId, options.venueId]);
+      native('getPermissions', [], function () {
+        native('initializeIndoorAtlas', config, initSuccess);
+      });
     } else {
-      console.log("IndoorAtlas: SetPosition: Check values");
-    };
-  },
+      native('initializeIndoorAtlas', config, initSuccess);
+    }
 
-  fetchFloorPlanWithId: function(floorplanId, successCallback, errorCallback){
-    var win = function(p) {
-      var floorplan = new FloorPlan(
-        p.id,
-        p.name,
-        p.url,
-        p.floorLevel,
-        p.bearing,
-        p.bitmapHeight,
-        p.bitmapWidth,
-        p.heightMeters,
-        p.widthMeters,
-        p.metersToPixels,
-        p.pixelsToMeters,
-        p.bottomLeft,
-        p.center,
-        p.topLeft,
-        p.topRight
-      );
-      successCallback(floorplan);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "fetchFloorplan", [floorplanId]);
-  },
+    return self;
+  };
 
-  coordinateToPoint: function(coords, floorplanId, successCallback, errorCallback){
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "coordinateToPoint",
-    [coords.latitude, coords.longitude, floorplanId]);
-  },
-
-  pointToCoordinate: function(point, floorplanId, successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      var err = new PositionError(e.code, e.message);
-      if (errorCallback) {
-        errorCallback(err);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "pointToCoordinate",
-    [point.x, point.y, floorplanId]);
-  },
-
-  setDistanceFilter: function(successCallback, errorCallback, distance) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "setDistanceFilter", [distance.distance]);
-  },
-
-  setSensitivities: function(successCallback, errorCallback, sensitivity) {
-    var win = function(success) {
-      successCallback(success)
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "setSensitivities", [sensitivity.orientationSensitivity, sensitivity.headingSensitivity]);
-  },
-
-  getFloorCertainty: function(successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "getFloorCertainty");
-  },
-
-  getTraceId: function(successCallback, errorCallback) {
-    var win = function(p) {
-      successCallback(p);
-    };
-    var fail = function(e) {
-      if (errorCallback) {
-        errorCallback(e);
-      }
-    };
-    exec(win, fail, "IndoorAtlas", "getTraceId");
-  },
+  // --- Positioning
 
   /**
-   * Initialize graph with the given graph JSON
+   * Starts IndoorAtlas positioning
+   *
+   * @param {function(Position)} onPosition a callback that executes when the
+   * position changes  with an `IndoorAtlas.Position` object as the parameter.
+   * @param {object} options distance filter options (optional)
+   * @param {number} options.minChangeMeters (optional) Distance filter.
+   * If set, determines the minimum distance (in meters) the position has to
+   * change before the next position is reported. If not set, all changes in
+   * position are returned, which happens approximately once a second.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchPosition(position => {
+   *     console.log(`
+   *         ${position.coords.latitude}
+   *         ${position.coords.longitude}
+   *         ${position.coords.floor}`);
+   * });
    */
-  buildWayfinder: function(graphJson) {
-    return new IAPromise(function(resolve, reject) {
-      var success = function(result) {
-        resolve(new Wayfinder(result.wayfinderId));
-      };
-      var error = function(e) { reject(e) };
-      exec(success, error, "IndoorAtlas", "buildWayfinder", [graphJson]);
-    });
-  }
-};
+  this.watchPosition = function(onPosition, options) {
+    if (callbacks.onLocation) {
+      callbacks.onLocation = onPosition;
+      return warning('Positioning already started, overwriting existing watch');
+    }
+    callbacks.onLocation = onPosition;
 
-/**
- * Wayfinder object
- */
-var Wayfinder = function(wayfinderId) {
-  var id = wayfinderId;
-  var location = null;
-  var destination = null;
+    // TODO: low-power mode
+    distanceFilter = options;
+
+    if (initialized) startPositioning();
+    // otherwise successful initialization will start positioning
+
+    return self;
+  };
 
   /**
-   * Set destination of the current wayfinding instance
+   * Stops IndoorAtlas positioning. Other watches are not cleared by this
+   * opertation.
+   *
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchPosition(position => {
+   *    // do some positioning
+   * });
+   * // stop after 10 seconds
+   * setTimeout(() => { IndoorAtlas.clearWatch(); }, 10000);
    */
-  this.setDestination = function(lat, lon, floor) {
-    destination = { lat: lat, lon: lon, floor: floor };
-  }
+  this.clearWatch = function() {
+    if (!callbacks.onLocation) {
+      return warning('Positioning not started');
+    }
+    delete callbacks.onLocation;
+    // NOTE: other watches not cleared
+    stopPositioning();
+    return self;
+  };
+
+  // --- Floor plans & venues
 
   /**
-   * Set location of the current wayfinding instance
+   * Start observing floor plan changes
+   *
+   * @param {function(FloorPlan)} onFloorPlanChange a callback that executes
+   * when the floor plan changes. `null` if not currently on any floor plan.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchFloorPlan(floorPlan => {
+   *     if (floorPlan) {
+   *         console.log(`entered floor plan ${floorPlan.name}`);
+   *     }
+   * });
    */
-  this.setLocation = function(lat, lon, floor) {
-    location = { lat: lat, lon: lon, floor: floor };
-  }
+  this.watchFloorPlan = function(onFloorPlanChange) {
+    if (callbacks.onFloorPlanChange) {
+      warning('Overwriting existing floor plan watch');
+    }
+    callbacks.onFloorPlanChange = onFloorPlanChange;
+    return self;
+  };
 
   /**
-   * Get route between the given location and destination
+   * Stop observing floor plan changes
+   * @return {object} returns `this` to allow chaining
    */
-  this.getRoute = function() {
-    return new IAPromise(function(resolve, reject) {
-      var success = function(result) {
+  this.clearFloorPlanWatch = function() {
+    if (!callbacks.onFloorPlanChange) {
+      return warning('No floor plan watch to clear');
+    }
+    delete callbacks.onFloorPlanChange;
+    return self;
+  };
 
-        var arrayOfRoutes = result.route.map(function(route) {
-          var begin = new RoutingPoint(route.begin.latitude, route.begin.longitude, route.begin.floor, route.begin.nodeIndex);
-          var end = new RoutingPoint(route.end.latitude, route.end.longitude, route.end.floor, route.end.nodeIndex);
-          var leg = new RoutingLeg(begin, route.direction, route.edgeIndex, end, route.length);
-          return leg;
-        });
-        resolve({ route: arrayOfRoutes });
-       };
-      var error = function(e) { reject(e) };
-      if (location == null || destination == null) {
-        resolve({ route: [] });
-      } else {
-        exec(success, error, "IndoorAtlas", "computeRoute", [id, location.lat, location.lon, location.floor, destination.lat, destination.lon, destination.floor]);
-      }
-    });
-  }
-};
+  /**
+   * Start observing venue changes
+   *
+   * @param {function(Venue)} onVenueChange a callback that executes
+   * when the venue changes. `null` if not currently near any venue.
+   * @return {object} returns `this` to allow chaining
+   */
+  this.watchVenue = function(onVenueChange) { // TODO: venue object
+    if (callbacks.onVenueChange) {
+      warning('Overwriting existing venue watch');
+    }
+    callbacks.onVenueChange = onVenueChange;
+    return self;
+  };
 
-module.exports = IndoorAtlas;
+  /**
+   * Stop observing venue changes
+   * @return {object} returns `this` to allow chaining
+   */
+  this.clearVenueWatch = function() {
+    if (!callbacks.onVenueChange) {
+      return warning('No venue watch to clear');
+    }
+    delete callbacks.onVenueChange;
+    return self;
+  };
+
+  // --- Status changes
+
+  /**
+   * Start observing status changes
+   *
+   * @param {function(CurrentStatus)} onStatus a callback that executes
+   * when the IndoorAtlas service status changes.
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.onStatusChanged(console.log);
+   */
+  this.onStatusChanged = function(onStatus) {
+    callbacks.onStatus = onStatus;
+    return self;
+  };
+
+  /**
+   * Stop observing status changes
+   * @return {object} returns `this` to allow chaining
+   */
+  this.removeStatusCallback = function() {
+    delete callbacks.onStatus;
+    return self;
+  };
+
+  // --- Heading & orientation
+  /**
+   * Start observing for device orientation & heading changes
+   *
+   * @param {function(Orientation)} onOrientation a callback that executes
+   * when the orientation of the device changes. Contains the heading and
+   * other orientation angles.
+   * @param {object} options distance filter options (optional)
+   * @param {number} options.minChangeDegrees (optional) Change filter.
+   * If set, determines the minimum angle in degrees that the device has to
+   * be rotated (about any axis) before a new orientation is reported.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchOrientation(orientation => {
+   *     console.log(`heading: ${orientation.trueHeading} degrees`);
+   * });
+   */
+  this.watchOrientation = function(onOrientation, options) {
+    callbacks.onOrientation = onOrientation;
+    orientationFilter = options;
+    return self;
+  };
+
+  /**
+   * Stop observing orientation changes
+   * @return {object} returns `this` to allow chaining
+   */
+  this.clearOrientationWatch = function() {
+    delete callbacks.onOrientation;
+    return self;
+  };
+
+  // --- Wayfinding
+
+  /**
+   * Request wayfinding from the current location of the user to the given
+   * coordinates
+   *
+   * @param {object} destination
+   * @param {number} destination.latitude Destination latitude in degrees
+   * @param {number} destination.longitude Destination longitude in degrees
+   * @param {number} destination.floor Destination floor number as defined in
+   * the mapping phase
+   * @param {function(Route)} onWayfindingRoute a callback that executes
+   * when the user's location is changed, gives the shortest route to the
+   * given destination as an object `{ legs }`, where `legs` is a
+   * list of `IndoorAtlas.RouteLeg` objects.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * const destination = { latitude: 60.16, longitude: 24.95, floor: 2 };
+   * IndoorAtlas.requestWayfindingUpdates(destination, route => {
+   *     console.log(`the route has ${route.legs.length} leg(s)`);
+   * });
+   */
+  this.requestWayfindingUpdates = function (destination, onWayfindingRoute) {
+    callbacks.onWayfindingRoute = onWayfindingRoute;
+    wayfindingDestination = destination;
+    if (initialized) requestWayfinding();
+    return self;
+  };
+
+  /**
+   * Stop wayfinding. Typically called after arriving to the destination
+   * (determined with {@link #requestWayfindingUpdates}) or if the user
+   * cancels the wayfinding session.
+   *
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.removeWayfindingUpdates()
+   */
+  this.removeWayfindingUpdates = function() {
+    delete callbacks.onWayfindingRoute;
+    wayfindingDestination = null;
+    if (initialized) stopWayfinding();
+    return self;
+  };
+
+  // --- Locks and explicit positions
+
+  /**
+   * Indicate current location to positioning service. This method can be used
+   * to pass a hint to the system e.g. when location is already known. This is
+   * completely optional and should only be used to shorten time it takes for
+   * the first fix. It is not recommended that this method is called with
+   * approximate locations with low or medium accuracy.
+   *
+   * @param {object} position
+   * @param {Coordinates} position.coordinates Like `IndoorAtlas.Coordinates`,
+   *  must have at least `latitude` and `longitude` members
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.setPosition({ latitude: 60.16, longitude: 24.95, floor: 2 });
+   */
+  this.setPosition = function(position) { // TODO: check type
+    if (!position.coordinates) throw new Error('setPosition: no coordinates');
+    if (initialized) native('setPosition', [null, position.coordinates, null, null]);
+    // otherwise just ignrore
+    return self;
+  };
+
+  /**
+   * Disable or re-enable indoor-outdoor detection
+   *
+   * @param {boolean} locked if `true`  keep positioning indoors and disable
+   * automatic indoor-outdoor detection. If `false`, re-enable automatic
+   * indoor-outdoor detection
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.lockIndoors(true);
+   */
+  this.lockIndoors = function(locked) {
+    // notice that since all parameters are optional in JavaScript, we cannot
+    // avoid users calling lockIndoors(). This is interpreted as enabling
+    // IndoorLock (instead of .lockIndoors(false)) to avoid confusion.
+    indoorLock = !!locked || locked === undefined;
+    if (initialized) native('lockIndoors', [indoorLock]);
+    // else handled in startPositioning
+    return self;
+  };
+
+  /**
+   * Disable automatic floor detection and lock the floor level to a given number
+   *
+   * @param {number} floorNumber The floor number (integer) to lock the
+   * positioning to. Use floor nubmers as defined in the mapping phase
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.lockFloor(3);
+   */
+  this.lockFloor = function(floorNumber) {
+    if (!isInteger(floorNumber)) throw new Error('floorNumber must be an integer');
+    floorLock = floorNumber;
+    if (initialized) native('lockFloor', [floorLock]);
+    // else handled in startPositioning
+    return self;
+  };
+
+  /**
+   * Re-enable automatic floor detection after locking the floor
+   * with {@link #lockFloor}
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.unlockFloor();
+   */
+  this.unlockFloor = function() {
+    floorLock = null;
+    if (initialized) native('unlockFloor', []);
+    // else handled in startPositioning
+    return self;
+  };
+
+  /**
+   * Returns the IndoorAtlas trace ID for this session in a callback.
+   * @param {function(string)} onTraceId A callback that returns the trace
+   * ID string. Called only once on success.
+   * @return {object} returns `this` to allow chaining
+   * @example IndoorAtlas.getTraceId(traceId => console.log(traceId));
+   */
+  this.getTraceId = function(onTraceId) {
+    callbacks.onTraceId = onTraceId;
+    if (statusHasBeenAvailable) {
+        native('getTraceId', [], function (traceId) {
+        // this might lose some trace IDs if this is called rapidly
+        if (callbacks.onTraceId) {
+          callbacks.onTraceId(traceId);
+          delete callbacks.onTraceId;
+        }
+      });
+    }
+    return self;
+  };
+}
+
+module.exports = new IndoorAtlas();

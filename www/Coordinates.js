@@ -1,38 +1,40 @@
 /**
- * This class contains position information.
- * @param {Object} lat
- * @param {Object} lng
- * @param {Object} alt
- * @param {Object} acc
- * @param {Object} head
- * @param {Object} vel
- * @param {Object} altacc
- * @constructor
+ * An `IndoorAtlas.Coordinates` object is attached to a `IndoorAtlas.Position`
+ * object that is available to callback functions in requests for the current
+ * position. It contains a set of properties that describe the geographic
+ * coordinates of a position.
  */
-var Coordinates = function(lat, lng, alt, acc, head, vel, flr) {
-  // The latitude of the position.
-  this.latitude = lat;
+var Coordinates = function(data) {
+  /**
+   * Latitude in decimal degrees
+   * @type {number}
+   */
+  this.latitude = data.latitude;
 
-  // The longitude of the position,
-  this.longitude = lng;
+  /**
+   * Longitude in decimal degrees.
+   * @type {number}
+   */
+  this.longitude = data.longitude;
 
-  // The accuracy of the position.
-  this.accuracy = acc;
+  /**
+   * Uncertainty of the position in meters
+   * @type {number}
+   */
+  this.accuracy = data.accuracy;
 
-  // The altitude of the position.
-  this.altitude = (alt !== undefined ? alt : null);
+  /**
+   * Direction of travel, specified in degrees counting clockwise relative
+   * to the true north
+   * @type {number}
+   */
+  this.heading = (data.heading !== undefined ? data.heading : null);
 
-  // The direction the device is moving at the position.
-  this.heading = (head !== undefined ? head : null);
-
-  // The velocity with which the device is moving at the position.
-  this.speed = 0;
-
-  // The altitude accuracy of the position.
-  this.altitudeAccuracy = null;
-
-  // The floor of the position.
-  this.floor = flr;
+  /**
+   * The floor level (integer) of building as defined in the mapping phase
+   * @type {number}
+   */
+  this.floor = data.flr;
 };
 
 module.exports = Coordinates;

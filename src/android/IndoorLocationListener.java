@@ -7,21 +7,26 @@ import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IARegion;
+import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationListener;
+import com.indooratlas.android.sdk.IAWayfindingListener;
+import com.indooratlas.android.sdk.resources.IAFloorPlan;
+import com.indooratlas.android.sdk.resources.IALatLng;
+import com.indooratlas.android.sdk.resources.IAVenue;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * Handles events from IALocationListener and IARegion.Listener and relays them to Javascript callbacks.
  */
-public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener {
+public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener, IAWayfindingListener {
     private static final String TAG = "IndoorLocationListener";
 
     private static final int TRANSITION_TYPE_UNKNOWN = 0;
@@ -33,6 +38,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private CallbackContext attitudeUpdateCallbackContext;
     private CallbackContext headingUpdateCallbackContext;
     private CallbackContext statusUpdateCallbackContext;
+    private CallbackContext wayfindingUpdateCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -124,6 +130,10 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
       statusUpdateCallbackContext = callbackContext;
     }
 
+    public void requestWayfindingUpdates(CallbackContext callbackContext) {
+      wayfindingUpdateCallbackContext = callbackContext;
+    }
+
     /**
      * Returns the sum of the all callback collections
      * @return
@@ -158,6 +168,10 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
         }
     }
 
+    public void removeWayfindingUpdates() {
+      wayfindingUpdateCallbackContext = null;
+    }
+
     /**
      * Removes attitude callback
      */
@@ -179,6 +193,53 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
         statusUpdateCallbackContext = null;
       }
 
+
+    private JSONObject getFloorPlanJSONFromIAFloorPlan(IAFloorPlan floorPlan) {
+      JSONObject floorplanInfo = new JSONObject();
+      try {
+        floorplanInfo.put("id", floorPlan.getId());
+        floorplanInfo.put("name", floorPlan.getName());
+        floorplanInfo.put("url", floorPlan.getUrl());
+        floorplanInfo.put("floorLevel", floorPlan.getFloorLevel());
+        floorplanInfo.put("bearing", floorPlan.getBearing());
+        floorplanInfo.put("bitmapHeight", floorPlan.getBitmapHeight());
+        floorplanInfo.put("bitmapWidth", floorPlan.getBitmapWidth());
+        floorplanInfo.put("heightMeters", floorPlan.getHeightMeters());
+        floorplanInfo.put("widthMeters", floorPlan.getWidthMeters());
+        floorplanInfo.put("metersToPixels", floorPlan.getMetersToPixels());
+        floorplanInfo.put("pixelsToMeters", floorPlan.getPixelsToMeters());
+
+        JSONArray latlngArray = new JSONArray();
+        IALatLng iaLatLng = floorPlan.getBottomLeft();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("bottomLeft", latlngArray);
+
+        latlngArray = new JSONArray();
+        iaLatLng = floorPlan.getCenter();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("center", latlngArray);
+
+        latlngArray = new JSONArray();
+        iaLatLng = floorPlan.getTopLeft();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("topLeft", latlngArray);
+
+        latlngArray = new JSONArray();
+        iaLatLng = floorPlan.getTopRight();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("topRight", latlngArray);
+      } catch(JSONException ex) {
+          Log.e(TAG, ex.toString());
+          throw new IllegalStateException(ex.getMessage());
+      }
+
+      return floorplanInfo;
+    }
+
     /**
      * Returns a JSON object which contains IARegion info.
      * @param iaRegion
@@ -192,6 +253,25 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             regionData.put("timestamp", iaRegion.getTimestamp());
             regionData.put("regionType", iaRegion.getType());
             regionData.put("transitionType", transitionType);
+
+            IAFloorPlan floorPlan = iaRegion.getFloorPlan();
+            if (floorPlan != null) {
+              regionData.put("floorPlan", getFloorPlanJSONFromIAFloorPlan(floorPlan));
+            }
+
+            IAVenue venue = iaRegion.getVenue();
+            if (venue != null) {
+              JSONObject venueData = new JSONObject();
+              venueData.put("id", venue.getId());
+              venueData.put("name", venue.getName());
+              JSONArray venueFloorPlans = new JSONArray();
+              for (IAFloorPlan venueFloorPlan : venue.getFloorPlans()) {
+                venueFloorPlans.put(getFloorPlanJSONFromIAFloorPlan(venueFloorPlan));
+              }
+              venueData.put("floorPlans", venueFloorPlans);
+              regionData.put("venue", venueData);
+            }
+
             return regionData;
         }
         catch(JSONException ex) {
@@ -228,6 +308,52 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             Log.e(TAG, ex.toString());
             throw new IllegalStateException(ex.getMessage());
         }
+    }
+
+    private JSONObject getRouteJSONFromIARoute(IARoute route) {
+      JSONObject obj = new JSONObject();
+      try {
+        JSONArray jsonArray = new JSONArray();
+        for (IARoute.Leg leg : route.getLegs()) {
+            jsonArray.put(jsonObjectFromRoutingLeg(leg));
+        }
+        obj.put("legs", jsonArray);
+      } catch(JSONException e) {
+          Log.e("IAWAYFINDER", "json error with route");
+      }
+      return obj;
+    }
+
+    /**
+     * Create JSON object from the given RoutingLeg object
+     */
+    private JSONObject jsonObjectFromRoutingLeg(IARoute.Leg routingLeg) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("begin", jsonObjectFromRoutingPoint(routingLeg.getBegin()));
+            obj.put("end", jsonObjectFromRoutingPoint(routingLeg.getEnd()));
+            obj.put("length", routingLeg.getLength());
+            obj.put("direction", routingLeg.getDirection());
+            obj.put("edgeIndex", routingLeg.getEdgeIndex());
+        } catch(JSONException e) {
+
+        }
+        return obj;
+    }
+
+    /**
+     * Create JSON object from RoutingPoint object
+     */
+    private JSONObject jsonObjectFromRoutingPoint(IARoute.Point routingPoint) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("latitude", routingPoint.getLatitude());
+            obj.put("longitude", routingPoint.getLongitude());
+            obj.put("floor", routingPoint.getFloor());
+        } catch(JSONException e) {
+
+        }
+        return obj;
     }
 
     /**
@@ -428,5 +554,15 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
               sendStatusResult(statusData);
               break;
         }
+    }
+
+    @Override
+    public void onWayfindingUpdate(IARoute route) {
+      if (wayfindingUpdateCallbackContext != null) {
+          PluginResult pluginResult;
+          pluginResult = new PluginResult(PluginResult.Status.OK, getRouteJSONFromIARoute(route));
+          pluginResult.setKeepCallback(true);
+          wayfindingUpdateCallbackContext.sendPluginResult(pluginResult);
+      }
     }
   }

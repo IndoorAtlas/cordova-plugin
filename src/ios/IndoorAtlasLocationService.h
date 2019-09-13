@@ -37,22 +37,6 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didRegionChange:(IARegion *)region type:(IndoorLocationTransitionType)enterOrExit;
 
 /**
- *  Return Information about given Floor Refrence
- *
- *  @param manager   The location manager object that generated the event
- *  @param floorPlan Information about FloorPlan
- */
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId;
-
-/**
- *  Return Error Information if unable to fetch Floorplan Info from server
- *
- *  @param manager
- *  @param error
- */
-- (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
-
-/**
  *  Status Changed
  *
  *  @param manager
@@ -75,22 +59,13 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  @param newHeading
  */
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)newHeading;
-/**
- * Passes the calculated point to the Javascript side
- *
- * @param point
- */
-- (void)sendCoordinateToPoint:(CGPoint)point;
 
 /**
- * Passes the calculated coordinate to the Javascript side
+ * Updated when a wayfinding route update is available.
  *
- * @param coords
+ * @param route Updated wayfinding route.
  */
-- (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
-
-- (void)errorInCoordinateToPoint:(NSError *) error;
-- (void)errorInPointToCoordinate:(NSError *) error;
+- (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route;
 
 @end
 @interface IndoorAtlasLocationService : NSObject{
@@ -99,7 +74,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
 
-- (id)init:(NSString *)apikey hash:(NSString *)apisecret;
+- (id)init:(NSString *)apikey;
 /**
  *  Start positioning
  *
@@ -112,6 +87,11 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)stopPositioning;
 
 /**
+ * Sets explicit position
+ */
+- (void)setPosition:(IALocation *)position;
+
+/**
  *  State is service active or not
  *
  *  @return YES/NO
@@ -119,40 +99,30 @@ typedef NSUInteger IndoorLocationTransitionType;
 -(BOOL)isServiceActive;
 
 /**
- *  Set explicit floor plan
+ *  Lock positioning to indoors
  */
-- (void)setFloorPlan:(NSString *)floorPlanId;
+- (void)lockIndoors:(BOOL)lock;
 
 /**
- *  Set explicit location
+ *  Lock positioning to a given floor
  */
-- (void)setLocation:(CLLocation *)location;
+- (void)setFloorLock:(int)floor;
 
 /**
- *  Set explicit venue
+ *  Unlock floor lock
  */
-- (void)setVenue:(NSString *)venueId;
+- (void)unlockFloor;
 
 /**
- *  Fetch Floorplan With Id
- *
- *  @param floorplanId
+ * Start monitoring wayfinding updates.
+ * @param request A wayfinding request to destination.
  */
-- (void)fetchFloorplanWithId:(NSString *)floorplanId callbackId:(NSString *)callbackId;
+- (void)startMonitoringForWayfinding:(IAWayfindingRequest*)request;
 
 /**
- * Calculates point with the given coordinates
- *
- * @param coords
+ *  Stop monitoring wayfinding updates.
  */
-- (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords;
-
-/**
- * Calculates coordinates with the given point
- *
- * @param point
- */
-- (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point;
+- (void)stopMonitoringForWayfinding;
 
 - (void)valueForDistanceFilter:(float *)distance;
 - (float)fetchFloorCertainty;
