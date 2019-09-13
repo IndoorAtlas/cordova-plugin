@@ -383,11 +383,9 @@
 {
     NSString *callbackId = command.callbackId;
     CDVPluginResult *pluginResult;
-    NSDictionary *options = [command.arguments objectAtIndex:0];
+    NSString *iakey = [command.arguments objectAtIndex:0];
 
-    NSString *iakey = [options objectForKey:@"key"];
-    NSString *iasecret = [options objectForKey:@"secret"];
-    if (iakey == nil || iasecret == nil) {
+    if (iakey == nil) {
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
         [result setObject:@"Invalid access token" forKey:@"message"];
@@ -395,7 +393,7 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
     else {
-        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey hash:iasecret];
+        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey];
         self.IAlocationInfo.delegate = self;
 
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -588,6 +586,29 @@
 - (void)stopLocation:(CDVInvokedUrlCommand *)command
 {
     [self _stopLocation];
+}
+
+- (void)setPosition:(CDVInvokedUrlCommand *)command
+{
+    NSString *region = [command argumentAtIndex:0];
+    NSArray *location = [command argumentAtIndex:1];
+    NSString *floorPlanId = [command argumentAtIndex:2];
+    NSString *venueId = [command argumentAtIndex:3];
+
+    if ([region length] != 0 || [floorPlanId length] != 0 || [venueId length] != 0) {
+        [self sendErrorCommand:command withMessage:@"An initialization error occured at setPosition"];
+        return;
+    }
+
+    if ([location count] != 2) {
+        [self sendErrorCommand:command withMessage:@"An invalid input location at setPosition: the size of the array must be 2."];
+        return;
+    }
+    double latitude = [(NSNumber *)[location objectAtIndex:0] doubleValue];
+    double longitude = [(NSNumber *)[location objectAtIndex:1] doubleValue];
+    CLLocation *loc = [[CLLocation alloc] initWithLatitude:latitude longitude:longitude];
+    IALocation *iaLoc = [IALocation locationWithCLLocation:loc];
+    [self.IAlocationInfo setPosition:iaLoc];
 }
 
 - (void)setDistanceFilter:(CDVInvokedUrlCommand *)command
@@ -833,76 +854,5 @@
     
     [self returnStatusInformation:statusDisplay code:statusCode];
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
-}
-
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId
-{
-    if (callbackId != nil) {
-
-        NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:17];
-
-        NSNumber *timestamp = [NSNumber numberWithDouble:([[NSDate date] timeIntervalSince1970] * 1000)];
-        [returnInfo setObject:timestamp forKey:@"timestamp"];
-        [returnInfo setObject:floorPlan.floorPlanId forKey:@"id"];
-        [returnInfo setObject:floorPlan.name forKey:@"name"];
-        [returnInfo setObject:floorPlan.imageUrl.absoluteString forKey:@"url"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.floor.level] forKey:@"floorLevel"];
-        [returnInfo setObject:[NSNumber numberWithDouble: floorPlan.bearing] forKey:@"bearing"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.height] forKey:@"bitmapHeight"];
-        [returnInfo setObject:[NSNumber numberWithInteger:floorPlan.width] forKey:@"bitmapWidth"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.heightMeters] forKey:@"heightMeters"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.widthMeters] forKey:@"widthMeters"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.meterToPixelConversion] forKey:@"metersToPixels"];
-        [returnInfo setObject:[NSNumber numberWithFloat:floorPlan.pixelToMeterConversion] forKey:@"pixelsToMeters"];
-        CLLocationCoordinate2D locationPoint = floorPlan.bottomLeft;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"bottomLeft"];
-        locationPoint = floorPlan.center;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"center"];
-        locationPoint = floorPlan.topLeft;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topLeft"];
-        locationPoint = floorPlan.topRight;
-        [returnInfo setObject:[NSArray arrayWithObjects:[NSNumber numberWithDouble:locationPoint.longitude], [NSNumber numberWithDouble:locationPoint.latitude], nil] forKey:@"topRight"];
-
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    }
-}
-
-- (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.floorPlanCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.floorPlanCallbackID];
-    }
-}
-
-- (void)errorInCoordinateToPoint:(NSError *) error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.coordinateToPointCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.coordinateToPointCallbackID];
-    }
-}
-- (void)errorInPointToCoordinate:(NSError *) error
-{
-    NSLog(@"locationManager::didFloorPlanFailedWithError %@", [error localizedFailureReason]);
-    if (self.pointToCoordinateCallbackID != nil) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithUnsignedInteger:FLOORPLAN_UNAVAILABLE] forKey:@"code"];
-        [posError setObject:[error localizedDescription] ? [error localizedDescription]:@"" forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-
-        [self.commandDelegate sendPluginResult:result callbackId:self.pointToCoordinateCallbackID];
-    }
 }
 @end

@@ -1,4 +1,38 @@
-Version 2.9.0 - September 2019
+Version 3.0.1 - August 2019
+----------------
+ * Fix FloorPlan.coordinateToPoint & pointToCoordinate. Both methods
+   crashed with a JavaScript error before this fix
+
+Version 3.0.0 - June 2019
+----------------
+ * new API
+
+Version 2.10.3 - June 2019
+------------------------------
+ * Update IndoorAtlas SDKs to 3.0.3
+
+Version 2.10.2 - June 2019
+------------------------------
+ * Update IndoorAtlas SDKs to 3.0.2
+
+Version 2.10.1 - May 2019
+------------------------------
+ * Update IndoorAtlas SDKs to 3.0.1
+
+Version 2.10.0 - April 2019
+------------------------------
+ * Backwards compatibility release: The 2.x IndoorAtlas Cordova API will not
+   be maintained after the 2.10.x versions
+ * Update IndoorAtlas iOS SDK to 3.0 while keeping the current Cordova API
+ * Minumum supported Android minSdkVersion raised to 21
+
+Version 2.9.1 - March 2019
+------------------------------
+ * Update IndoorAtlas iOS SDK to version 2.9.4
+ * Update IndoorAtlas Android SDK to version 2.9.3
+ * Implement missing setPosition on iOS
+
+Version 2.9.0 - September 2018
 ------------------------------
  * IndoorAtlas SDK version 2.9 with integrated wayfinding
  * New wayfinding API

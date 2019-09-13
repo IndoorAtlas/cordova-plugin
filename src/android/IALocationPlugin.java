@@ -500,7 +500,8 @@ public class IALocationPlugin extends CordovaPlugin {
     }
 
     private void setDistanceFilter(float distance, CallbackContext callbackContext) {
-        stopPositioning();
+        final boolean wasRunning = mLocationServiceRunning;
+        if (wasRunning) stopPositioning();
         if (distance >= 0) {
             mLocationRequest.setSmallestDisplacement(distance);
             JSONObject successObject = new JSONObject();
@@ -511,7 +512,7 @@ public class IALocationPlugin extends CordovaPlugin {
                 throw new IllegalStateException(ex.getMessage());
             }
             callbackContext.success(successObject);
-            startPositioning();
+            if (wasRunning) startPositioning();
         } else {
             callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_VALUE));
         }

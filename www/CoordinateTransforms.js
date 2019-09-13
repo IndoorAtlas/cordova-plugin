@@ -1,7 +1,6 @@
-/**
+/*
  * Coordinate transforms
  */
-
 var CoordinateTransforms = {
   boundingBoxToScalingFactor: function(bb) {
     var a = 6378137; // earth semimajor axis in meters
@@ -72,7 +71,7 @@ var CoordinateTransforms = {
 
   // WGS coordinates to relative coordinates
   wgsToRel: function(boundingBox, wgsCoords) {
-    return this.enuToRel(boundingBox, this.wgsToEnu(boundingBox, wgsCoords))
+    return this.enuToRel(boundingBox, this.wgsToEnu(boundingBox, wgsCoords));
   },
 
   // WGS coordinates to ENU coordinates
@@ -105,5 +104,6 @@ var CoordinateTransforms = {
       y: relativeCoords[1] * (boundingBox.dimensions[1] / 2.0) + boundingBox.dimensions[1] / 2.0
     };
   }
-}
+};
+
 module.exports = CoordinateTransforms;

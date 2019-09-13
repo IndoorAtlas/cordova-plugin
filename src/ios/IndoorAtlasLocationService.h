@@ -37,22 +37,6 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didRegionChange:(IARegion *)region type:(IndoorLocationTransitionType)enterOrExit;
 
 /**
- *  Return Information about given Floor Refrence
- *
- *  @param manager   The location manager object that generated the event
- *  @param floorPlan Information about FloorPlan
- */
-- (void)location:(IndoorAtlasLocationService *)manager withFloorPlan:(IAFloorPlan *)floorPlan callbackId:(NSString *)callbackId;
-
-/**
- *  Return Error Information if unable to fetch Floorplan Info from server
- *
- *  @param manager
- *  @param error
- */
-- (void)location:(IndoorAtlasLocationService *)manager didFloorPlanFailedWithError:(NSError *)error;
-
-/**
  *  Status Changed
  *
  *  @param manager
@@ -83,23 +67,6 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route;
 
-/**
- * Passes the calculated point to the Javascript side
- *
- * @param point
- */
-- (void)sendCoordinateToPoint:(CGPoint)point;
-
-/**
- * Passes the calculated coordinate to the Javascript side
- *
- * @param coords
- */
-- (void)sendPointToCoordinate:(CLLocationCoordinate2D)coords;
-
-- (void)errorInCoordinateToPoint:(NSError *) error;
-- (void)errorInPointToCoordinate:(NSError *) error;
-
 @end
 @interface IndoorAtlasLocationService : NSObject{
 
@@ -107,7 +74,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
 
-- (id)init:(NSString *)apikey hash:(NSString *)apisecret;
+- (id)init:(NSString *)apikey;
 /**
  *  Start positioning
  *
@@ -118,6 +85,11 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  Stop positioning
  */
 - (void)stopPositioning;
+
+/**
+ * Sets explicit position
+ */
+- (void)setPosition:(IALocation *)position;
 
 /**
  *  State is service active or not
@@ -151,27 +123,6 @@ typedef NSUInteger IndoorLocationTransitionType;
  *  Stop monitoring wayfinding updates.
  */
 - (void)stopMonitoringForWayfinding;
-
-/**
- *  Fetch Floorplan With Id
- *
- *  @param floorplanId
- */
-- (void)fetchFloorplanWithId:(NSString *)floorplanId callbackId:(NSString *)callbackId;
-
-/**
- * Calculates point with the given coordinates
- *
- * @param coords
- */
-- (void)getCoordinateToPoint:(NSString *)floorplanId andCoordinates: (CLLocationCoordinate2D) coords;
-
-/**
- * Calculates coordinates with the given point
- *
- * @param point
- */
-- (void)getPointToCoordinate:(NSString *)floorplanId andPoint: (CGPoint) point;
 
 - (void)valueForDistanceFilter:(float *)distance;
 - (float)fetchFloorCertainty;
