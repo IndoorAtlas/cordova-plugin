@@ -1,3 +1,7 @@
+Version 3.0.2 - September 2019
+----------------
+ * Fix Android crash in case of repeated deviceready (#36)
+
 Version 3.0.1 - August 2019
 ----------------
  * Fix FloorPlan.coordinateToPoint & pointToCoordinate. Both methods
