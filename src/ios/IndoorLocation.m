@@ -591,7 +591,8 @@
 - (void)setPosition:(CDVInvokedUrlCommand *)command
 {
     NSString *region = [command argumentAtIndex:0];
-    NSArray *location = [command argumentAtIndex:1];
+    //NSArray *location = [command argumentAtIndex:1];
+    NSDictionary *location = [command argumentAtIndex:1];
     NSString *floorPlanId = [command argumentAtIndex:2];
     NSString *venueId = [command argumentAtIndex:3];
 
@@ -599,13 +600,16 @@
         [self sendErrorCommand:command withMessage:@"An initialization error occured at setPosition"];
         return;
     }
-
+/*
     if ([location count] != 2) {
         [self sendErrorCommand:command withMessage:@"An invalid input location at setPosition: the size of the array must be 2."];
         return;
     }
     double latitude = [(NSNumber *)[location objectAtIndex:0] doubleValue];
     double longitude = [(NSNumber *)[location objectAtIndex:1] doubleValue];
+ */
+    double latitude = [(NSNumber *)[location valueForKey:@"latitude"] doubleValue];
+    double longitude = [(NSNumber *)[location valueForKey:@"longitude"] doubleValue];
     CLLocation *loc = [[CLLocation alloc] initWithLatitude:latitude longitude:longitude];
     IALocation *iaLoc = [IALocation locationWithCLLocation:loc];
     [self.IAlocationInfo setPosition:iaLoc];
