@@ -94,7 +94,6 @@ public class IALocationPlugin extends CordovaPlugin {
             result = new PluginResult(PluginResult.Status.OK);
             mCbContext.sendPluginResult(result);
         }
-        mCbContext = null;
     }
 
     /**
