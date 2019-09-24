@@ -448,20 +448,22 @@ public class IALocationPlugin extends CordovaPlugin {
         if (mLocationManager != null) {
           builder = new IALocation.Builder();
           String region = args.getString(0).trim();
-          JSONArray location = args.getJSONArray(1);
+          JSONObject location = args.getJSONObject(1);
           String floorPlanId = args.getString(2).trim();
           String venueId = args.getString(3).trim();
 
+          // These are getting the values of the string "null" rather than null,
+          // and so aren't empty and are failing to let the code pass through.
+          /*
           if (!floorPlanId.isEmpty() || !region.isEmpty() || !venueId.isEmpty()) {
             // TODO: explicit region IDs are deprecated in SDK 2.9
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
             return;
           }
+          */
 
-          if (location.length() == 2) {
-            builder.withLatitude(location.getDouble(0));
-            builder.withLongitude(location.getDouble(1));
-          }
+          builder.withLatitude(location.getDouble("latitude"));
+          builder.withLongitude(location.getDouble("longitude"));
 
           cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
