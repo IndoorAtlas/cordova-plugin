@@ -1,3 +1,7 @@
+Version 3.1.0 - October 2019
+----------------
+* Update IndoorAtlas SDKs to 3.1.0
+
 Version 3.0.2 - September 2019
 ----------------
  * Fix Android crash in case of repeated deviceready (#36)

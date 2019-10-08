@@ -190,6 +190,14 @@ INDOORATLAS_API
  */
 @property (nonatomic, strong, nullable) IAFloor *floor;
 /**
+ * The JSON payload for this geofence.
+ */
+@property (nonatomic, strong, nullable) NSDictionary *payload;
+/**
+ * Is this geofence cloud defined (static) or runtime defined (dynamic)
+ */
+@property (nonatomic) BOOL isCloudGeofence;
+/**
  * Does the geofence contain the coordinate?
  */
 - (BOOL)containsCoordinate:(CLLocationCoordinate2D)coordinate;
@@ -375,6 +383,13 @@ INDOORATLAS_API
  * Region this location was obtained from.
  */
 @property (nonatomic, readwrite, nullable) IARegion *region;
+
+/**
+ * Experimental feature for soft location updates.
+ * The API may be changed in future.
+ * Set to true before giving as a custom location to <IALocationManager> to make the location behave more like radio source rather than a location hint.
+ */
+@property (nonatomic, assign) bool soft;
 
 @end
 
@@ -563,7 +578,25 @@ INDOORATLAS_API
 @property(assign, nonatomic) enum ia_location_accuracy desiredAccuracy;
 
 /**
- * The set of geofences monitored by the location manager.
+ * Explicitly enable background location updates. (iOS 9.0+ only)
+ *
+ * Location updates must be active when app goes to background for this flag to have effect.
+ * If you have enabled background execution in some other way, you may still receive location updates in background even if this flag is not set.
+ *
+ * NOTE! you must also enable the Location updates background mode and include NSLocationAlwaysAndWhenInUseUsageDescription
+ * key in your app's Info.plist file, and the user must authorize the always on background location permission in order for this flag to have any effect.
+ *
+ * For more info, see:
+ * https://developer.apple.com/documentation/corelocation/getting_the_user_s_location/handling_location_events_in_the_background
+ * https://developer.apple.com/documentation/corelocation/cllocationmanager/1620568-allowsbackgroundlocationupdates
+ * https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services/requesting_always_authorization
+ *
+ * Default value is false, i.e. background location updates are not explicitly enabled
+ */
+@property(assign, nonatomic) BOOL allowsBackgroundLocationUpdates;
+
+/**
+ * The set of (dynamic) geofences monitored by the location manager. Note that automatically monitored cloud geofences are not included.
  *
  * You cannot add geofences to this property directly. Instead use the <startMonitoringGeofence:> method.
  */
@@ -658,7 +691,7 @@ INDOORATLAS_API
 - (void)stopUpdatingLocation;
 
 /**
- * Starts monitoring the specified geofence.
+ * Starts monitoring the specified geofence. Note that cloud geofences are monitored automatically.
  *
  * You must call this method once for each geofence you want to monitor. If an existing geofence with the same identifier is already being monitored by the app, the old geofence is replaced by the new one.
  * Geofence events are delivered as regions to the <indoorLocationManager:didEnterRegion:> and <indoorLocationManager:didExitRegion:> methods of your delegate.
