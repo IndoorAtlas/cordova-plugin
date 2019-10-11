@@ -2,6 +2,7 @@ Version 3.1.0 - October 2019
 ----------------
 * Update IndoorAtlas SDKs to 3.1.0
 * Fixed setPosition for iOS and Android (#38, #39)
+* Fixed bug in error message (#37)
 
 Version 3.0.2 - September 2019
 ----------------

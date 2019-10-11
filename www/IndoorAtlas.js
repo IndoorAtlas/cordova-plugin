@@ -103,7 +103,7 @@ function IndoorAtlas() {
   // none of the Cordova callbacks are supposed to fail, always report
   // as status OUT_OF_SERVICE if something like this happens
   function error(result) {
-    var message = 'internal error' + methodName + ' failed ' + JSON.stringify(result);
+    var message = 'internal error ' + JSON.stringify(result);
     console.error('IndoorAtlas ERROR: ' + message);
     if (callbacks.onStatus) {
       callbacks.onStatus(CurrentStatus.OUT_OF_SERVICE, message);
