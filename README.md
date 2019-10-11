@@ -15,7 +15,7 @@ for instructions on staying in the old version until you have time to migrate._
 
 ## Documentation
 
-The full documentation for the IndoorAtlas Cordova plugin is available at: https://docs.indooratlas.com/cordova/3.0/
+The full documentation for the IndoorAtlas Cordova plugin is available at: https://docs.indooratlas.com/cordova/latest/
 
 ## Development notes
 
