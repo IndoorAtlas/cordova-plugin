@@ -2,7 +2,7 @@ _This plugin has recently been updated to a new version 3.x with new a new API.
 Refer `migration-guide.md` for instructions on migrating from 2.x versions or
 for instructions on staying in the old version until you have time to migrate._
 
-# IndoorAtlas Cordova Plugin 3.0
+# IndoorAtlas Cordova Plugin <img src="https://img.shields.io/github/release/IndoorAtlas/cordova-plugin.svg">
 
 [IndoorAtlas](https://www.indooratlas.com/) provides a unique Platform-as-a-Service (PaaS) solution that runs a disruptive geomagnetic positioning in its full-stack hybrid technology for accurately pinpointing a location inside a building. The IndoorAtlas SDK enables app developers to use high-accuracy indoor positioning in venues that have been fingerprinted.
 
