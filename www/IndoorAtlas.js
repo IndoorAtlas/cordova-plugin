@@ -63,9 +63,17 @@ function getDeviceType() {
   return deviceType;
 }
 
+function isNumber(value) {
+  return typeof value === 'number' && isFinite(value);
+}
+
 function isInteger(value) {
   // official Mozilla polyfill for Number.isInteger
-  return typeof value === 'number' &&  isFinite(value) && Math.floor(value) === value;
+  return typeof isNumber(value) && Math.floor(value) === value;
+}
+
+function isNonNegativeNumber(value) {
+  return typeof isNumber(value) && value >= 0;
 }
 
 function IndoorAtlas() {
@@ -496,15 +504,20 @@ function IndoorAtlas() {
    * approximate locations with low or medium accuracy.
    *
    * @param {object} position
-   * @param {Coordinates} position.coordinates Like `IndoorAtlas.Coordinates`,
-   *  must have at least `latitude` and `longitude` members
+   * @param {number} position.latitude Latitude in degrees
+   * @param {number} position.longitude Longitude in degrees
+   * @param {number} position.floor Integer floor number (optional)
+   * @param {number} position.accuracy Accuracy radius in meters (optional)
    * @return {object} returns `this` to allow chaining
    * @example
    * IndoorAtlas.setPosition({ latitude: 60.16, longitude: 24.95, floor: 2 });
    */
-  this.setPosition = function(position) { // TODO: check type
-    if (!position.coordinates) throw new Error('setPosition: no coordinates');
-    if (initialized) native('setPosition', [null, position.coordinates, null, null]);
+  this.setPosition = function(position) {
+    if (!isNumber(position.latitude) || !isNumber(position.longitude)) throw new Error('setPosition: invalid or missing coordinates');
+    if (position.hasOwnProperty('floor') && !isInteger(position.floor)) throw new Error('setPosition: invalid floor number');
+    if (position.hasOwnProperty('accuracy') && !isNonNegativeNumber(position.accuracy)) throw new Error('setPosition: invalid accuracy value')
+    
+    if (initialized) native('setPosition', [position.latitude, position.longitude, position.floor, position.accuracy]);
     // otherwise just ignrore
     return self;
   };

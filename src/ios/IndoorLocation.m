@@ -590,24 +590,26 @@
 
 - (void)setPosition:(CDVInvokedUrlCommand *)command
 {
-    NSString *region = [command argumentAtIndex:0];
-    NSArray *location = [command argumentAtIndex:1];
-    NSString *floorPlanId = [command argumentAtIndex:2];
-    NSString *venueId = [command argumentAtIndex:3];
-
-    if ([region length] != 0 || [floorPlanId length] != 0 || [venueId length] != 0) {
-        [self sendErrorCommand:command withMessage:@"An initialization error occured at setPosition"];
-        return;
+    NSString *oLat = [command argumentAtIndex:0];
+    NSString *oLon = [command argumentAtIndex:1];
+    NSString *oFloor = [command argumentAtIndex:2];
+    NSString *oAcc = [command argumentAtIndex:3];
+    NSLog(@"locationManager::setPosition:: %@, %@, %@, %@", oLat, oLon, oFloor, oAcc);
+    
+    const double lat = [oLat doubleValue];
+    const double lon = [oLon doubleValue];
+    CLLocation *loc = [[CLLocation alloc] initWithLatitude:lat longitude:lon];
+    if (oAcc) {
+        const double acc = [oAcc doubleValue];
+        [loc setValue: [NSNumber numberWithDouble:acc] forKey:@"horizontalAccuracy"];
     }
-
-    if ([location count] != 2) {
-        [self sendErrorCommand:command withMessage:@"An invalid input location at setPosition: the size of the array must be 2."];
-        return;
+    IALocation *iaLoc;
+    if (oFloor) {
+        const int floor = [oFloor intValue];
+        iaLoc = [IALocation locationWithCLLocation:loc andFloor: [IAFloor floorWithLevel:floor]];
+    } else {
+        iaLoc = [IALocation locationWithCLLocation:loc];
     }
-    double latitude = [(NSNumber *)[location objectAtIndex:0] doubleValue];
-    double longitude = [(NSNumber *)[location objectAtIndex:1] doubleValue];
-    CLLocation *loc = [[CLLocation alloc] initWithLatitude:latitude longitude:longitude];
-    IALocation *iaLoc = [IALocation locationWithCLLocation:loc];
     [self.IAlocationInfo setPosition:iaLoc];
 }
 
