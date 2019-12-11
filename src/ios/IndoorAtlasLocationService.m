@@ -38,7 +38,7 @@
         self.manager = [IALocationManager new];
 
         // Set IndoorAtlas API key
-        [self.manager setApiKey:self.apikey andSecret:@" "];
+        [self.manager setApiKey:self.apikey andSecret:@""];
 
         self.manager.delegate = self;
         serviceStopped = YES;
