@@ -1,7 +1,7 @@
 Version 3.1.3 - December 2019
 ----------------
  * Update IndoorAtlas SDKs to 3.1.3
- * Fix iOS support (3.1.2)
+ * Fix iOS support with SDK 3.1.2 (#40)
 
 Version 3.1.2 - November 2019
 ----------------
