@@ -131,7 +131,7 @@ function IndoorAtlas() {
   }
 
   function stopWayfinding() {
-    native('removeWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor]);
+    native('removeWayfindingUpdates', []);
   }
 
   function requestGeofenceUpdates() {
