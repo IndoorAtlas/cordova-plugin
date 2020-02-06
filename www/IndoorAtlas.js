@@ -130,7 +130,7 @@ function IndoorAtlas() {
   }
 
   function stopWayfinding() {
-    native('removeWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor]);
+    native('removeWayfindingUpdates', []);
   }
 
   function startPositioning() {
@@ -516,7 +516,7 @@ function IndoorAtlas() {
     if (!isNumber(position.latitude) || !isNumber(position.longitude)) throw new Error('setPosition: invalid or missing coordinates');
     if (position.hasOwnProperty('floor') && !isInteger(position.floor)) throw new Error('setPosition: invalid floor number');
     if (position.hasOwnProperty('accuracy') && !isNonNegativeNumber(position.accuracy)) throw new Error('setPosition: invalid accuracy value')
-    
+
     if (initialized) native('setPosition', [position.latitude, position.longitude, position.floor, position.accuracy]);
     // otherwise just ignrore
     return self;
