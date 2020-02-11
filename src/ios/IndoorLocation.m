@@ -52,6 +52,7 @@
 @property (nonatomic, strong) NSString *addHeadingUpdateCallbackID;
 @property (nonatomic, strong) NSString *addStatusUpdateCallbackID;
 @property (nonatomic, strong) NSString *addRouteUpdateCallbackID;
+@property (nonatomic, strong) NSString *addGeofenceUpdateCallbackID;
 
 @end
 
@@ -254,7 +255,7 @@
 {
     if (_addAttitudeUpdateCallbackID != nil) {
         CDVPluginResult *pluginResult;
-        
+
         NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:5];
         [result setObject:secondsSinceRefDate forKey:@"timestamp"];
@@ -272,7 +273,7 @@
 {
     if (_addHeadingUpdateCallbackID != nil) {
         CDVPluginResult *pluginResult;
-        
+
         NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:secondsSinceRefDate forKey:@"timestamp"];
@@ -305,7 +306,7 @@
 {
     if (_addStatusUpdateCallbackID != nil) {
         CDVPluginResult *pluginResult;
-        
+
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:statusString forKey:@"message"];
         [result setObject:[NSNumber numberWithUnsignedInteger:code] forKey:@"code"];
@@ -333,6 +334,16 @@
             [floorplans addObject:[self floorPlanToDictionary:[regionInfo.venue.floorplans objectAtIndex:i]]];
         }
         [venue setObject:floorplans forKey:@"floorPlans"];
+        NSMutableArray *geofences = [[NSMutableArray alloc] initWithCapacity:regionInfo.venue.geofences.count];
+        for (size_t i = 0; i < regionInfo.venue.geofences.count; i++) {
+            [geofences addObject:[self dictionaryFromGeofence:[regionInfo.venue.geofences objectAtIndex:i]]];
+        }
+        [venue setObject:geofences forKey:@"geofences"];
+        NSMutableArray *pois = [[NSMutableArray alloc] initWithCapacity:regionInfo.venue.pois.count];
+        for (size_t i = 0; i < regionInfo.venue.pois.count; i++) {
+            [pois addObject:[self dictionaryFromPoi:[regionInfo.venue.pois objectAtIndex:i]]];
+        }
+        [venue setObject:pois forKey:@"pois"];
         [result setObject:venue forKey:@"venue"];
     }
     if (regionInfo.floorplan != nil) {
@@ -595,7 +606,7 @@
     NSString *oFloor = [command argumentAtIndex:2];
     NSString *oAcc = [command argumentAtIndex:3];
     NSLog(@"locationManager::setPosition:: %@, %@, %@, %@", oLat, oLon, oFloor, oAcc);
-    
+
     const double lat = [oLat doubleValue];
     const double lon = [oLon doubleValue];
     CLLocation *loc = [[CLLocation alloc] initWithLatitude:lat longitude:lon];
@@ -658,12 +669,12 @@
 {
     NSString *oSensitivity = [command argumentAtIndex:0];
     NSString *hSensitivity = [command argumentAtIndex:1];
-    
+
     double orientationSensitivity = [oSensitivity doubleValue];
     double headingSensitivity = [hSensitivity doubleValue];
-    
+
     [self.IAlocationInfo setSensitivities: &orientationSensitivity headingSensitivity:&headingSensitivity];
-    
+
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
     [result setObject:@"Sensitivities set" forKey:@"message"];
@@ -681,7 +692,7 @@
     const double lat = [oLat doubleValue];
     const double lon = [oLon doubleValue];
     const int floor = [oFloor intValue];
-    
+
     NSLog(@"locationManager::requestWayfindingUpdates %f, %f, %d", lat, lon, floor);
     IAWayfindingRequest *req = [IAWayfindingRequest alloc];
     req.coordinate = CLLocationCoordinate2DMake(lat, lon);
@@ -692,6 +703,113 @@
 - (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command
 {
     [self.IAlocationInfo stopMonitoringForWayfinding];
+}
+
+- (IAPolygonGeofence *)geofenceFromDictionary:(NSDictionary *)geofence {
+
+    NSDictionary *geometry = [geofence objectForKey:@"geometry"];
+    NSArray *coordinates = [geometry valueForKey:@"coordinates"];
+    NSArray *linearRing = coordinates[0];
+    NSMutableArray *points = [[NSMutableArray alloc] init];
+    for (int i = 0; i < [linearRing count]; i++) {
+        NSArray *vertex = linearRing[i];
+        [points addObject:vertex[1]];
+        [points addObject:vertex[0]];
+    }
+    NSDictionary *properties = [geofence objectForKey:@"properties"];
+
+    IAFloor *iaFloor = [IAFloor floorWithLevel:[[properties valueForKey:@"floor"] integerValue]];
+    IAPolygonGeofence *iaGeofence = [
+        IAPolygonGeofence
+            polygonGeofenceWithIdentifier:[geofence objectForKey:@"id"]
+            andFloor:iaFloor
+            edges:points
+        ];
+    iaGeofence.name = [properties objectForKey:@"name"];
+    iaGeofence.payload = [properties objectForKey:@"payload"];
+    return iaGeofence;
+}
+
+- (NSDictionary *)dictionaryFromGeofence:(IAPolygonGeofence *)iaGeofence
+{
+    NSMutableDictionary *geoJson = [NSMutableDictionary dictionaryWithCapacity:4];
+    [geoJson setObject:@"Feature" forKey:@"type"];
+    [geoJson setObject:iaGeofence.identifier forKey:@"id"];
+
+    NSMutableDictionary *properties = [NSMutableDictionary dictionaryWithCapacity:2];
+    [properties setObject:iaGeofence.name forKey:@"name"];
+    [properties setObject:[NSNumber numberWithInt:iaGeofence.floor.level] forKey:@"floor"];
+    if (iaGeofence.payload != nil) {
+        [properties setObject:iaGeofence.payload forKey:@"payload"];
+    }
+    [geoJson setObject:properties forKey:@"properties"];
+
+    NSMutableDictionary *geometry = [NSMutableDictionary dictionaryWithCapacity:2];
+    [geometry setObject:@"Polygon" forKey:@"type"];
+    NSMutableArray *coordinates = [[NSMutableArray alloc] init];
+    NSMutableArray *linearRing = [[NSMutableArray alloc] init];
+    for (int i = 0; i < [iaGeofence.points count]; i += 2) {
+        NSMutableArray *vertex = [[NSMutableArray alloc] init];
+        [vertex addObject:iaGeofence.points[i + 1]];
+        [vertex addObject:iaGeofence.points[i]];
+        [linearRing addObject:vertex];
+    }
+    [coordinates addObject:linearRing];
+    [geometry setObject:coordinates forKey:@"coordinates"];
+
+    [geoJson setObject:geometry forKey:@"geometry"];
+
+    return geoJson;
+}
+
+- (NSDictionary *)dictionaryFromPoi:(IAPOI *)iaPoi
+{
+    NSMutableDictionary *poi = [NSMutableDictionary dictionaryWithCapacity:4];
+    [poi setObject:@"Feature" forKey:@"type"];
+    [poi setObject:iaPoi.identifier forKey:@"id"];
+
+    NSMutableDictionary *properties = [NSMutableDictionary dictionaryWithCapacity:3];
+    [properties setObject:iaPoi.name forKey:@"name"];
+    [properties setObject:[NSNumber numberWithInt:iaPoi.floor.level] forKey:@"floor"];
+    if (iaPoi.payload != nil) {
+        [properties setObject:iaPoi.payload forKey:@"payload"];
+    }
+    [poi setObject:properties forKey:@"properties"];
+
+    NSMutableDictionary *geometry = [NSMutableDictionary dictionaryWithCapacity:2];
+    [geometry setObject:@"Point" forKey:@"type"];
+    NSMutableArray *coordinates = [[NSMutableArray alloc] init];
+    [coordinates addObject:[NSNumber numberWithDouble:iaPoi.coordinate.longitude]];
+    [coordinates addObject:[NSNumber numberWithDouble:iaPoi.coordinate.latitude]];
+    [geometry setObject:coordinates forKey:@"coordinates"];
+
+    [poi setObject:geometry forKey:@"geometry"];
+
+    return poi;
+}
+
+- (void)watchGeofences:(CDVInvokedUrlCommand *)command
+{
+    self.addGeofenceUpdateCallbackID = command.callbackId;
+}
+
+- (void)clearGeofenceWatch:(CDVInvokedUrlCommand *)command
+{
+    self.addGeofenceUpdateCallbackID = nil;
+}
+
+- (void)addDynamicGeofence:(CDVInvokedUrlCommand *)command
+{
+    NSDictionary *geoJson = [command argumentAtIndex:0];
+    IAPolygonGeofence *iaGeofence = [self geofenceFromDictionary:geoJson];
+    [self.IAlocationInfo startMonitoringGeofences:iaGeofence];
+}
+
+- (void)removeDynamicGeofence:(CDVInvokedUrlCommand *)command
+{
+    NSDictionary *geoJson = [command argumentAtIndex:0];
+    IAPolygonGeofence *iaGeofence = [self geofenceFromDictionary:geoJson];
+    [self.IAlocationInfo stopMonitoringGeofences:iaGeofence];
 }
 
 - (void)lockFloor:(CDVInvokedUrlCommand *)command
@@ -791,21 +909,45 @@
     }
 }
 
+- (NSString *)getGeofenceTransitionType:(IndoorLocationTransitionType)enterOrExit
+{
+    if (enterOrExit == TRANSITION_TYPE_ENTER) {
+        return @"ENTER";
+    } else if (enterOrExit == TRANSITION_TYPE_EXIT) {
+        return @"EXIT";
+    } else {
+        return @"UNKNOWN";
+    }
+}
+
 - (void)location:(IndoorAtlasLocationService *)manager didRegionChange:(IARegion *)region type:(IndoorLocationTransitionType)enterOrExit
 {
     if (region == nil) {
         return;
     }
-    IndoorRegionInfo *cData = self.regionData;
-    cData.region = region;
-    cData.regionStatus = enterOrExit;
-    if (self.regionData.watchCallbacks.count > 0) {
-        for (NSString *timerId in self.regionData.watchCallbacks) {
-            [self returnRegionInfo:[self.regionData.watchCallbacks objectForKey:timerId] andKeepCallback:YES];
+    // Is the `isKindOfClass` check required? Are all geofences IAPolygonGeofences?
+    if (region.type == kIARegionTypeGeofence && [region isKindOfClass:[IAPolygonGeofence class]]) {
+        NSMutableDictionary *geofenceDict = [self dictionaryFromGeofence:region];
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
+        [result setObject:geofenceDict forKey:@"geoJson"];
+        [result setObject:[self getGeofenceTransitionType:enterOrExit] forKey:@"transitionType"];
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        if (self.addGeofenceUpdateCallbackID) {
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addGeofenceUpdateCallbackID];
         }
     } else {
-        // No callbacks waiting on us anymore, turn off listening.
-        [self _stopLocation];
+        IndoorRegionInfo *cData = self.regionData;
+        cData.region = region;
+        cData.regionStatus = enterOrExit;
+        if (self.regionData.watchCallbacks.count > 0) {
+            for (NSString *timerId in self.regionData.watchCallbacks) {
+                [self returnRegionInfo:[self.regionData.watchCallbacks objectForKey:timerId] andKeepCallback:YES];
+            }
+        } else {
+            // No callbacks waiting on us anymore, turn off listening.
+            [self _stopLocation];
+        }
     }
 }
 
@@ -816,7 +958,7 @@
     double z = attitude.quaternion.z;
     double w = attitude.quaternion.w;
     NSDate *timestamp = attitude.timestamp;
-    
+
     [self returnAttitudeInformation:x y:y z:z w:w timestamp:timestamp];
 }
 
@@ -824,7 +966,7 @@
 {
     double direction = heading.trueHeading;
     NSDate *timestamp = heading.timestamp;
-    
+
     [self returnHeadingInformation:direction timestamp:timestamp];
 }
 
@@ -853,7 +995,7 @@
             statusDisplay = @"Unspecified Status";
             break;
     }
-    
+
     [self returnStatusInformation:statusDisplay code:statusCode];
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }

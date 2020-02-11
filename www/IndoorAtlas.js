@@ -49,6 +49,7 @@ var RegionChangeObserver = require('./RegionChangeObserver');
 var CurrentStatus = require('./CurrentStatus');
 var Orientation = require('./Orientation');
 var Route = require('./Route');
+var Geofence = require('./Geofence');
 
 // --- Helper functions and constants (*not* in the global scope)
 
@@ -131,6 +132,20 @@ function IndoorAtlas() {
 
   function stopWayfinding() {
     native('removeWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor]);
+  }
+
+  function requestGeofenceUpdates() {
+    if (debug) debug('add geofence watch');
+    native('watchGeofences', [], function (result) {
+      if (callbacks.onTriggeredGeofence) {
+        callbacks.onTriggeredGeofence(result.transitionType, Geofence.fromGeoJSON(result.geoJson));
+      }
+    });
+  }
+
+  function removeGeofenceUpdates() {
+    if (debug) debug('clear geofence watch');
+    native('clearGeofenceWatch', []);
   }
 
   function startPositioning() {
@@ -256,6 +271,8 @@ function IndoorAtlas() {
       });
 
       if (callbacks.onLocation) startPositioning();
+
+      if (callbacks.onTriggeredGeofence) requestGeofenceUpdates();
     }
 
     var config = [apiKey, 'dummy-secret'];
@@ -454,9 +471,9 @@ function IndoorAtlas() {
 
   /**
    * Request wayfinding from the current location of the user to the given
-   * coordinates
+   * coordinates. Also a {@link #POI} can be given as a destination.
    *
-   * @param {object} destination
+   * @param {(object | POI)} destination
    * @param {number} destination.latitude Destination latitude in degrees
    * @param {number} destination.longitude Destination longitude in degrees
    * @param {number} destination.floor Destination floor number as defined in
@@ -494,6 +511,88 @@ function IndoorAtlas() {
     return self;
   };
 
+  // --- Geofences
+
+  /**
+   * Callback function triggered on geofence events
+   *
+   * @callback geofenceCallback
+   * @param {string} transitionType Event type, either `'ENTER'`, `'EXIT'` or `'UNKNOWN'`
+   * @param {#Geofence} geofence Triggered geofence.
+   */
+
+  /**
+   * Start monitoring for geofence events (entering or exiting geofences).
+   *
+   * @param {geofenceCallback} onTriggeredGeofence A callback which
+   * is executed when a geofence is entered or exited.
+   * @return {object} Returns `this` to allow chaining
+   */
+
+  this.watchGeofences = function (onTriggeredGeofence) {
+    callbacks.onTriggeredGeofence = onTriggeredGeofence;
+    if (initialized) {
+      requestGeofenceUpdates();
+    }
+    return self;
+  };
+
+  /**
+   * Stop monitoring enter/exit events for geofences.
+   *
+   * @return {object} Returns `this` to allow chaining
+   */
+
+  this.clearGeofenceWatch = function() {
+    delete callbacks.onTriggeredGeofence;
+    if (initialized) {
+      removeGeofenceUpdates();
+    }
+    return self;
+  };
+
+  /**
+   * Add a geofence to be monitored for enter/exit.
+   *
+   * @param {Geofence} geofence The geofence to be monitored.
+   * @return {object} Returns `this` to allow chaining
+   *
+   * @example
+   * IndoorAtlas.addDynamicGeofence(new IndoorAtlas.Geofence({
+   *   id: '12345678-90ab-cdef-1234-567890abcdef',
+   *   name: 'My geofence',
+   *   floor: 1,
+   *   coordinates: [
+   *     [65.1234, 25.51234],
+   *     [65.1254, 25.51234],
+   *     [65.1254, 25.51334],
+   *     [65.1234, 25.51334],
+   *     [65.1234, 25.51234]
+   *   ]
+   * }));
+   */
+  this.addDynamicGeofence = function (geofence) {
+    native('addDynamicGeofence', [geofence.toGeoJSON()]);
+    return self;
+  }
+
+  /**
+   * Removes a dynamic geofence from being monitored.
+   *
+   * @param {(string|Geofence)} geofence Either a {@link Geofence} object or a geofence ID string.
+   * @return Returns `this` to allow chaining
+   * @example <caption>Provide a whole geofence object</caption>
+   * var geofence = new IndoorAtlas.Geofence({ ... });
+   * // ...
+   * IndoorAtlas.removeDynamicGeofence(geofence);
+   * @example <caption>Or just an geofence ID string</caption>
+   * IndoorAtlas.removeDynamicGeofence('12345678-90ab-cdef-1234-567890abcdef');
+   */
+  this.removeDynamicGeofence = function (geofence) {
+    native('removeDynamicGeofence', [geofence.toGeoJSON()]);
+    return self;
+  }
+
   // --- Locks and explicit positions
 
   /**
@@ -516,7 +615,7 @@ function IndoorAtlas() {
     if (!isNumber(position.latitude) || !isNumber(position.longitude)) throw new Error('setPosition: invalid or missing coordinates');
     if (position.hasOwnProperty('floor') && !isInteger(position.floor)) throw new Error('setPosition: invalid floor number');
     if (position.hasOwnProperty('accuracy') && !isNonNegativeNumber(position.accuracy)) throw new Error('setPosition: invalid accuracy value')
-    
+
     if (initialized) native('setPosition', [position.latitude, position.longitude, position.floor, position.accuracy]);
     // otherwise just ignrore
     return self;

@@ -1,4 +1,6 @@
 var FloorPlan = require('./FloorPlan');
+var Geofence = require('./Geofence');
+var POI = require('./POI');
 
 /**
  * A data object describing a venue, also known as a _building_ or _location_.
@@ -26,6 +28,22 @@ var Venue = function(data) {
    */
   this.floorPlans = data.floorPlans.map(function (floorPlanData) {
     return new FloorPlan(floorPlanData);
+  });
+
+  /**
+   * List of geofences in this venue
+   * @type {Geofence[]}
+   */
+  this.geofences = data.geofences.map(function (geofenceData) {
+    return Geofence.fromGeoJSON(geofenceData);
+  });
+
+  /**
+   * List of POIs in this venue
+   * @type {POI[]}
+   */
+  this.pois = data.pois.map(function (poiData) {
+    return POI.fromGeoJSON(poiData);
   });
 };
 

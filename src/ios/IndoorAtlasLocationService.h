@@ -124,6 +124,9 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 - (void)stopMonitoringForWayfinding;
 
+- (void)startMonitoringGeofences:(IAGeofence *)geofence;
+- (void)stopMonitoringGeofences:(IAGeofence *)geofence;
+
 - (void)valueForDistanceFilter:(float *)distance;
 - (float)fetchFloorCertainty;
 - (NSString *)fetchTraceId;

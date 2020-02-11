@@ -1,5 +1,10 @@
 package com.ialocation.plugin;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.Collections;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -15,6 +20,8 @@ import com.indooratlas.android.sdk.IARegion;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
 import com.indooratlas.android.sdk.IAWayfindingRequest;
+import com.indooratlas.android.sdk.IAGeofence;
+import com.indooratlas.android.sdk.IAGeofenceRequest;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -191,6 +198,16 @@ public class IALocationPlugin extends CordovaPlugin {
               requestWayfindingUpdates(lat, lon, floor, callbackContext);
             } else if ("removeWayfindingUpdates".equals(action)) {
               removeWayfindingUpdates();
+            } else  if ("watchGeofences".equals(action)) {
+                watchGeofences(callbackContext);
+            } else  if ("clearGeofenceWatch".equals(action)) {
+                clearGeofenceWatch();
+            } else if ("addDynamicGeofence".equals(action)) {
+                JSONObject geofence = args.getJSONObject(0);
+                addDynamicGeofence(geofence);
+            } else if ("removeDynamicGeofence".equals(action)) {
+                JSONObject geofence = args.getJSONObject(0);
+                removeDynamicGeofence(geofence);
             } else if ("lockFloor".equals(action)) {
               int floorNumber = args.getInt(0);
               lockFloor(floorNumber);
@@ -366,6 +383,91 @@ public class IALocationPlugin extends CordovaPlugin {
             @Override
             public void run() {
               mLocationManager.removeWayfindingUpdates();
+            }
+        });
+    }
+
+    private IAGeofence geofenceFromJsonObject(JSONObject geoJson) {
+        try {
+            List<double[]> iaEdges = new ArrayList<>();
+            JSONObject geometry = geoJson.getJSONObject("geometry");
+            JSONObject properties = geoJson.getJSONObject("properties");
+            JSONArray coordinates = geometry.getJSONArray("coordinates");
+            JSONArray linearRing = coordinates.getJSONArray(0);
+            for (int i = 0; i < linearRing.length(); i++) {
+                JSONArray vertex = linearRing.getJSONArray(i);
+                iaEdges.add(new double[] {vertex.getDouble(1), vertex.getDouble(0)});
+            }
+            JSONObject payload = new JSONObject();
+            if (properties.has("payload")) {
+                payload = properties.getJSONObject("payload");
+            }
+            IAGeofence iaGeofence = new IAGeofence.Builder()
+                .withId(geoJson.getString("id"))
+                .withName(properties.getString("name"))
+                .withFloor(properties.getInt("floor"))
+                .withPayload(payload)
+                .withEdges(iaEdges)
+                .build();
+            return iaGeofence;
+        } catch (JSONException e) {
+            Log.e(TAG, "error reading geofence geojson: " + e.getMessage());
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    private void watchGeofences(CallbackContext callbackContext) {
+        getListener(this).addGeofences(callbackContext);
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.addGeofences(
+                    new IAGeofenceRequest.Builder()
+                        .withCloudGeofences(true)
+                        .build(),
+                    getListener(IALocationPlugin.this)
+                );
+            }
+        });
+    }
+
+    private void clearGeofenceWatch() {
+        getListener(this).removeGeofenceUpdates();
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.removeGeofenceUpdates(getListener(IALocationPlugin.this));
+            }
+        });
+    }
+
+    private void addDynamicGeofence(JSONObject geoJson) {
+        IAGeofence iaGeofence = geofenceFromJsonObject(geoJson);
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.addGeofences(
+                    new IAGeofenceRequest.Builder()
+                        .withGeofence(iaGeofence)
+                        .withCloudGeofences(true)
+                        .build(),
+                    getListener(IALocationPlugin.this)
+                );
+            }
+        });
+    }
+
+    private void removeDynamicGeofence(JSONObject geoJson) {
+        List<String> geofenceIds = new ArrayList<>();
+        try {
+            geofenceIds.add(geoJson.getString("id"));
+        } catch (JSONException e) {
+           throw new IllegalStateException(e.getMessage());
+        }
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.removeGeofences(geofenceIds);
             }
         });
     }
