@@ -5,9 +5,9 @@
  * under the `IndoorAtlas` singleton object. For example the function
  *  {@link #initialize} can be used in code as `IndoorAtlas.initialize(...)`.
  *
- * The classes returned by the plugin, such as {@link FloorPlan}
+ * Most classes returned by the plugin, such as {@link FloorPlan}
  * (= `IndoorAtlas.FloorPlan`) are not supposed to be constructed by the user
- * directly.
+ * directly. The only exception is {@link Geofence|IndoorAtlas.Geofence}.
  *
  * ## Basic usage
  *
