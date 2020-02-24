@@ -1,3 +1,7 @@
+Version 3.1.4 - February 2020
+----------------
+ * Update IndoorAtlas SDKs to 3.1.4
+
 Version 3.1.3 - December 2019
 ----------------
  * Update IndoorAtlas SDKs to 3.1.3
