@@ -10,6 +10,10 @@ import com.indooratlas.android.sdk.IARegion;
 import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationListener;
 import com.indooratlas.android.sdk.IAWayfindingListener;
+import com.indooratlas.android.sdk.IAGeofence;
+import com.indooratlas.android.sdk.IAGeofenceEvent;
+import com.indooratlas.android.sdk.IAGeofenceListener;
+import com.indooratlas.android.sdk.IAPOI;
 import com.indooratlas.android.sdk.resources.IAFloorPlan;
 import com.indooratlas.android.sdk.resources.IALatLng;
 import com.indooratlas.android.sdk.resources.IAVenue;
@@ -26,7 +30,8 @@ import java.util.HashMap;
 /**
  * Handles events from IALocationListener and IARegion.Listener and relays them to Javascript callbacks.
  */
-public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener, IAWayfindingListener {
+public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener,
+        IAWayfindingListener, IAGeofenceListener {
     private static final String TAG = "IndoorLocationListener";
 
     private static final int TRANSITION_TYPE_UNKNOWN = 0;
@@ -39,6 +44,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private CallbackContext headingUpdateCallbackContext;
     private CallbackContext statusUpdateCallbackContext;
     private CallbackContext wayfindingUpdateCallbackContext;
+    private CallbackContext geofenceCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -132,6 +138,14 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
 
     public void requestWayfindingUpdates(CallbackContext callbackContext) {
       wayfindingUpdateCallbackContext = callbackContext;
+    }
+
+    public void addGeofences(CallbackContext callbackContext) {
+        geofenceCallbackContext = callbackContext;
+    }
+
+    public void removeGeofenceUpdates() {
+        geofenceCallbackContext = null;
     }
 
     /**
@@ -269,6 +283,16 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
                 venueFloorPlans.put(getFloorPlanJSONFromIAFloorPlan(venueFloorPlan));
               }
               venueData.put("floorPlans", venueFloorPlans);
+              JSONArray venueGeofences = new JSONArray();
+              for (IAGeofence geofence : venue.getGeofences()) {
+                venueGeofences.put(getGeojsonFromIaGeofence(geofence));
+              }
+              venueData.put("geofences", venueGeofences);
+              JSONArray venuePois = new JSONArray();
+              for (IAPOI poi : venue.getPOIs()) {
+                venuePois.put(getPoiJsonFromIaPoi(poi));
+              }
+              venueData.put("pois", venuePois);
               regionData.put("venue", venueData);
             }
 
@@ -564,5 +588,99 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
           pluginResult.setKeepCallback(true);
           wayfindingUpdateCallbackContext.sendPluginResult(pluginResult);
       }
+    }
+
+    private JSONObject getGeojsonFromIaGeofence(IAGeofence iaGeofence) {
+        try {
+            JSONObject geoJson = new JSONObject();
+
+            JSONObject properties = new JSONObject();
+            properties.put("name", iaGeofence.getName());
+            properties.put("floor", iaGeofence.getFloor());
+            properties.put("payload", iaGeofence.getPayload());
+            geoJson.put("properties", properties);
+
+            JSONObject geometry = new JSONObject();
+            JSONArray coordinates = new JSONArray();
+            JSONArray linearRing = new JSONArray();
+            for (double[] iaEdge : iaGeofence.getEdges()) {
+                JSONArray vertex = new JSONArray();
+                vertex.put(iaEdge[1]);
+                vertex.put(iaEdge[0]);
+                linearRing.put(vertex);
+            }
+            geometry.put("type", "Polygon");
+            coordinates.put(linearRing);
+            geometry.put("coordinates", coordinates);
+
+            geoJson.put("type", "Feature");
+            geoJson.put("id", iaGeofence.getId());
+            geoJson.put("geometry", geometry);
+
+            return geoJson;
+        } catch (JSONException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    private JSONObject getPoiJsonFromIaPoi(IAPOI iaPoi) {
+        try {
+            JSONObject poi = new JSONObject();
+
+            JSONObject properties = new JSONObject();
+            properties.put("name", iaPoi.getName());
+            properties.put("floor", iaPoi.getFloor());
+            properties.put("payload", iaPoi.getPayload());
+            poi.put("properties", properties);
+
+            JSONObject geometry = new JSONObject();
+            JSONArray coordinates = new JSONArray();
+            coordinates.put(iaPoi.getLocation().longitude);
+            coordinates.put(iaPoi.getLocation().latitude);
+            geometry.put("type", "Point");
+            geometry.put("coordinates", coordinates);
+
+            poi.put("type", "Feature");
+            poi.put("id", iaPoi.getId());
+            poi.put("geometry", geometry);
+
+            return poi;
+        } catch (JSONException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    // Cordova plugin uses string literals "ENTER" and "EXIT" instead of enums.
+    private String geofenceToRegionTransitionType(int geofenceTransitionType) {
+        if (geofenceTransitionType == IAGeofence.GEOFENCE_TRANSITION_ENTER) {
+            return "ENTER";
+        } else if (geofenceTransitionType == IAGeofence.GEOFENCE_TRANSITION_EXIT) {
+            return "EXIT";
+        } else {
+            return "UNKNOWN";
+        }
+    }
+
+    @Override
+    public void onGeofencesTriggered(IAGeofenceEvent event) {
+        if (geofenceCallbackContext != null) {
+            for (IAGeofence iaGeofence : event.getTriggeringGeofences()) {
+                try {
+                    String transitionType = geofenceToRegionTransitionType(event.getGeofenceTransition());
+                    JSONObject geoJson = getGeojsonFromIaGeofence(iaGeofence);
+                    JSONObject result = new JSONObject();
+                    result.put("transitionType", transitionType);
+                    result.put("geoJson", geoJson);
+                    PluginResult pluginResult = new PluginResult(
+                        PluginResult.Status.OK,
+                        result
+                    );
+                    pluginResult.setKeepCallback(true);
+                    geofenceCallbackContext.sendPluginResult(pluginResult);
+                } catch (JSONException e) {
+                    throw new IllegalStateException(e.getMessage());
+                }
+            }
+        }
     }
   }

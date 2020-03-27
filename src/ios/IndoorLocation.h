@@ -20,6 +20,7 @@ enum IACurrentStatus {
     STATUS_AVAILABLE = 2,
     STATUS_LIMITED = 10
 };
+
 typedef NSUInteger IndoorLocationStatus;
 
 // simple object to keep track of location information
@@ -74,6 +75,10 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command;
 - (void)requestWayfindingUpdates:(CDVInvokedUrlCommand *)command;
 - (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command;
+- (void)watchGeofences:(CDVInvokedUrlCommand *)command;
+- (void)clearGeofenceWatch:(CDVInvokedUrlCommand *)command;
+- (void)addDynamicGeofence:(CDVInvokedUrlCommand *)command;
+- (void)removeDynamicGeofence:(CDVInvokedUrlCommand *)command;
 - (void)lockFloor:(CDVInvokedUrlCommand *)command;
 - (void)unlockFloor:(CDVInvokedUrlCommand *)command;
 - (void)lockIndoors:(CDVInvokedUrlCommand *)command;

@@ -240,4 +240,17 @@
 {
     [self.manager stopMonitoringForWayfinding];
 }
+
+- (void)startMonitoringGeofences:(IAGeofence *)geofence
+{
+    NSLog(@"startMonitoringGeofence: %@, floor %ld", geofence.name, geofence.floor.level);
+    [self.manager startMonitoringForGeofence:geofence];
+}
+
+- (void)stopMonitoringGeofences:(IAGeofence *)geofence
+{
+    NSLog(@"stopMonitoringGeofence: %@, floor %ld", geofence.name, geofence.floor.level);
+    [self.manager stopMonitoringForGeofence:geofence];
+}
+
 @end

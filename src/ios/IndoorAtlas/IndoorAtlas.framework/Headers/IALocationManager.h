@@ -13,6 +13,7 @@
 INDOORATLAS_API extern NSString * _Nonnull const kIATraceId;
 
 @class IALocationManager;
+@class IAGeofence;
 
 /**
  * Defines the type of region.
@@ -70,31 +71,6 @@ typedef NS_ENUM(NSInteger, ia_status_type) {
 };
 
 /**
- * Defines the device calibration quality.
- * The quality of calibration affects location accuracy.
- * @deprecated Deprecated since SDK 3.0
- */
-typedef NS_ENUM(NSInteger, ia_calibration) {
-    /**
-     * Quality is poor.
-     * @deprecated Deprecated since SDK 3.0
-     */
-    kIACalibrationPoor,
-
-    /**
-     * Quality is good.
-     * @deprecated Deprecated since SDK 3.0
-     */
-    kIACalibrationGood,
-
-    /**
-     * Quality is excellent.
-     * @deprecated Deprecated since SDK 3.0
-     */
-    kIACalibrationExcellent,
-} __attribute__((deprecated("Deprecated since SDK 3.0")));
-
-/**
  * Defines the accuracy of location.
  */
 typedef NS_ENUM(NSInteger, ia_location_accuracy) {
@@ -108,7 +84,40 @@ typedef NS_ENUM(NSInteger, ia_location_accuracy) {
      * Locations with this accuracy are typically obtained with lowest amount of processing to reduce device power drain.
      */
     kIALocationAccuracyLow,
+
+    /**
+     * Best accuracy for cart use case.
+     * Use when device is mounted to a shopping cart or similar platform with wheels.
+     */
+    kIALocationAccuracyBestForCart
 };
+
+/**
+ * Represents a point of interest.
+ */
+INDOORATLAS_API
+@interface IAPOI : NSObject
+/**
+ * Identifier of the point of interest
+ */
+@property (nonatomic, readonly, nonnull) NSString *identifier;
+/**
+ * Name of the point of interest, can be empty
+ */
+@property (nonatomic, readonly, nullable) NSString *name;
+/**
+ * The JSON payload for this point of interest.
+ */
+@property (nonatomic, readonly, nullable) NSDictionary *payload;
+/**
+ * Location of the point of interest
+ */
+@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
+/**
+ * Floor the point of interest is located on.
+ */
+@property (nonatomic, readonly, nonnull) IAFloor *floor;
+@end
 
 /**
  * Represents a venue in IndoorAtlas system
@@ -127,6 +136,15 @@ INDOORATLAS_API
  * ID of the venue in IndoorAtlas developer console
  */
 @property (nonatomic, strong, nonnull) NSString *id;
+/**
+ * Geofences for this venue
+ */
+@property (nonatomic, readonly, nullable) NSArray<IAGeofence*> *geofences;
+/**
+ * Point of interests for this venue
+ */
+@property (nonatomic, readonly, nullable) NSArray<IAPOI*> *pois;
+
 @end
 
 /**
@@ -153,11 +171,11 @@ INDOORATLAS_API
  */
 @property (nonatomic, strong, nullable) NSDate *timestamp;
 /**
- * If there is a venue related to this region this is the venue of that.
+ * If this is a venue region then this will point to the venue object.
  */
 @property (nonatomic, strong, nullable) IAVenue *venue;
 /**
- * If there is a floorplan related to this region this is the floorplan of that.
+ * If this is a floorplan region then this will point to the floorplan object.
  */
 @property (nonatomic, strong, nullable) IAFloorPlan *floorplan;
 @end
@@ -479,14 +497,6 @@ INDOORATLAS_API
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager statusChanged:(nonnull IAStatus*)status;
 
 /**
- * Tells that calibration quality changed.
- * @param manager The location manager object that generated the event.
- * @param quality The calibration quality at the time of the event.
- * @deprecated Deprecated since SDK 3.0
- */
-- (void)indoorLocationManager:(nonnull IALocationManager*)manager calibrationQualityChanged:(enum ia_calibration)quality __attribute__((deprecated("Deprecated since SDK 3.0")));
-
-/**
  * Tells that extra information dictionary was received. This dictionary contains
  * identifier for debugging positioning.
  * @param manager The location manager object that generated the event.
@@ -517,13 +527,6 @@ INDOORATLAS_API
  */
 INDOORATLAS_API
 @interface IALocationManager : NSObject
-/**
- * The latest calibration quality value
- *
- * @param calibration See possible values at [ia_calibration](/Constants/ia_calibration.html)
- * @deprecated Deprecated since SDK 3.0
- */
-@property (nonatomic, readonly) enum ia_calibration calibration __attribute__((deprecated("Deprecated since SDK 3.0")));
 
 /**
  * The latest location update.
@@ -647,8 +650,9 @@ INDOORATLAS_API
 - (void)unlockFloor;
 
 /**
- * Lock or unlock positioning indoors. Disables indoor-outdoor detection as well as GPS scanning
- * if locked.
+ * Lock or unlock positioning indoors. Disables indoor-outdoor detection when locked.
+ * Indoor lock is enabled by default.
+ *
  * @param lockIndoor boolean value indicating whether to lock or unlock indoor positioning
  */
 - (void)lockIndoors:(bool)lockIndoor;
@@ -660,7 +664,8 @@ INDOORATLAS_API
 /**
  * Set IndoorAtlas API key and secret for authentication.
  *
- * This method must be called before further requests with server requiring authentication.
+ * This method must be called once before starting location updates.
+ * Changing API key at runtime will stop location updates and reset state.
  *
  * @param key API key used for authentication.
  * @param secret API secret used for authentication.
