@@ -70,82 +70,8 @@
     self.regionData = nil;
 }
 
-- (BOOL)isAuthorized
-{
-    BOOL authorizationStatusClassPropertyAvailable = [CLLocationManager respondsToSelector:@selector(authorizationStatus)]; // iOS 4.2+
-
-    if (authorizationStatusClassPropertyAvailable) {
-        NSUInteger authStatus = [CLLocationManager authorizationStatus];
-#ifdef __IPHONE_8_0
-        if ([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {  //iOS 8.0+
-            return (authStatus == kCLAuthorizationStatusAuthorizedWhenInUse) || (authStatus == kCLAuthorizationStatusAuthorizedAlways) || (authStatus == kCLAuthorizationStatusNotDetermined);
-        }
-#else
-        return (authStatus == kCLAuthorizationStatusAuthorized) || (authStatus == kCLAuthorizationStatusNotDetermined);
-#endif
-
-    }
-
-    // by default, assume YES (for iOS < 4.2)
-    return YES;
-}
-
-- (BOOL)isLocationServicesEnabled
-{
-    BOOL locationServicesEnabledInstancePropertyAvailable = [self.locationManager respondsToSelector:@selector(locationServicesEnabled)]; // iOS 3.x
-    BOOL locationServicesEnabledClassPropertyAvailable = [CLLocationManager respondsToSelector:@selector(locationServicesEnabled)]; // iOS 4.x
-
-    if (locationServicesEnabledClassPropertyAvailable) { // iOS 4.x
-        return [CLLocationManager locationServicesEnabled];
-    } else if (locationServicesEnabledInstancePropertyAvailable) { // iOS 2.x, iOS 3.x
-        return [(id)self.locationManager locationServicesEnabled];
-
-    } else {
-        return NO;
-    }
-}
-
 - (void)startLocation
 {
-    if (![self isLocationServicesEnabled]) {
-        [self returnLocationError:PERMISSION_DENIED withMessage:@"Location services are not enabled."];
-        return;
-    }
-    if (![self isAuthorized]) {
-        NSString *message = nil;
-        BOOL authStatusAvailable = [CLLocationManager respondsToSelector:@selector(authorizationStatus)]; // iOS 4.2+
-        if (authStatusAvailable) {
-            NSUInteger code = [CLLocationManager authorizationStatus];
-            if (code == kCLAuthorizationStatusNotDetermined) {
-                // could return POSITION_UNAVAILABLE but need to coordinate with other platforms
-                message = @"User undecided on application's use of location services.";
-            } else if (code == kCLAuthorizationStatusRestricted) {
-                message = @"Application's use of location services is restricted.";
-            }
-            else if(code == kCLAuthorizationStatusDenied) {
-                message = @"Application's use of location services is restricted.";
-            }
-        }
-        // PERMISSIONDENIED is only PositionError that makes sense when authorization denied
-        [self returnLocationError:PERMISSION_DENIED withMessage:message];
-
-        return;
-    }
-
-#ifdef __IPHONE_8_0
-    NSUInteger code = [CLLocationManager authorizationStatus];
-    if (code == kCLAuthorizationStatusNotDetermined && ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)] || [self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)])) { //iOS8+
-        if([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationWhenInUseUsageDescription"]) {
-            [self.locationManager requestWhenInUseAuthorization];
-        } else if([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationAlwaysUsageDescription"]) {
-            [self.locationManager requestAlwaysAuthorization];
-        } else {
-            NSLog(@"[Warning] No NSLocationAlwaysUsageDescription or NSLocationWhenInUseUsageDescription key is defined in the Info.plist file.");
-        }
-        return;
-    }
-#endif
-
     __locationStarted = YES;
     [self.IAlocationInfo startPositioning];
 }
@@ -162,10 +88,6 @@
     }
     if (stopLocationservice) {
         if (__locationStarted) {
-            if (![self isLocationServicesEnabled]) {
-                return;
-            }
-
             [self.locationManager stopUpdatingLocation];
             __locationStarted = NO;
         }
@@ -428,32 +350,24 @@
         return;
     }
 
-    if ([self isLocationServicesEnabled] == NO) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
-        [posError setObject:@"Location services are disabled." forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+    if (!self.locationData) {
+       self.locationData = [[IndoorLocationInfo alloc] init];
+    }
+    IndoorLocationInfo *lData = self.locationData;
+    if (!lData.locationCallbacks) {
+       lData.locationCallbacks = [NSMutableArray arrayWithCapacity:1];
+    }
+
+    if (!__locationStarted || _locationData.region == nil) {
+       // add the callbackId into the array so we can call back when get data
+       if (callbackId != nil) {
+          [lData.locationCallbacks addObject:callbackId];
+       }
+
+       // Tell the location manager to start notifying us of heading updates
+       [self startLocation];
     } else {
-        if (!self.locationData) {
-            self.locationData = [[IndoorLocationInfo alloc] init];
-        }
-        IndoorLocationInfo *lData = self.locationData;
-        if (!lData.locationCallbacks) {
-            lData.locationCallbacks = [NSMutableArray arrayWithCapacity:1];
-        }
-
-        if (!__locationStarted || _locationData.region == nil) {
-            // add the callbackId into the array so we can call back when get data
-            if (callbackId != nil) {
-                [lData.locationCallbacks addObject:callbackId];
-            }
-
-            // Tell the location manager to start notifying us of heading updates
-            [self startLocation];
-        } else {
-            [self returnLocationInfo:callbackId andKeepCallback:NO];
-        }
+       [self returnLocationInfo:callbackId andKeepCallback:NO];
     }
 }
 
@@ -482,17 +396,9 @@
     // add the callbackId into the dictionary so we can call back whenever get data
     [lData.watchCallbacks setObject:callbackId forKey:timerId];
 
-    if ([self isLocationServicesEnabled] == NO) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
-        [posError setObject:@"Location services are disabled." forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    } else {
-        if (!__locationStarted) {
-            // Tell the location manager to start notifying us of location updates
-            [self startLocation];
-        }
+    if (!__locationStarted) {
+       // Tell the location manager to start notifying us of location updates
+       [self startLocation];
     }
 }
 
@@ -533,17 +439,9 @@
     // add the callbackId into the dictionary so we can call back whenever get data
     [lData.watchCallbacks setObject:callbackId forKey:timerId];
 
-    if ([self isLocationServicesEnabled] == NO) {
-        NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
-        [posError setObject:[NSNumber numberWithInt:PERMISSION_DENIED] forKey:@"code"];
-        [posError setObject:@"Location services are disabled." forKey:@"message"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
-        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    } else {
-        if (!__locationStarted) {
-            // Tell the location manager to start notifying us of location updates
-            [self startLocation];
-        }
+    if (!__locationStarted) {
+       // Tell the location manager to start notifying us of location updates
+       [self startLocation];
     }
 }
 

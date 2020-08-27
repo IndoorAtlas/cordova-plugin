@@ -11,7 +11,7 @@
  * IAFloorPlan represents floor plan data received from service.
  */
 INDOORATLAS_API
-@interface IAFloorPlan : NSObject <NSCoding>
+@interface IAFloorPlan : NSObject
 
 /**
  * @name Floor plan information
@@ -110,7 +110,7 @@ INDOORATLAS_API
  * @param coord WGS84 coordinate
  * @return corresponding pixel point on floor plan bitmap
  */
-- (CGPoint) coordinateToPoint:(CLLocationCoordinate2D) coord;
+- (CGPoint)coordinateToPoint:(CLLocationCoordinate2D)coord;
 
 /**
  * Converts point to corresponding coordinate.
@@ -118,32 +118,7 @@ INDOORATLAS_API
  * @param point pixel point of floor plan bitmap
  * @return corresponding WGS84 coordinate
  */
-- (CLLocationCoordinate2D) pointToCoordinate:(CGPoint) point;
-
-/**
- * Initializes <IAFloorPlan>
- * @param floorPlanId is the identifier of floor plan
- * @param width is the width of the floor plan image in pixels
- * @param height is the height of the floor plan image in pixels
- * @param wgsToPixel is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
- * @param pixelToWgs is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
- */
-- (nullable id)initWithId:(nullable NSString *)floorPlanId width:(NSUInteger)width height:(NSUInteger)height wgs2pix:(nullable NSArray*)wgsToPixel pix2wgs:(nullable NSArray*)pixelToWgs;
-
-/**
- * Initializes <IAFloorPlan>
- * @param floorPlanId is the identifier of floor plan
- * @param width is the width of the floor plan image in pixels
- * @param height is the height of the floor plan image in pixels
- * @param wgsToPixel is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
- * @param pixelToWgs is an NSArray of 6 double values in row major order used for creating an affine transform for point mapping
- * @param url is a NSURL object containing the url address of the floor plan image
- * @param name is the name of the floor plan
- * @param floor is a IAFloor object containing the floor number and floor certainty of the floor plan
- */
-- (nullable id)initWithId:(nullable NSString *)floorPlanId width:(NSUInteger)width height:(NSUInteger)height wgs2pix:(nullable NSArray*)wgsToPixel pix2wgs:(nullable NSArray*)pixelToWgs
-                 imageUrl:(nullable NSURL*)url name:(nullable NSString*)name
-                    floor:(nullable IAFloor*) floor;
+- (CLLocationCoordinate2D)pointToCoordinate:(CGPoint)point;
 
 @end
 

@@ -18,7 +18,7 @@ typedef double IACertainty;
  * It is a replacement for CoreLocation's CLFloor as the interface for that is not open.
  */
 INDOORATLAS_API
-@interface IAFloor : NSObject <NSCoding>
+@interface IAFloor : NSObject
 
 /**
  * Initializes and returns a floor object with the specified level information.

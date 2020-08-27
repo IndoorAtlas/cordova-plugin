@@ -1,3 +1,8 @@
+Version 3.3.0 - March 2020
+----------------
+ * Add geofence and POI support
+ * Update IndoorAtlas SDKs to 3.3.3
+
 Version 3.2.1 - March 2020
 ----------------
  * Add geofence and POI support

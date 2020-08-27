@@ -9,11 +9,14 @@
 
 #define INDOORATLAS_API __attribute__((visibility("default")))
 
-// extraInfo dictionary keys
+/**
+ * Use this key to obtain the session trace id from the [IALocationManager extraInfo](Classes/IALocationManager.html#/c:objc(cs)IALocationManager(py)extraInfo) dictionary.
+ */
 INDOORATLAS_API extern NSString * _Nonnull const kIATraceId;
 
 @class IALocationManager;
 @class IAGeofence;
+@class IAPOI;
 
 /**
  * Defines the type of region.
@@ -92,32 +95,6 @@ typedef NS_ENUM(NSInteger, ia_location_accuracy) {
     kIALocationAccuracyBestForCart
 };
 
-/**
- * Represents a point of interest.
- */
-INDOORATLAS_API
-@interface IAPOI : NSObject
-/**
- * Identifier of the point of interest
- */
-@property (nonatomic, readonly, nonnull) NSString *identifier;
-/**
- * Name of the point of interest, can be empty
- */
-@property (nonatomic, readonly, nullable) NSString *name;
-/**
- * The JSON payload for this point of interest.
- */
-@property (nonatomic, readonly, nullable) NSDictionary *payload;
-/**
- * Location of the point of interest
- */
-@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
-/**
- * Floor the point of interest is located on.
- */
-@property (nonatomic, readonly, nonnull) IAFloor *floor;
-@end
 
 /**
  * Represents a venue in IndoorAtlas system
@@ -127,15 +104,15 @@ INDOORATLAS_API
 /**
  * Name of the venue
  */
-@property (nonatomic, strong, nonnull) NSString *name;
+@property (nonatomic, readonly, nonnull) NSString *name;
 /**
  * Mapped floors that the venue has
  */
-@property (nonatomic, strong, nonnull) NSArray *floorplans;
+@property (nonatomic, readonly, nonnull) NSArray *floorplans;
 /**
  * ID of the venue in IndoorAtlas developer console
  */
-@property (nonatomic, strong, nonnull) NSString *id;
+@property (nonatomic, readonly, nonnull) NSString *id;
 /**
  * Geofences for this venue
  */
@@ -181,28 +158,10 @@ INDOORATLAS_API
 @end
 
 /**
- * Struct defining bounding box in WGS84 coordinates.
- */
-struct ia_bounding_box {
-    /**
-     * Coordinates for min and max corners of the bounding box.
-     */
-    CLLocationCoordinate2D coords[2];
-};
-
-/**
  * An IAGeofence object provides a way to represent custom regions.
  */
 INDOORATLAS_API
 @interface IAGeofence : IARegion
-/**
- * Bounding box of the geofence.
- *
- * The bounding box must accurately cover the hit testable area by <containsCoordinate:> method.
- *
- * The bounding box is used internally to optimize geofence lookups.
- */
-@property (nonatomic, assign) struct ia_bounding_box boundingBox;
 /**
  * The floor the geofence is located on.
  */
@@ -212,9 +171,14 @@ INDOORATLAS_API
  */
 @property (nonatomic, strong, nullable) NSDictionary *payload;
 /**
+ * Center coordinate of the geofence.
+ */
+@property (nonatomic, readonly) CLLocationCoordinate2D coordinate;
+/**
  * Is this geofence cloud defined (static) or runtime defined (dynamic)
  */
-@property (nonatomic) BOOL isCloudGeofence;
+@property (nonatomic, readonly) BOOL isCloudGeofence;
+
 /**
  * Does the geofence contain the coordinate?
  */
@@ -227,18 +191,29 @@ INDOORATLAS_API
 INDOORATLAS_API
 @interface IAPolygonGeofence : IAGeofence
 /**
- * The unique points for the polygon.
+ * The unique points of the polygon.
  */
 @property (nonatomic, readonly, strong) NSArray<NSNumber*> * _Nonnull points;
 /**
  * Creates a new polygonal region from unique edges.
  * @param identifier Identifier for the geofence.
- * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
+ * @param `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
  * @param edges Coordinates specifying the polygon.
  *
  * The edges must be supplied in clockwise order for the polygon to be valid.
  */
 + (nonnull IAPolygonGeofence*)polygonGeofenceWithIdentifier:(nonnull NSString*)identifier andFloor:(nullable IAFloor*)floor edges:(nonnull NSArray<NSNumber*>*)edges;
+@end
+
+/**
+ * Represents a point of interest.
+ */
+INDOORATLAS_API
+@interface IAPOI : IAGeofence
+/**
+ * The floor the POI is located on.
+ */
+@property (nonatomic, strong, nonnull) IAFloor *floor;
 @end
 
 /**
@@ -257,6 +232,9 @@ INDOORATLAS_API
 @property (nonatomic, assign) NSInteger floor;
 @end
 
+/**
+ * Represents a point in a route.
+ */
 INDOORATLAS_API
 @interface IARoutePoint : NSObject
 /**
@@ -279,18 +257,18 @@ INDOORATLAS_API
 @end
 
 /**
- * Object representing the line segment between two <IARoutePoint>s.
+ * Object representing the line segment between two `IARoutePoint` objects.
  * Includes the distance and direction of the segment as well as the start and end points.
  */
 INDOORATLAS_API
 @interface IARouteLeg : NSObject
 /**
- * The <IARoutePoint> representing the beginning of this leg.
+ * The `IARoutePoint` representing the beginning of this leg.
  */
 @property (nonatomic, readonly, nonnull) IARoutePoint *begin;
 
 /**
- * The <IARoutePoint> representing the end of this leg.
+ * The `IARoutePoint` representing the end of this leg.
  */
 @property (nonatomic, readonly, nonnull) IARoutePoint *end;
 
@@ -320,29 +298,27 @@ INDOORATLAS_API
 INDOORATLAS_API
 @interface IARoute : NSObject
 /**
- * An array of <IARouteLeg>s connecting user's location to destination.
+ * An array of `IARouteLeg` objects connecting user's location to destination.
  */
 @property (nonatomic, readonly, nonnull) NSArray<IARouteLeg*> *legs;
 @end
 
 /**
- * <IAStatus> specifies the current status of locationing service.
+ * IAStatus specifies the current status of the locationing service.
  */
 INDOORATLAS_API
 @interface IAStatus : NSObject
 /**
- * Type of status message.
- *
- * @param type See possible values at [ia_status_type](/Constants/ia_status_type.html)
+ * Type of the status message.
  */
 @property (nonatomic, assign) enum ia_status_type type;
 @end
 
 /**
- * An IALocation object represents the location data generated by an <IALocationManager> object. This object incorporates the geographical coordinates along with values indicating the accuracy of the measurements and when those measurements were made.
+ * An IALocation object represents the location data generated by an `IALocationManager` object. This object incorporates the geographical coordinates along with values indicating the accuracy of the measurements and when those measurements were made.
  * This class also reports information about the the course, the direction in which the device is traveling.
  *
- * Typically, you use an <IALocationManager> object to create instances of this class based on the last known location of the user's device.
+ * Typically, you use an `IALocationManager` object to create instances of this class based on the last known location of the user's device.
  * You can create instances yourself, however, if you want to cache custom location data or get the distance between two points.
  *
  * This class is designed to be used as is and should not be subclassed.
@@ -367,7 +343,7 @@ INDOORATLAS_API
 /**
  * Initializes and returns a location object with specified CoreLocation information.
  * @param location CLLocation object. Might be initialized in code or from CLLocationManager.
- * @param <IAFloor> object with level information. Nil <IAFloor> means that the floor is unknown.
+ * @param `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
  *
  * An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
  */
@@ -380,7 +356,7 @@ INDOORATLAS_API
 /**
  * CoreLocation compatible [location information](https://developer.apple.com/library/ios/documentation/CoreLocation/Reference/CLLocation_Class/). (read-only)
  *
- * When running in the simulator, <IALocationManager> provides fake values.
+ * When running in the simulator, `IALocationManager` provides fake values.
  * You must run your application on an actual iOS device to get the actual location of the device.
  */
 @property (nonatomic, readonly, nullable) CLLocation *location;
@@ -395,24 +371,24 @@ INDOORATLAS_API
  * This property is included as CLLocation's CLFloor is private interface.
  * Thus it may be deprecated in future.
  */
-@property (nonatomic, readwrite, nullable) IAFloor *floor;
+@property (nonatomic, strong, nullable) IAFloor *floor;
 
 /**
  * Region this location was obtained from.
  */
-@property (nonatomic, readwrite, nullable) IARegion *region;
+@property (nonatomic, strong, nullable) IARegion *region;
 
 /**
  * Experimental feature for soft location updates.
  * The API may be changed in future.
- * Set to true before giving as a custom location to <IALocationManager> to make the location behave more like radio source rather than a location hint.
+ * Set to true before giving as a custom location to `IALocationManager` to make the location behave more like radio source rather than a location hint.
  */
 @property (nonatomic, assign) bool soft;
 
 @end
 
 /**
- * Object containing heading data. Generated by <IALocationManager>
+ * Object containing heading data. Generated by `IALocationManager`
  */
 INDOORATLAS_API
 @interface IAHeading : NSObject
@@ -427,7 +403,7 @@ INDOORATLAS_API
 @end
 
 /**
- * Object containing orientation data. Generated by <IALocationManager>
+ * Object containing orientation data. Generated by `IALocationManager`
  */
 INDOORATLAS_API
 @interface IAAttitude : NSObject
@@ -442,7 +418,7 @@ INDOORATLAS_API
 @end
 
 /**
- * The IALocationManagerDelegate protocol defines the methods used to receive location updates from an <IALocationManager> object.
+ * The IALocationManagerDelegate protocol defines the methods used to receive location updates from an `IALocationManager` object.
  *
  * Upon receiving a successful location update, you can use the result to update your user interface or perform other actions.
  *
@@ -462,7 +438,7 @@ INDOORATLAS_API
  * Implementation of this method is optional but recommended.
  *
  * @param manager The location manager object that generated the update event.
- * @param locations An array of <IALocation> objects containing the location data. This array always contains at least one object representing the current location.
+ * @param locations An array of `IALocation` objects containing the location data. This array always contains at least one object representing the current location.
  * If updates were deferred or if multiple locations arrived before they could be delivered, the array may contain additional entries.
  * The objects in the array are organized in the order in which they occured. Threfore, the most recent location update is at the end of the array.
  */
@@ -490,7 +466,7 @@ INDOORATLAS_API
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didUpdateRoute:(nonnull IARoute*)route;
 
 /**
- * Tells that <IALocationManager> status changed. This is used to signal network connection issues.
+ * Tells that `IALocationManager` status changed. This is used to signal network connection issues.
  * @param manager The location manager object that generated the event.
  * @param status The status at the time of the event.
  */
@@ -601,7 +577,7 @@ INDOORATLAS_API
 /**
  * The set of (dynamic) geofences monitored by the location manager. Note that automatically monitored cloud geofences are not included.
  *
- * You cannot add geofences to this property directly. Instead use the <startMonitoringGeofence:> method.
+ * You cannot add geofences to this property directly. Instead use the `[IALocationManager startMonitoringGeofence:]` method.
  */
 @property(nonatomic, readonly, strong, nullable) NSArray<IAGeofence*> *monitoredGeofences;
 
@@ -631,11 +607,6 @@ INDOORATLAS_API
  * The version string returned is in format "major.minor.patch". (see: [Semantic Versioning](http://semver.org/))
  */
 + (nonnull NSString*)versionString;
-
-/**
- * Returns the shared <IALocationManager> instance.
- */
-+ (nonnull IALocationManager *)sharedInstance;
 
 /**
  * Locks positioning to specified floor level
@@ -676,10 +647,11 @@ INDOORATLAS_API
  * Starts the generation of updates that report the user's current location.
  *
  * This method returns immediately. Calling this method causes the location manager to obtain an initial location fix (which may take several seconds)
- * and notify your delegate by calling its <indoorLocationManager:didUpdateLocations:> method. After that, the receiver generates update events whenever there is new estimate.
+ * and notify your delegate by calling its `[IALocationManagerDelegate indoorLocationManager:didUpdateLocations:]` method. After that, the receiver `
+ * generates update events whenever there is new estimate.
  *
  * Calling this method several times in succession does not automatically result in new events being generated.
- * Calling <stopUpdatingLocation> in-between, however, does cause a new initial event to be sent the next time you call this method.
+ * Calling `[IALocationManager stopUpdatingLocation]` in-between, however, does cause a new initial event to be sent the next time you call this method.
  *
  * If you start this service and your app is suspended, the system stops the delivery of events until your app starts running again (only in foreground).
  * If your app is terminated, the delivery of new location events stops altogether.
@@ -735,10 +707,9 @@ INDOORATLAS_API
 - (void)stopMonitoringForWayfinding;
 
 /**
- * Marks init method as deprecated.
-* @deprecated
+ * Returns the shared <IALocationManager> instance.
  */
-- (_Nullable id)init __attribute__((deprecated("[[IALocationManager alloc] init] is depreated. Use [IALocationManager sharedInstance] instead.")));
++ (nonnull IALocationManager *)sharedInstance;
 @end
 
 #undef INDOORATLAS_API
