@@ -178,6 +178,10 @@ INDOORATLAS_API
  * Is this geofence cloud defined (static) or runtime defined (dynamic)
  */
 @property (nonatomic, readonly) BOOL isCloudGeofence;
+/**
+ * Unique [lat, lon] points of the geofence, if any.
+ */
+@property (nonatomic, readonly, strong) NSArray<NSNumber*> * _Nonnull points;
 
 /**
  * Does the geofence contain the coordinate?
@@ -190,10 +194,6 @@ INDOORATLAS_API
  */
 INDOORATLAS_API
 @interface IAPolygonGeofence : IAGeofence
-/**
- * The unique points of the polygon.
- */
-@property (nonatomic, readonly, strong) NSArray<NSNumber*> * _Nonnull points;
 /**
  * Creates a new polygonal region from unique edges.
  * @param identifier Identifier for the geofence.
