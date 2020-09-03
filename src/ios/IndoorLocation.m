@@ -628,7 +628,7 @@
     return iaGeofence;
 }
 
-- (NSDictionary *)dictionaryFromGeofence:(IAPolygonGeofence *)iaGeofence
+- (NSDictionary *)dictionaryFromGeofence:(IAGeofence *)iaGeofence
 {
     NSMutableDictionary *geoJson = [NSMutableDictionary dictionaryWithCapacity:4];
     [geoJson setObject:@"Feature" forKey:@"type"];
@@ -823,8 +823,7 @@
     if (region == nil) {
         return;
     }
-    // Is the `isKindOfClass` check required? Are all geofences IAPolygonGeofences?
-    if (region.type == kIARegionTypeGeofence && [region isKindOfClass:[IAPolygonGeofence class]]) {
+    if (region.type == kIARegionTypeGeofence) {
         NSMutableDictionary *geofenceDict = [self dictionaryFromGeofence:region];
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
         [result setObject:geofenceDict forKey:@"geoJson"];
