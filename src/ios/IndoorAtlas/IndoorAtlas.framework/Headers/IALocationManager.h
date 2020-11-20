@@ -499,7 +499,8 @@ INDOORATLAS_API
  * The IALocationManager class is central point for configuring the delivery of indoor location related events to your app.
  * You use and instance of this class to establish the parameters that determine when location events should be delivered and to start and stop the actual delivery of those events.
  * You can also use a location manager object to retrieve the most recent location data.
- * The shared instance, property changes and methods of this class must be called from the application main thread only
+ *
+ * The shared IALocationManager instance is thread safe. (since SDK version 3.3+)
  */
 INDOORATLAS_API
 @interface IALocationManager : NSObject
