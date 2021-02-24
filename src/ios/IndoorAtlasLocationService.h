@@ -74,7 +74,7 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 @property (nonatomic, weak) id <IALocationDelegate> delegate;
 
-- (id)init:(NSString *)apikey;
+- (id)init:(NSString *)apikey pluginVersion:(NSString *)pluginVersion;
 /**
  *  Start positioning
  *
@@ -124,10 +124,14 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 - (void)stopMonitoringForWayfinding;
 
+- (void)requestWayfindingRouteFrom:(nonnull id<IALatLngFloorCompatible>)from to:(nonnull id<IALatLngFloorCompatible>)to callback:(void(^_Nonnull)(IARoute *_Nonnull))callback;
+
 - (void)startMonitoringGeofences:(IAGeofence *)geofence;
 - (void)stopMonitoringGeofences:(IAGeofence *)geofence;
 
 - (void)valueForDistanceFilter:(float *)distance;
+- (void)valueForTimeFilter:(float *)interval;
+- (void)setDesiredAccuracy:(ia_location_accuracy)accuracy;
 - (float)fetchFloorCertainty;
 - (NSString *)fetchTraceId;
 - (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity;

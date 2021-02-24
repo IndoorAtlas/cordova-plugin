@@ -2,6 +2,10 @@
 #import <UIKit/UIKit.h>
 #import "IndoorAtlasLocationService.h"
 
+@interface IALocationManager ()
+- (void)setObject:(id)object forKey:(NSString*)key;
+@end
+
 @interface IndoorAtlasLocationService()<IALocationManagerDelegate> {
 }
 
@@ -25,17 +29,20 @@
  *  IndoorAtlas Navigation
  *
  *  @param apikey    IndoorAtlas key
- *  @param apisecret IndoorAtlas secret
+ *  @param pluginVersion IA cordova plugin version
  *
  *  @return Object for indoor navigation
  */
-- (id)init:(NSString *)apikey
+- (id)init:(NSString *)apikey pluginVersion:(NSString *)pluginVersion
 {
     self = [super init];
     if (self) {
         self.apikey = apikey;
         // Create IALocationManager and point delegate to receiver
-        self.manager = [IALocationManager new];
+        self.manager = [IALocationManager sharedInstance];
+        
+        // Set cordova plugin info
+        [self.manager setObject:@{ @"name": @"cordova", @"version": pluginVersion} forKey:@"IAWrapper"];
 
         // Set IndoorAtlas API key
         [self.manager setApiKey:self.apikey andSecret:@""];
@@ -161,6 +168,16 @@
     self.manager.distanceFilter = (CLLocationDistance) *(distance);
 }
 
+- (void)valueForTimeFilter:(float *)interval
+{
+    self.manager.timeFilter = (NSTimeInterval) *(interval);
+}
+
+- (void)setDesiredAccuracy:(ia_location_accuracy)accuracy
+{
+    self.manager.desiredAccuracy = accuracy;
+}
+
 - (float)fetchFloorCertainty
 {
   return [IALocationManager sharedInstance].location.floor.certainty;
@@ -239,6 +256,11 @@
 - (void)stopMonitoringForWayfinding
 {
     [self.manager stopMonitoringForWayfinding];
+}
+
+- (void)requestWayfindingRouteFrom:(nonnull id<IALatLngFloorCompatible>)from to:(nonnull id<IALatLngFloorCompatible>)to callback:(void(^_Nonnull)(IARoute *_Nonnull))callback
+{
+    [self.manager requestWayfindingRouteFrom:from to:to callback:callback];
 }
 
 - (void)startMonitoringGeofences:(IAGeofence *)geofence

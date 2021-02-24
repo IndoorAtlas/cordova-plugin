@@ -19,8 +19,9 @@ public class PositionError {
     public static final int FLOOR_PLAN_UNAVAILABLE = 6;
     public static final int UNSPECIFIED_ERROR = 7;
     public static final int FLOOR_PLAN_UNDEFINED = 8;
-    public static final int INVALID_VALUE = 9;
-
+    public static final int INVALID_OUTPUT_THRESHOLD_VALUE = 9;
+    public static final int INVALID_POSITIONING_MODE = 10;
+    
     /**
      * Returns an error JSON object with given errorCode and message
      * @param errorCode
@@ -77,13 +78,15 @@ public class PositionError {
                     errorObject.put("code", errorCode);
                     errorObject.put("message", "Floor plan undefined. See ~/www/jsAPIKeys.js file");
                     break;
-                case INVALID_VALUE:
+                case INVALID_OUTPUT_THRESHOLD_VALUE:
                     errorObject.put("code", errorCode);
-                    errorObject.put("message", "Distance value should be positive");
-                case UNSPECIFIED_ERROR:
-                    errorObject.put("code", errorCode);
-                    errorObject.put("message", "Unspecified error");
+                    errorObject.put("message", "Distance and time filter values should be positive");
                     break;
+                case INVALID_POSITIONING_MODE:
+                  errorObject.put("code", errorCode);
+                  errorObject.put("message", "Invalid positioning mode");
+                  break;
+                case UNSPECIFIED_ERROR:
                 default:
                     errorObject.put("code", errorCode);
                     errorObject.put("message", "Unspecified error");

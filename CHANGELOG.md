@@ -1,3 +1,10 @@
+Version 3.4.0 - February 2021
+----------------
+ * Update IndoorAtlas SDKs to 3.4.2
+ * Add wayfinding A->B route request support
+ * Add time based location updates support
+ * Add low power and cart-mode support
+
 Version 3.3.2 - November 2020
 ----------------
  * Update IndoorAtlas SDKs to 3.3.6

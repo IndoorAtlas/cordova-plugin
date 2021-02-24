@@ -17,11 +17,15 @@ import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IALocationRequest;
 import com.indooratlas.android.sdk.IARegion;
+import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
+import com.indooratlas.android.sdk.IAWayfindingListener;
 import com.indooratlas.android.sdk.IAWayfindingRequest;
 import com.indooratlas.android.sdk.IAGeofence;
 import com.indooratlas.android.sdk.IAGeofenceRequest;
+import com.indooratlas.android.sdk.resources.IALatLngFloor;
+import com.indooratlas.android.sdk.resources.IALatLngFloorCompatible;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -29,6 +33,8 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import static com.ialocation.plugin.IndoorLocationListener.getRouteJSONFromIARoute;
 
 /**
  * Cordova Plugin which implements IndoorAtlas positioning service.
@@ -168,9 +174,13 @@ public class IALocationPlugin extends CordovaPlugin {
                 String watchId = args.getString(0);
                 clearRegionWatch(watchId);
                 callbackContext.success();
-            } else if ("setDistanceFilter".equals(action)) {
+            } else if ("setOutputThresholds".equals(action)) {
                 float distance = (float) args.getDouble(0);
-                setDistanceFilter(distance, callbackContext);
+                float interval = (float) args.getDouble(1);
+                setOutputThresholds(distance, interval, callbackContext);
+            } else if ("setPositioningMode".equals(action)) {
+              String mode = args.getString(0);
+              setPositioningMode(mode, callbackContext);
             } else if ("getTraceId".equals(action)) {
               getTraceId(callbackContext);
             } else if ("getFloorCertainty".equals(action)) {
@@ -196,6 +206,18 @@ public class IALocationPlugin extends CordovaPlugin {
               double lon = args.getDouble(1);
               int floor = args.getInt(2);
               requestWayfindingUpdates(lat, lon, floor, callbackContext);
+            } else if ("requestWayfindingRoute".equals(action)) {
+              JSONObject _from = args.getJSONObject(0);
+              JSONObject _to = args.getJSONObject(1);
+              IALatLngFloor from = new IALatLngFloor(
+                  _from.getDouble("latitude"),
+                  _from.getDouble("longitude"),
+                  _from.getInt("floor"));
+              IALatLngFloor to = new IALatLngFloor(
+                  _to.getDouble("latitude"),
+                  _to.getDouble("longitude"),
+                  _to.getInt("floor"));
+              requestWayfindingRoute(from, to, callbackContext);
             } else if ("removeWayfindingUpdates".equals(action)) {
               removeWayfindingUpdates();
             } else  if ("watchGeofences".equals(action)) {
@@ -383,6 +405,28 @@ public class IALocationPlugin extends CordovaPlugin {
             @Override
             public void run() {
               mLocationManager.removeWayfindingUpdates();
+            }
+        });
+    }
+
+    private void requestWayfindingRoute(
+        IALatLngFloorCompatible from,
+        IALatLngFloorCompatible to,
+        CallbackContext callbackContext
+    ) {
+        IAWayfindingListener listener = new IAWayfindingListener() {
+            @Override
+            public void onWayfindingUpdate(IARoute route) {
+                PluginResult pluginResult;
+                pluginResult = new PluginResult(PluginResult.Status.OK, getRouteJSONFromIARoute(route));
+                pluginResult.setKeepCallback(false);
+                callbackContext.sendPluginResult(pluginResult);
+            }
+        };
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.requestWayfindingRoute(from, to, listener);
             }
         });
     }
@@ -596,24 +640,43 @@ public class IALocationPlugin extends CordovaPlugin {
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
+    
+    private void setPositioningMode(String mode, CallbackContext callbackContext) {
+      int priority;
+      switch (mode) {
+        case "HIGH_ACCURACY": priority = IALocationRequest.PRIORITY_HIGH_ACCURACY; break;
+        case "LOW_POWER": priority = IALocationRequest.PRIORITY_LOW_POWER; break;
+        case "CART": priority = IALocationRequest.PRIORITY_CART_MODE; break;
+        default:
+          callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_POSITIONING_MODE));
+          return;
+      }
+      mLocationRequest.setPriority(priority);
+    }
 
-    private void setDistanceFilter(float distance, CallbackContext callbackContext) {
+    private void setOutputThresholds(float distance, float interval, CallbackContext callbackContext) {
+        if (distance < 0 || interval < 0) {
+            callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_OUTPUT_THRESHOLD_VALUE));
+            return;
+        }
         final boolean wasRunning = mLocationServiceRunning;
         if (wasRunning) stopPositioning();
         if (distance >= 0) {
             mLocationRequest.setSmallestDisplacement(distance);
-            JSONObject successObject = new JSONObject();
-            try {
-                successObject.put("message","Distance filter set");
-            } catch (JSONException ex) {
-                Log.e(TAG, ex.toString());
-                throw new IllegalStateException(ex.getMessage());
-            }
-            callbackContext.success(successObject);
-            if (wasRunning) startPositioning();
-        } else {
-            callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_VALUE));
         }
+        if (interval >= 0) {
+            // convert to milliseconds
+            mLocationRequest.setFastestInterval((long)(interval * 1000));
+        }
+        JSONObject successObject = new JSONObject();
+        try {
+            successObject.put("message","Output thresholds set");
+        } catch (JSONException ex) {
+            Log.e(TAG, ex.toString());
+            throw new IllegalStateException(ex.getMessage());
+        }
+        callbackContext.success(successObject);
+        if (wasRunning) startPositioning();
     }
 
     private void getTraceId(CallbackContext callbackContext) {

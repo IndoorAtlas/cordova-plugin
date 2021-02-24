@@ -45,7 +45,7 @@
 @property (nonatomic, strong) NSString *floorPlanCallbackID;
 @property (nonatomic, strong) NSString *coordinateToPointCallbackID;
 @property (nonatomic, strong) NSString *pointToCoordinateCallbackID;
-@property (nonatomic, strong) NSString *setDistanceFilterCallbackID;
+@property (nonatomic, strong) NSString *setOutputThresholdsCallbackID;
 @property (nonatomic, strong) NSString *getFloorCertaintyCallbackID;
 @property (nonatomic, strong) NSString *getTraceIdCallbackID;
 @property (nonatomic, strong) NSString *addAttitudeUpdateCallbackID;
@@ -64,7 +64,6 @@
 
 - (void)pluginInitialize
 {
-    self.locationManager = [[CLLocationManager alloc] init];
     __locationStarted = NO;
     self.locationData = nil;
     self.regionData = nil;
@@ -87,10 +86,7 @@
         stopLocationservice = NO;
     }
     if (stopLocationservice) {
-        if (__locationStarted) {
-            [self.locationManager stopUpdatingLocation];
-            __locationStarted = NO;
-        }
+        __locationStarted = NO;
         [self.IAlocationInfo stopPositioning];
     }
 }
@@ -206,9 +202,9 @@
     }
 }
 
-- (void)returnRouteInformation:(IARoute *)route
+- (void)returnRouteInformation:(IARoute *)route callbackId:(NSString *)callbackId andKeepCallback:(BOOL)keepCallback
 {
-    if (_addRouteUpdateCallbackID == nil) {
+    if (callbackId == nil) {
         NSLog(@"No wayfinding callback found");
         return;
     }
@@ -217,11 +213,17 @@
     for (int i = 0; i < [route.legs count]; i++) {
         [routingLegs addObject:[self dictionaryFromRouteLeg:route.legs[i]]];
     }
-    NSDictionary *result = @{@"legs": routingLegs};
+    NSString *error;
+    switch ([route error]) {
+        case kIARouteErrorNoError: error = @"NO_ERROR"; break;
+        case kIARouteErrorRoutingFailed: error = @"ROUTING_FAILED"; break;
+        case kIARouteErrorGraphNotAvailable: error = @"GRAPH_NOT_AVAILABLE"; break;
+    }
+    NSDictionary *result = @{@"legs": routingLegs, @"error": error};
 
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-    [pluginResult setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addRouteUpdateCallbackID];
+    [pluginResult setKeepCallbackAsBool:keepCallback];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
 - (void)returnStatusInformation:(NSString *)statusString code:(NSUInteger) code
@@ -298,15 +300,9 @@
     return dict;
 }
 
-- (void)dealloc
-{
-    self.locationManager.delegate = nil;
-}
-
 - (void)onReset
 {
     [self _stopLocation];
-    [self.locationManager stopUpdatingHeading];
 }
 
 
@@ -317,6 +313,7 @@
     NSString *callbackId = command.callbackId;
     CDVPluginResult *pluginResult;
     NSString *iakey = [command.arguments objectAtIndex:0];
+    NSString *pluginVersion = [command.arguments objectAtIndex:2];
 
     if (iakey == nil) {
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -326,7 +323,7 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
     }
     else {
-        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey];
+        self.IAlocationInfo = [[IndoorAtlasLocationService alloc] init:iakey pluginVersion:pluginVersion];
         self.IAlocationInfo.delegate = self;
 
         NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -522,19 +519,40 @@
     [self.IAlocationInfo setPosition:iaLoc];
 }
 
-- (void)setDistanceFilter:(CDVInvokedUrlCommand *)command
+- (void)setOutputThresholds:(CDVInvokedUrlCommand *)command
 {
-    self.setDistanceFilterCallbackID = command.callbackId;
+    self.setOutputThresholdsCallbackID = command.callbackId;
+ 
     NSString *distance = [command argumentAtIndex:0];
-
     float d = [distance floatValue];
+    NSString *interval = [command argumentAtIndex:1];
+    float t = [interval floatValue];
+    
     [self.IAlocationInfo valueForDistanceFilter: &d];
+    [self.IAlocationInfo valueForTimeFilter: &t];
 
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
-    [result setObject:@"DistanceFilter set" forKey:@"message"];
+    [result setObject:@"Output thresholds set" forKey:@"message"];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.setDistanceFilterCallbackID];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.setOutputThresholdsCallbackID];
+}
+
+- (void)setPositioningMode:(CDVInvokedUrlCommand *)command
+{
+    NSString *mode = [command argumentAtIndex:0];
+    
+    if ([mode isEqualToString:@"HIGH_ACCURACY"]) {
+        [self.IAlocationInfo setDesiredAccuracy:kIALocationAccuracyBest];
+    } else if ([mode isEqualToString:@"LOW_POWER"]) {
+        [self.IAlocationInfo setDesiredAccuracy:kIALocationAccuracyLow];
+    } else if ([mode isEqualToString:@"CART"]) {
+        [self.IAlocationInfo setDesiredAccuracy:kIALocationAccuracyBestForCart];
+    } else {
+        NSLog(@"Invalid positioning mode %@", mode);
+        return;
+    }
+    NSLog(@"Positioning mode set to %@", mode);
 }
 
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command
@@ -601,6 +619,25 @@
 - (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command
 {
     [self.IAlocationInfo stopMonitoringForWayfinding];
+}
+
+- (void)requestWayfindingRoute:(CDVInvokedUrlCommand *)command
+{
+    NSDictionary *from_ = [command argumentAtIndex:0];
+    NSDictionary *to_ = [command argumentAtIndex:1];
+
+    IALatLngFloor *from = [IALatLngFloor latLngFloorWithLatitude:[[from_ valueForKey:@"latitude"] doubleValue]
+                                                    andLongitude:[[from_ valueForKey:@"longitude"] doubleValue]
+                                                        andFloor:[[from_ valueForKey:@"floor"] integerValue]];
+    IALatLngFloor *to = [IALatLngFloor latLngFloorWithLatitude:[[to_ valueForKey:@"latitude"] doubleValue]
+                                                  andLongitude:[[to_ valueForKey:@"longitude"] doubleValue]
+                                                      andFloor:[[to_ valueForKey:@"floor"] integerValue]];
+
+    NSLog(@"locationManager::requestWayfindingRoute from %f, %f, %d to %f, %f, %d", from.latitude, from.longitude, from.floor, to.latitude, to.longitude, to.floor);
+    
+    [self.IAlocationInfo requestWayfindingRouteFrom:from to:to callback:^(IARoute *route) {
+        [self returnRouteInformation:route callbackId:command.callbackId andKeepCallback:NO];
+    }];
 }
 
 - (IAPolygonGeofence *)geofenceFromDictionary:(NSDictionary *)geofence {
@@ -790,7 +827,7 @@
 
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route
 {
-    [self returnRouteInformation:route];
+    [self returnRouteInformation:route callbackId:_addRouteUpdateCallbackID andKeepCallback:YES];
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager didFailWithError:(NSError *)error

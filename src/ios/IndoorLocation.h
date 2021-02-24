@@ -50,7 +50,6 @@ typedef NSUInteger IndoorLocationStatus;
 @interface IndoorLocation : CDVPlugin {
 }
 
-@property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) IndoorLocationInfo *locationData;
 @property (nonatomic, strong) IndoorRegionInfo *regionData;
 @property (nonatomic, strong) NSMutableArray *wayfinderInstances;
@@ -69,12 +68,14 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)addStatusChangedCallback:(CDVInvokedUrlCommand *)command;
 - (void)removeStatusCallback:(CDVInvokedUrlCommand *)command;
 - (void)setPosition:(CDVInvokedUrlCommand *)command;
-- (void)setDistanceFilter:(CDVInvokedUrlCommand *)command;
+- (void)setOutputThresholds:(CDVInvokedUrlCommand *)command;
+- (void)setPositioningMode:(CDVInvokedUrlCommand *)command;
 - (void)getFloorCertainty:(CDVInvokedUrlCommand *)command;
 - (void)getTraceId:(CDVInvokedUrlCommand *)command;
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command;
 - (void)requestWayfindingUpdates:(CDVInvokedUrlCommand *)command;
 - (void)removeWayfindingUpdates:(CDVInvokedUrlCommand *)command;
+- (void)requestWayfindingRoute:(CDVInvokedUrlCommand *)command;
 - (void)watchGeofences:(CDVInvokedUrlCommand *)command;
 - (void)clearGeofenceWatch:(CDVInvokedUrlCommand *)command;
 - (void)addDynamicGeofence:(CDVInvokedUrlCommand *)command;

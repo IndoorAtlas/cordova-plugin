@@ -34,7 +34,7 @@ INDOORATLAS_API
 @property (nonatomic, readonly) NSInteger level;
 
 /**
- * Certainty that <IALocation> floor has the correct value.
+ * Certainty that `IALocation` floor has the correct value.
  */
 @property (nonatomic, readonly) IACertainty certainty;
 

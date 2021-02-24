@@ -334,7 +334,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
         }
     }
 
-    private JSONObject getRouteJSONFromIARoute(IARoute route) {
+    static JSONObject getRouteJSONFromIARoute(IARoute route) {
       JSONObject obj = new JSONObject();
       try {
         JSONArray jsonArray = new JSONArray();
@@ -342,6 +342,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             jsonArray.put(jsonObjectFromRoutingLeg(leg));
         }
         obj.put("legs", jsonArray);
+        obj.put("error", route.getError().name());
       } catch(JSONException e) {
           Log.e("IAWAYFINDER", "json error with route");
       }
@@ -351,7 +352,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     /**
      * Create JSON object from the given RoutingLeg object
      */
-    private JSONObject jsonObjectFromRoutingLeg(IARoute.Leg routingLeg) {
+    private static JSONObject jsonObjectFromRoutingLeg(IARoute.Leg routingLeg) {
         JSONObject obj = new JSONObject();
         try {
             obj.put("begin", jsonObjectFromRoutingPoint(routingLeg.getBegin()));
@@ -368,7 +369,7 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     /**
      * Create JSON object from RoutingPoint object
      */
-    private JSONObject jsonObjectFromRoutingPoint(IARoute.Point routingPoint) {
+    private static JSONObject jsonObjectFromRoutingPoint(IARoute.Point routingPoint) {
         JSONObject obj = new JSONObject();
         try {
             obj.put("latitude", routingPoint.getLatitude());

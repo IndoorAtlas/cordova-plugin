@@ -86,7 +86,7 @@ function IndoorAtlas() {
   var indoorLock = false;
   var floorLock = null;
   var wayfindingDestination = null;
-  var distanceFilter = null;
+  var positioningOptions = null;
   var orientationFilter = null;
   var regionChangeObserver = null;
   var statusHasBeenAvailable = false;
@@ -129,6 +129,12 @@ function IndoorAtlas() {
       if (callbacks.onWayfindingRoute) callbacks.onWayfindingRoute(new Route(route));
     });
   }
+  
+  function requestWayfindingRoute(from, to, onWayfindingRoute) {
+    native('requestWayfindingRoute', [from, to], function (route) {
+      onWayfindingRoute(new Route(route));
+    });
+  }
 
   function stopWayfinding() {
     native('removeWayfindingUpdates', []);
@@ -162,8 +168,17 @@ function IndoorAtlas() {
     }, error);
 
     // before addWatch to avoid unnecessary pos restart
-    if (distanceFilter && distanceFilter.minChangeMeters > 0) {
-      native('setDistanceFilter', [distanceFilter.minChangeMeters]);
+    if (positioningOptions && (positioningOptions.minChangeMeters > 0 || positioningOptions.minIntervalSeconds > 0)) {
+      var minChangeMeters = positioningOptions.minChangeMeters || 0;
+      var minIntervalSeconds = positioningOptions.minIntervalSeconds || 0;
+      native('setOutputThresholds', [minChangeMeters, minIntervalSeconds]);
+    }
+    
+    if (positioningOptions && positioningOptions.positioningMode) {
+      if (!['HIGH_ACCURACY','LOW_POWER','CART'].includes(positioningOptions.positioningMode)) {
+        throw new Error('Invalid positioning mode: ' + positioningOptions.positioningMode);
+      }
+      native('setPositioningMode', [positioningOptions.positioningMode]);
     }
 
     native('addWatch', [DEFAULT_WATCH_ID, null], function (data) {
@@ -209,7 +224,7 @@ function IndoorAtlas() {
     native('removeStatusCallback', []);
     native('removeWayfindingUpdates', []); // just in case
 
-    distanceFilter = null;
+    positioningOptions = null;
     orientationFilter = null;
 
     // reset locks
@@ -276,10 +291,10 @@ function IndoorAtlas() {
     }
 
     var config = [apiKey, 'dummy-secret'];
+    // plugin version
+    config.push(cordovaPluginMetadata['cordova-plugin-indooratlas']);
     if (getDeviceType() == 'Android') {
       // get permission
-      config.push(cordovaPluginMetadata['cordova-plugin-indooratlas']);
-
       native('getPermissions', [], function () {
         native('initializeIndoorAtlas', config, initSuccess);
       });
@@ -297,11 +312,18 @@ function IndoorAtlas() {
    *
    * @param {function(Position)} onPosition a callback that executes when the
    * position changes  with an `IndoorAtlas.Position` object as the parameter.
-   * @param {object} options distance filter options (optional)
+   * @param {object} options positioning options (optional)
    * @param {number} options.minChangeMeters (optional) Distance filter.
    * If set, determines the minimum distance (in meters) the position has to
    * change before the next position is reported. If not set, all changes in
    * position are returned, which happens approximately once a second.
+   * @param {number} options.minIntervalSeconds (optional) Time filter.
+   * The minimum amount of time measured in seconds that must be elapsed
+   * before an update event is generated. Setting this to 0 disables time based updates.
+   * Maximum update frequency is determined from values of distance filter and time filter.
+   * Update is generated when either of conditions specified by these filters are met. Default value is 2.
+   * @param {string} options.positioningMode (optional) positioning mode.
+   * One of: `HIGH_ACCURACY`, `LOW_POWER` or `CART`.  Default is `HIGH_ACCURACY`
    * @return {object} returns `this` to allow chaining
    * @example
    * IndoorAtlas.watchPosition(position => {
@@ -318,8 +340,7 @@ function IndoorAtlas() {
     }
     callbacks.onLocation = onPosition;
 
-    // TODO: low-power mode
-    distanceFilter = options;
+    positioningOptions = options;
 
     if (initialized) startPositioning();
     // otherwise successful initialization will start positioning
@@ -511,6 +532,37 @@ function IndoorAtlas() {
     return self;
   };
 
+  /**
+   * Request a single-shot wayfinding route.
+   * Also a {@link #POI} can be given as a source or destination.
+   *
+   * @param {(object | POI)} from
+   * @param {number} from.latitude Starting location latitude in degrees
+   * @param {number} from.longitude Starting location longitude in degrees
+   * @param {number} from.floor Starting location floor number as defined in
+   * the mapping phase
+   * @param {(object | POI)} to
+   * @param {number} to.latitude Destination latitude in degrees
+   * @param {number} to.longitude Destination longitude in degrees
+   * @param {number} to.floor Destination floor number as defined in
+   * the mapping phase
+   * @param {function(Route)} onWayfindingRoute a callback that executes
+   * with the shortest route to the
+   * given destination as an object `{ legs }`, where `legs` is a
+   * list of `IndoorAtlas.RouteLeg` objects.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * const from = { latitude: 60.16, longitude: 24.95, floor: 2 };
+   * const to = { latitude: 60.161, longitude: 24.951, floor: 3 };
+   * IndoorAtlas.requestWayfindingRoute(from, to, route => {
+   *     console.log(`the route has ${route.legs.length} leg(s)`);
+   * });
+   */
+  this.requestWayfindingRoute = function (from, to, onWayfindingRoute) {
+    if (initialized) requestWayfindingRoute(from, to, onWayfindingRoute);
+    return self;
+  };
+ 
   // --- Geofences
 
   /**

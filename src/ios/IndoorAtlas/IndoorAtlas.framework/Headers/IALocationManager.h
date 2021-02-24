@@ -6,17 +6,30 @@
 #import <CoreMotion/CoreMotion.h>
 #import <IndoorAtlas/IAFloor.h>
 #import <IndoorAtlas/IAFloorPlan.h>
+#import <simd/simd.h>
 
 #define INDOORATLAS_API __attribute__((visibility("default")))
 
 /**
- * Use this key to obtain the session trace id from the [IALocationManager extraInfo](Classes/IALocationManager.html#/c:objc(cs)IALocationManager(py)extraInfo) dictionary.
+ * Indicates that a feature that is still subject to change in a future release.
+ */
+@protocol IABeta
+@end
+/**
+ * Indicates a feature that is not available by default but can be enabled by contacting IndoorAtlas sales.
+ */
+@protocol IARestricted
+@end
+
+/**
+ * Use this key to obtain the session trace id from the `[IALocationManager extraInfo]` dictionary.
  */
 INDOORATLAS_API extern NSString * _Nonnull const kIATraceId;
 
 @class IALocationManager;
 @class IAGeofence;
 @class IAPOI;
+@class IALatLngFloor;
 
 /**
  * Defines the type of region.
@@ -95,6 +108,33 @@ typedef NS_ENUM(NSInteger, ia_location_accuracy) {
     kIALocationAccuracyBestForCart
 };
 
+/**
+ * Defines the error status of a wayfinding request
+ */
+typedef NS_ENUM(NSInteger, ia_route_error) {
+    /** Routing was successful */
+    kIARouteErrorNoError = 0,
+    /** Route could not be computed */
+    kIARouteErrorRoutingFailed = 1,
+    /** Wayfinding graph not available */
+    kIARouteErrorGraphNotAvailable = 2
+};
+
+@protocol IALatLngFloorCompatible
+@property (nonatomic,readonly) IALatLngFloor * _Nonnull latLngFloor;
+@end
+
+/**
+ * Represents generic location with latitude, longitude and floor number
+ */
+INDOORATLAS_API
+@interface IALatLngFloor : NSObject <IALatLngFloorCompatible>
+@property (nonatomic,readonly) CLLocationDegrees latitude;
+@property (nonatomic,readonly) CLLocationDegrees longitude;
+@property (nonatomic,readonly) NSInteger floor;
++ (nonnull IALatLngFloor *)latLngFloorWithLatitude:(CLLocationDegrees)latitude andLongitude:(CLLocationDegrees)longitude andFloor:(NSInteger)floor;
++ (nonnull IALatLngFloor *)latLngFloorWithCoordinate:(CLLocationCoordinate2D)coordinate andFloor:(NSInteger)floor;
+@end
 
 /**
  * Represents a venue in IndoorAtlas system
@@ -139,8 +179,7 @@ INDOORATLAS_API
 @property (nonatomic, strong, nullable) NSString *name;
 /**
  * Region type
- *
- * @param type See possible values at [ia_region_type](/Constants/ia_region_type.html)
+ * See possible values at `ia_region_type`
  */
 @property (nonatomic, assign) enum ia_region_type type;
 /**
@@ -197,7 +236,7 @@ INDOORATLAS_API
 /**
  * Creates a new polygonal region from unique edges.
  * @param identifier Identifier for the geofence.
- * @param `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
+ * @param floor `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
  * @param edges Coordinates specifying the polygon.
  *
  * The edges must be supplied in clockwise order for the polygon to be valid.
@@ -209,7 +248,7 @@ INDOORATLAS_API
  * Represents a point of interest.
  */
 INDOORATLAS_API
-@interface IAPOI : IAGeofence
+@interface IAPOI : IAGeofence <IALatLngFloorCompatible>
 /**
  * The floor the POI is located on.
  */
@@ -220,7 +259,7 @@ INDOORATLAS_API
  * Provides wayfinding destination for the SDK.
  */
 INDOORATLAS_API
-@interface IAWayfindingRequest : NSObject
+@interface IAWayfindingRequest : NSObject <IALatLngFloorCompatible>
 /**
  * Wayfinding request's destination coordinate.
  */
@@ -236,7 +275,7 @@ INDOORATLAS_API
  * Represents a point in a route.
  */
 INDOORATLAS_API
-@interface IARoutePoint : NSObject
+@interface IARoutePoint : NSObject <IALatLngFloorCompatible>
 /**
  * Coordinate of this point.
  */
@@ -301,6 +340,10 @@ INDOORATLAS_API
  * An array of `IARouteLeg` objects connecting user's location to destination.
  */
 @property (nonatomic, readonly, nonnull) NSArray<IARouteLeg*> *legs;
+/** Whether route is available */
+@property (nonatomic, readonly) bool isSuccessful;
+/** Error status for routing */
+@property (nonatomic, readonly) enum ia_route_error error;
 @end
 
 /**
@@ -324,7 +367,7 @@ INDOORATLAS_API
  * This class is designed to be used as is and should not be subclassed.
  */
 INDOORATLAS_API
-@interface IALocation : NSObject
+@interface IALocation : NSObject <IALatLngFloorCompatible>
 
 /**
  * @name Initializing a Location Object
@@ -343,7 +386,7 @@ INDOORATLAS_API
 /**
  * Initializes and returns a location object with specified CoreLocation information.
  * @param location CLLocation object. Might be initialized in code or from CLLocationManager.
- * @param `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
+ * @param floor `IAFloor` object with level information. Nil `IAFloor` means that the floor is unknown.
  *
  * An explicit location is used as a hint in the system. This means that the inputted location is used only to determine the initial position and setting the location does not lock the floor or venue context.
  */
@@ -415,6 +458,178 @@ INDOORATLAS_API
  * Time when orientation was obtained
  */
 @property(readonly, nonatomic, copy, nullable) NSDate *timestamp;
+@end
+
+/**
+ * Object describing an object in the AR space.
+ * The methods of an instance of this class can be called from any thread.
+ *
+ * NOTE! To enable AR features, please contact IndoorAtlas sales.
+ */
+INDOORATLAS_API
+@interface IAARObject : NSObject <IABeta,IARestricted>
+/**
+ * Get the current model matrix for this object.
+ *
+ * @param outModelMatrix Output: a 4x4 homogeneous model-to-world matrix. .
+ * @return true if the outtModelMatrix was set and the object can be displayed,
+           false if the model matrix is not available or object should not be displayed for
+ *         some other reason.
+ */
+- (bool)updateModelMatrix:(nonnull simd_float4x4*)outModelMatrix;
+@end
+
+/**
+ * IndoorAtlas AR fusion API
+ *
+ * NOTE! To enable AR features, please contact IndoorAtlas sales.
+ *
+ * The AR API provides you with convenient means of converting between two important
+ * coordinate systems:
+ *     * The global coordinates encoded in IALocation objects and their components.
+ *       In practice, this means latitude, longitude, floor number and heading/orientation
+ *       information.
+ *     * An augmented reality (AR) coordinate system, which is assumed to be a right-handed
+ *       3D metric coordinate system, where the Y axis points up (towards the sky).
+ *
+ * The local tracking of the device in the AR coordinate system is assumed to be handled by an
+ * external AR solution like ARCore, whose certain outputs are given to this class. The IndoorAtlas
+ * platform fuses this information with the IndoorAtlas position estimates and provides the
+ * relevant coordinate transforms in a stable and visually consistent manner, which allows you
+ * to easily place geographically referenced content in the AR world.
+ *
+ * The methods of an instance of this class can be called from any thread.
+ */
+INDOORATLAS_API
+@interface IAARSession : NSObject <IABeta,IARestricted>
+/**
+ * Wayfinding arrow AR object.
+ */
+@property (nonatomic, readonly, nonnull) IAARObject *wayfindingCompassArrow;
+
+/**
+ * Wayfinding target (goal) AR object.
+ */
+@property (nonatomic, readonly, nonnull) IAARObject *wayfindingTarget;
+
+/**
+ * Array of waypoint AR objects constructed from the wayfinding route.
+ */
+@property (nonatomic, readonly, nullable) NSArray<IAARObject*> *wayfindingTurnArrows;
+
+/**
+ * Check if the positioning session has approximately converged. If false, it
+ * is recommended to advise the user to walk for a couple of meters to any direction so
+ * that they coordinate systems can be oriented correctly. This is optional, but the
+ * `IAARObject` instances may first appear in clearly incorrect directions on positions
+ * otherwise.
+ */
+@property (nonatomic, readonly) bool converged;
+
+
+/**
+ * Create an AR Point-of-Interest in the given geographical coordinates. The coordinates of
+ * the object in the AR world update in a visually pleasing manner.
+ *
+ * @param coords latitude in degrees
+ * @param floorNumber IndoorAtlas integer floor number
+ * @return IAARObject
+ */
+- (nonnull IAARObject*)createPoi:(CLLocationCoordinate2D)coords floorNumber:(int)floorNumber;
+
+/**
+ * Create an AR Point-of-Interest in the given geographical coordinates. The coordinates of
+ * the object in the AR world update in a visually pleasing manner.
+ *
+ * @param coords latitude in degrees
+ * @param floorNumber IndoorAtlas integer floor number
+ * @param heading Heading in degrees 0=North, 90=East, 180=South, 270=West
+ * @param zOffset Vertical offset from the floor plane in meters
+ * @return IAARObject
+ */
+- (nonnull IAARObject*)createPoi:(CLLocationCoordinate2D)coords floorNumber:(int)floorNumber heading:(double)heading zOffset:(double)zOffset;
+
+/**
+ * Create an AR Point-of-Interest in the given geographical coordinates. The coordinates of
+ * the object in the AR world update in a visually pleasing manner.
+ *
+ * @param location location of the POI
+ * @return IAARObject
+ */
+- (nonnull IAARObject*)createPoi:(nonnull IALocation*)location;
+
+/**
+ * Convert from geographical to AR coordinates.
+ *
+ * @param coords Geographical coordinates
+ * @param floorNumber IndoorAtlas integer floor number
+ * @param heading heading in degrees 0=North, 90=East, 180=South, 270=West
+ * @param zOffset Vertical offset from the floor plane in meters
+ * @return a 4x4 homogeneous model-to-world matrix. The matrix will be a identity
+ *         matrix in case of conversion failure. The conversion fails unless both
+ *         IndoorAtlas positioning and the AR input have been obtained (i.e.,
+ *         before the first fix or before setArCameraMatrix has been called for the
+ *         first time).
+ */
+- (simd_float4x4)geoToAr:(const CLLocationCoordinate2D)coords floorNumber:(int)floorNumber heading:(double)heading zOffset:(double)zOffset;
+
+/**
+ * Convert from AR to geographic coordinates.
+ *
+ * @param matrix 4x4 homogeneous model-to-world matrix
+ * @return geographical coordinates. Nil if not available
+ */
+- (nonnull IALocation*)arToGeo:(const simd_float4x4)matrix;
+
+/**
+ * Convert from AR to geographic coordinates.
+ *
+ * @param x AR coordinate system X-coordinate (horizontal)
+ * @param y AR coordinate system Y-coordinate (vertical)
+ * @param z AR coordinate system Z-coordinate (horizontal)
+ *
+ * @return geographical coordinates. Nil if not available
+ */
+- (nonnull IALocation*)arToGeo:(double)x Y:(double)y Z:(double)z;
+
+/**
+ * Input current pose from the external AR tracking. This method should be called on each
+ * successfully tracked AR camera frame.
+ *
+ * @param poseMatrix Current "sensor pose" from AR tracking.
+                     a 4x4 homogeneous local-to-world matrix, equivalent to ARKit's ARCamera.transform[1]
+                     This matrix does not change with UI orientation.
+                     1: https://developer.apple.com/documentation/arkit/arcamera/2866108-transform.
+ */
+- (void)setPoseMatrix:(const simd_float4x4)poseMatrix;
+
+/**
+ * Set the current camera-to-world matrix. Should be called regularly as long as one wishes
+ * to render objects. Calling on each AR frame is recommended.
+ *
+ * @param cameraToWorldMatrix a 4x4 homogeneous camera-to-world matrix, where the the negative
+ *                            Z axis is points "into the screen" in camera coordinates. Unlike
+ *                            the poseMatrix method, this matrix may change with UI orientation.
+ *                            This matrix is equivalent to inverse of ARKit's ARCamera.viewMatrix[1]
+ *                            1: https://developer.apple.com/documentation/arkit/arcamera/2921672-viewmatrix
+ */
+- (void)setCameraToWorldMatrix:(const simd_float4x4)cameraToWorldMatrix;
+
+/**
+ * Input AR plane tracking information. This input is optional, but allows more accurate
+ * vertical tracking, e.g., placing geo-referenced AR objects so that they appear to be on
+ * the floor. If used, should be called on each AR frame for each tracked horizontal
+ * upward-facing planes as input.
+ *
+ * The planes will be applied on the next `setPoseMatrix:` call.
+ *
+ * @param centerX Center X coordinate of the plane
+ * @param centerY Center Y coordinate of the plane
+ * @param centerZ Center Z coordinate of the plane
+ * @param extentX Extent X of the plane
+ * @param extentZ Extent Z of the plane
+ */
+- (void)addPlaneWithCenterX:(float)centerX withCenterY:(float)centerY withCenterZ:(float)centerZ withExtentX:(float)extentX withExtentZ:(float)extentZ;
 @end
 
 /**
@@ -525,12 +740,21 @@ INDOORATLAS_API
 @property (nonatomic, readwrite, nullable) IAHeading *heading;
 
 /**
- * The minimum distance measured in meters that the device must move
- * horizontally before an update event is generated.
+ * The minimum distance measured in meters that the device must move horizontally before an update event is generated.
+ * Setting this to 0 disables distance based updates.
+ * Maximum update frequency is determined from values of distanceFilter and timeFilter. Update is generated when either of conditions specified by these filters are met.
  * Default value is 0.7 meters.
- * Uses CoreLocation [CLLocationDistance](https://developer.apple.com/library/ios/documentation/CoreLocation/Reference/CoreLocationDataTypesRef/index.html#//apple_ref/c/tdef/CLLocationDistance).
+ * Uses CoreLocation [CLLocationDistance](https://developer.apple.com/documentation/corelocation/cllocationdistance?language=objc).
  */
 @property (assign, nonatomic) CLLocationDistance distanceFilter;
+
+/**
+ * The minimum amount of time measured in seconds that must be elapsed before an update event is generated.
+ * Setting this to 0 disables time based updates.
+ * Maximum update frequency is determined from values of distanceFilter and timeFilter. Update is generated when either of conditions specified by these filters are met.
+ * Default value is 2.
+ */
+@property (assign, nonatomic) NSTimeInterval timeFilter;
 
 /**
  * The minimum angular change in degrees required to generate new didUpdateHeading event.
@@ -553,7 +777,7 @@ INDOORATLAS_API
  *
  * Default value is kIALocationAccuracyBest.
  *
- * @param desiredAccuracy See possible values at [ia_location_accuracy](/Constants/ia_location_accuracy)
+ * See possible values at `ia_location_accuracy`
  */
 @property(assign, nonatomic) enum ia_location_accuracy desiredAccuracy;
 
@@ -567,8 +791,11 @@ INDOORATLAS_API
  * key in your app's Info.plist file, and the user must authorize the always on background location permission in order for this flag to have any effect.
  *
  * For more info, see:
+ *
  * https://developer.apple.com/documentation/corelocation/getting_the_user_s_location/handling_location_events_in_the_background
+ *
  * https://developer.apple.com/documentation/corelocation/cllocationmanager/1620568-allowsbackgroundlocationupdates
+ *
  * https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services/requesting_always_authorization
  *
  * Default value is false, i.e. background location updates are not explicitly enabled
@@ -689,15 +916,15 @@ INDOORATLAS_API
 
 /**
  * Start monitoring for wayfinding updates.
- * Calling this method causes the location manager to obtain a route from user's current location to destination defined in parameter "request" (this may take several seconds).
+ * Calling this method causes the location manager to obtain a route from user's current location to destination defined in parameter "to" (this may take several seconds).
  * Calling this method notify your delegate by calling its <indoorLocationManager:didUpdateRoute:> method. After that, the receiver generates update events whenever the route changes.
  *
  * Calling this method several times in succession overwrites the previously done requests.
  * Calling <stopUpdatingLocation> in-between, however, does cause a new initial event to be sent the next time you call this method.
  *
- * @param request An <IAWayfindingRequest> specifying the type of wayfinding updates to monitor.
+ * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination
  */
-- (void)startMonitoringForWayfinding:(nonnull IAWayfindingRequest*)request;
+- (void)startMonitoringForWayfinding:(nonnull id<IALatLngFloorCompatible>)to;
 
 /**
  * Stops monitoring for wayfinding updates.
@@ -706,6 +933,29 @@ INDOORATLAS_API
  * You can always restart the generation of wayfinding route updates by calling the <startMonitoringForWayfinding> method again.
  */
 - (void)stopMonitoringForWayfinding;
+
+/**
+ * Request a single-shot wayfinding route. Callback with route result is called from the application main thread.
+ *
+ * @param from An <IALatLngFloorCompatible> object specifying the wayfinding starting location
+ * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination
+ * @param callback callback to call with route result
+ */
+- (void)requestWayfindingRouteFrom:(nonnull id<IALatLngFloorCompatible>)from to:(nonnull id<IALatLngFloorCompatible>)to callback:(void(^_Nonnull)(IARoute *_Nonnull))callback;
+
+/**
+ * Lazily creates AR session.
+ *
+ * To release memory and stop all AR related processing you must call `releaseArSession`.
+ *
+ * NOTE! To enable AR features, please contact IndoorAtlas sales.
+ */
+@property (nonatomic, readonly, nullable) IAARSession *arSession;
+
+/**
+ * Stops all AR related activity and releases the memory allocated for it.
+ */
+- (void)releaseArSession;
 
 /**
  * Returns the shared <IALocationManager> instance.
