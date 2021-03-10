@@ -27,4 +27,4 @@ Usage:
 
 ## License
 
-Copyright 2015-2019 IndoorAtlas Ltd. The Cordova Plugin is released under the Apache License. See the [LICENSE.md](https://github.com/IndoorAtlas/cordova-plugin/blob/master/LICENSE) file for details.
+Copyright 2015-2021 IndoorAtlas Ltd. The Cordova Plugin is released under the Apache License. See the [LICENSE.md](https://github.com/IndoorAtlas/cordova-plugin/blob/master/LICENSE) file for details.

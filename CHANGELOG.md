@@ -1,3 +1,8 @@
+Version 3.4.1 - March 2021
+----------------
+ * Update IndoorAtlas SDKs to 3.4.3
+ * Prepare for React.Native support (available in `react-native` branch)
+
 Version 3.4.0 - February 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.2
