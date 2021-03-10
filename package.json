@@ -1,27 +1,25 @@
 {
-  "name": "cordova-plugin-indooratlas",
+  "name": "react-native-indooratlas",
   "version": "3.4.0",
-  "description": "Cordova plugin using IndoorAtlas SDK.",
-  "cordova": {
-    "id": "cordova-plugin-indooratlas",
-    "platforms": [
-      "android",
-      "ios"
-    ]
-  },
+  "description": "React.Native plugin using IndoorAtlas SDK.",
+  "homepage": "https://github.com/indooratlas/cordova-plugin/tree/react-native",
   "repository": {
     "type": "git",
-    "url": "https://github.com/IndoorAtlas/cordova-plugin"
+    "url": "https://github.com/IndoorAtlas/cordova-plugin.git#react-native"
   },
   "keywords": [
-    "cordova",
+    "React.Native",
     "IndoorAtlas",
     "geolocation",
-    "ecosystem:cordova",
-    "cordova-android",
     "wayfinding",
     "indoor positioning"
   ],
   "author": "IndoorAtlas",
-  "license": "Apache 2.0"
+  "license": "Apache 2.0",
+  "dependencies": {
+    "@remobile/react-native-cordova": "^1.1.1"
+  },
+  "scripts": {
+    "postinstall": "cp -i src/ios/RCTCordova.podspec ../@remobile/react-native-cordova/ios/"
+  }
 }

@@ -41,8 +41,8 @@
         // Create IALocationManager and point delegate to receiver
         self.manager = [IALocationManager sharedInstance];
         
-        // Set cordova plugin info
-        [self.manager setObject:@{ @"name": @"cordova", @"version": pluginVersion} forKey:@"IAWrapper"];
+        // react.native
+        [self.manager setObject:@{ @"name": @"react-native", @"version": pluginVersion} forKey:@"IAWrapper"];
 
         // Set IndoorAtlas API key
         [self.manager setApiKey:self.apikey andSecret:@""];

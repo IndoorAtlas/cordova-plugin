@@ -1,4 +1,8 @@
 #import "IndoorLocation.h"
+// react.native
+#import "CDVPlugin.h"
+#import "CDVPluginResult.h"
+#import "CDVCommandDelegateImpl.h"
 #pragma mark IndoorLocationInfo
 
 @implementation IndoorLocationInfo
@@ -53,11 +57,77 @@
 
 @end
 
+// react.native
+@interface CDVCommandDelegateWrapper : CDVCommandDelegateImpl
+- (void)addCallback:(id)callbackId name:(NSString *)name;
+@end
+
+@implementation CDVCommandDelegateWrapper
+{
+    NSMutableDictionary *callbacks;
+    CDVPluginEventEmitter *plugin;
+}
+
+- (id)initWithPlugin:(CDVPluginEventEmitter *)plugin;
+{
+    self = [super init];
+    if (self) {
+        self->plugin = plugin;
+        self->callbacks = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+- (void)sendPluginResult:(CDVPluginResult*)result callbackId:(id)callbackId
+{
+    if ([result.status intValue] == CDVCommandStatus_OK) {
+        // send OK results as events to workaround react.native callbacks only being callable once
+        NSValue *idKey = [NSValue valueWithNonretainedObject:callbackId];
+        NSString *name = [self->callbacks objectForKey:idKey];
+        [self->plugin sendEventWithName:name body:[result message]];
+    } else {
+        // send other results via normal callback (assuming only one result per callback)
+        [super sendPluginResult:result callbackId:callbackId];
+    }
+}
+
+- (void)addCallback:(id)callbackId name:(NSString *)name
+{
+    NSValue *idKey = [NSValue valueWithNonretainedObject:callbackId];
+    [self->callbacks setObject:name forKey:idKey];
+}
+
+@end
+
 @implementation IndoorLocation
 {
     BOOL __locationStarted;
+    // react.native
+    CDVCommandDelegateWrapper *__commandDelegateWrapper;
 }
 
+// react.native
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        [self pluginInitialize];
+        __commandDelegateWrapper = [[CDVCommandDelegateWrapper alloc] initWithPlugin:self];
+    }
+    return self;
+}
+
+// react.native
++ (BOOL)requiresMainQueueSetup
+{
+    return YES;
+}
+
+// react.native
+- (CDVCommandDelegateImpl*)commandDelegate
+{
+    return __commandDelegateWrapper;
+}
 
 - (void)pluginInitialize
 {
@@ -119,7 +189,7 @@
         }
 
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-        [result setKeepCallbackAsBool:keepCallback];
+        //[result setKeepCallbackAsBool:keepCallback];
     }
     if (result) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
@@ -140,7 +210,7 @@
     } else if (lData && lData.region) {
         NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithDictionary:[self formatRegionInfo:lData.region andTransitionType:lData.regionStatus]];
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnInfo];
-        [result setKeepCallbackAsBool:keepCallback];
+        //[result setKeepCallbackAsBool:keepCallback];
     }
     if (result) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
@@ -179,7 +249,7 @@
         [result setObject:[NSNumber numberWithDouble:z] forKey:@"z"];
         [result setObject:[NSNumber numberWithDouble:w] forKey:@"w"];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addAttitudeUpdateCallbackID];
     }
 }
@@ -194,7 +264,7 @@
         [result setObject:secondsSinceRefDate forKey:@"timestamp"];
         [result setObject:[NSNumber numberWithDouble:heading] forKey:@"trueHeading"];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addHeadingUpdateCallbackID];
     }
 }
@@ -219,7 +289,7 @@
     NSDictionary *result = @{@"legs": routingLegs, @"error": error};
 
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-    [pluginResult setKeepCallbackAsBool:keepCallback];
+    //[pluginResult setKeepCallbackAsBool:keepCallback];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
@@ -232,7 +302,7 @@
         [result setObject:statusString forKey:@"message"];
         [result setObject:[NSNumber numberWithUnsignedInteger:code] forKey:@"code"];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addStatusUpdateCallbackID];
     }
 }
@@ -863,7 +933,7 @@
         [result setObject:geofenceDict forKey:@"geoJson"];
         [result setObject:[self getGeofenceTransitionType:enterOrExit] forKey:@"transitionType"];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         if (self.addGeofenceUpdateCallbackID) {
             [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addGeofenceUpdateCallbackID];
         }
@@ -930,4 +1000,43 @@
     [self returnStatusInformation:statusDisplay code:statusCode];
     NSLog(@"IALocationManager status %d %@", status.type, statusDisplay) ;
 }
+
+// react.native
+// same as RCT_EXPORT_CORDOVA_METHOD, but also map callback ids back to name
+#define RCT_EXPORT_CORDOVA_METHOD2(NAME) \
+RCT_EXPORT_METHOD(NAME:(NSArray *)args success:(RCTResponseSenderBlock)success error:(RCTResponseSenderBlock)error) { \
+CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc]initWithArguments:args success:success error:error]; \
+[__commandDelegateWrapper addCallback:command.callbackId name:@""#NAME]; \
+[self NAME:command]; \
+}
+RCT_EXPORT_MODULE(IndoorAtlas);
+RCT_EXPORT_CORDOVA_METHOD2(initializeIndoorAtlas);
+RCT_EXPORT_CORDOVA_METHOD2(getLocation);
+RCT_EXPORT_CORDOVA_METHOD2(addWatch);
+RCT_EXPORT_CORDOVA_METHOD2(clearWatch);
+RCT_EXPORT_CORDOVA_METHOD2(addRegionWatch);
+RCT_EXPORT_CORDOVA_METHOD2(clearRegionWatch);
+RCT_EXPORT_CORDOVA_METHOD2(addAttitudeCallback);
+RCT_EXPORT_CORDOVA_METHOD2(removeAttitudeCallback);
+RCT_EXPORT_CORDOVA_METHOD2(addHeadingCallback);
+RCT_EXPORT_CORDOVA_METHOD2(removeHeadingCallback);
+RCT_EXPORT_CORDOVA_METHOD2(removeRouteCallback);
+RCT_EXPORT_CORDOVA_METHOD2(addStatusChangedCallback);
+RCT_EXPORT_CORDOVA_METHOD2(removeStatusCallback);
+RCT_EXPORT_CORDOVA_METHOD2(setPosition);
+RCT_EXPORT_CORDOVA_METHOD2(setOutputThresholds);
+RCT_EXPORT_CORDOVA_METHOD2(setPositioningMode);
+RCT_EXPORT_CORDOVA_METHOD2(getFloorCertainty);
+RCT_EXPORT_CORDOVA_METHOD2(getTraceId);
+RCT_EXPORT_CORDOVA_METHOD2(setSensitivities);
+RCT_EXPORT_CORDOVA_METHOD2(requestWayfindingUpdates);
+RCT_EXPORT_CORDOVA_METHOD2(removeWayfindingUpdates);
+RCT_EXPORT_CORDOVA_METHOD2(requestWayfindingRoute);
+RCT_EXPORT_CORDOVA_METHOD2(watchGeofences);
+RCT_EXPORT_CORDOVA_METHOD2(clearGeofenceWatch);
+RCT_EXPORT_CORDOVA_METHOD2(addDynamicGeofence);
+RCT_EXPORT_CORDOVA_METHOD2(removeDynamicGeofence);
+RCT_EXPORT_CORDOVA_METHOD2(lockFloor);
+RCT_EXPORT_CORDOVA_METHOD2(unlockFloor);
+RCT_EXPORT_CORDOVA_METHOD2(lockIndoors);
 @end

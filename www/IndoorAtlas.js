@@ -1,5 +1,5 @@
 /**
- * # IndoorAtlas Cordova plugin v3
+ * # IndoorAtlas Cordova/React.Native plugin v3
  *
  * All functions that are part of the IndoorAtlas Cordova plugin are scoped
  * under the `IndoorAtlas` singleton object. For example the function
@@ -19,8 +19,9 @@
  *
  * First, add IndoorAtlas plugin to the `config.xml` file of your project
  * ```xml
- * <plugin name="cordova-plugin-indooratlas" spec="git+https://github.com/IndoorAtlas/cordova-plugin.git" />
+ * <plugin name="react-native-plugin-indooratlas" spec="git+https://github.com/IndoorAtlas/cordova-plugin.git#react-native" />
  * ```
+ * TODO react.native
  * Then you can initialize in Cordova's "deviceready" callback or later, e.g.,
  * ```javascript
  * document.addEventListener('deviceready', () => {
@@ -42,8 +43,12 @@
  */
 var ___; // this dummy variable helps with automatic docs generation
 
-var cordovaExec = require('cordova/exec');
-var cordovaPluginMetadata = require("cordova/plugin_list").metadata;
+// react.native
+var pluginVersion = require('react-native-indooratlas/package.json').version;
+var isAndroid = require('@remobile/react-native-cordova').isandroid;
+var cordovaExec = require('@remobile/react-native-cordova').exec;
+import { NativeEventEmitter, NativeModules } from 'react-native';
+var eventEmitter = new NativeEventEmitter(NativeModules.IndoorAtlas);
 var Position = require('./Position');
 var RegionChangeObserver = require('./RegionChangeObserver');
 var CurrentStatus = require('./CurrentStatus');
@@ -56,12 +61,10 @@ var Geofence = require('./Geofence');
 var DEFAULT_WATCH_ID = 'default-watch';
 var DEFAULT_REGION_WATCH_ID = 'default-region-watch';
 
+// react.native
 function getDeviceType() {
-  var deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" :
-                   (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" :
-                   (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" :
-                   (navigator.userAgent.match(/BlackBerry/i)) == "BlackBerry" ? "BlackBerry" : "null";
-  return deviceType;
+  if (isAndroid) return 'Android';
+  else return 'iOS';
 }
 
 function isNumber(value) {
@@ -80,7 +83,8 @@ function isNonNegativeNumber(value) {
 function IndoorAtlas() {
 
   // --- Private state variables
-
+  // react.native
+  var subscriptions = {};
   var callbacks = {};
   var initialized = false;
   var indoorLock = false;
@@ -111,6 +115,7 @@ function IndoorAtlas() {
     }
   }
 
+  // react.native
   function native(methodName, options, onSuccess) {
       function successCallback(result) {
         if (debug) debug(methodName + " completed " + JSON.stringify(result));
@@ -118,6 +123,10 @@ function IndoorAtlas() {
       }
 
       if (debug) debug('executing '+methodName+'(' + JSON.stringify(options) + ')');
+      if (subscriptions[methodName]) {
+        subscriptions[methodName].remove();
+      }
+      subscriptions[methodName] = eventEmitter.addListener(methodName, successCallback);
       cordovaExec(successCallback, error, 'IndoorAtlas', methodName, options);
   }
 
@@ -251,6 +260,7 @@ function IndoorAtlas() {
   /**
    * Initializes IndoorAtlas location manager object with provided API key.
    * Must be called before using other methods. Should be called in Cordova's
+   * TODO react.native
    * [deviceready](https://cordova.apache.org/docs/en/9.x/cordova/events/events.html#deviceready)
    * callback or later.
    *
@@ -293,7 +303,7 @@ function IndoorAtlas() {
 
     var config = [apiKey, 'dummy-secret'];
     // plugin version
-    config.push(cordovaPluginMetadata['cordova-plugin-indooratlas']);
+    config.push(pluginVersion);
     if (getDeviceType() == 'Android') {
       // get permission
       native('getPermissions', [], function () {
@@ -367,6 +377,11 @@ function IndoorAtlas() {
     delete callbacks.onLocation;
     // NOTE: other watches are cleared as well
     stopPositioning();
+    // react.native
+    for (const [_, value] of Object.entries(subscriptions)) {
+      value.remove();
+    }
+    subscriptions = {};
     return self;
   };
 
