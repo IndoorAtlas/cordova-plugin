@@ -42,17 +42,14 @@
 }
 
 @property (nonatomic, strong) IndoorAtlasLocationService *IAlocationInfo;
-@property (nonatomic, strong) NSString *floorPlanCallbackID;
-@property (nonatomic, strong) NSString *coordinateToPointCallbackID;
-@property (nonatomic, strong) NSString *pointToCoordinateCallbackID;
-@property (nonatomic, strong) NSString *setOutputThresholdsCallbackID;
-@property (nonatomic, strong) NSString *getFloorCertaintyCallbackID;
-@property (nonatomic, strong) NSString *getTraceIdCallbackID;
-@property (nonatomic, strong) NSString *addAttitudeUpdateCallbackID;
-@property (nonatomic, strong) NSString *addHeadingUpdateCallbackID;
-@property (nonatomic, strong) NSString *addStatusUpdateCallbackID;
-@property (nonatomic, strong) NSString *addRouteUpdateCallbackID;
-@property (nonatomic, strong) NSString *addGeofenceUpdateCallbackID;
+@property (nonatomic, strong) id setOutputThresholdsCallbackID;
+@property (nonatomic, strong) id getFloorCertaintyCallbackID;
+@property (nonatomic, strong) id getTraceIdCallbackID;
+@property (nonatomic, strong) id addAttitudeUpdateCallbackID;
+@property (nonatomic, strong) id addHeadingUpdateCallbackID;
+@property (nonatomic, strong) id addStatusUpdateCallbackID;
+@property (nonatomic, strong) id addRouteUpdateCallbackID;
+@property (nonatomic, strong) id addGeofenceUpdateCallbackID;
 
 @end
 
@@ -91,7 +88,7 @@
     }
 }
 
-- (void)returnLocationInfo:(NSString *)callbackId andKeepCallback:(BOOL)keepCallback
+- (void)returnLocationInfo:(id)callbackId andKeepCallback:(BOOL)keepCallback
 {
     CDVPluginResult *result = nil;
     IndoorLocationInfo *lData = self.locationData;
@@ -129,7 +126,7 @@
     }
 }
 
-- (void)returnRegionInfo:(NSString *)callbackId andKeepCallback:(BOOL)keepCallback
+- (void)returnRegionInfo:(id)callbackId andKeepCallback:(BOOL)keepCallback
 {
     CDVPluginResult *result = nil;
     IndoorRegionInfo *lData = self.regionData;
@@ -158,13 +155,13 @@
     [posError setObject:message ? message:@"" forKey:@"message"];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
 
-    for (NSString *callbackId in self.locationData.locationCallbacks) {
+    for (id callbackId in self.locationData.locationCallbacks) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
 
     [self.locationData.locationCallbacks removeAllObjects];
 
-    for (NSString *callbackId in self.locationData.watchCallbacks) {
+    for (id callbackId in self.locationData.watchCallbacks) {
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
 }
@@ -202,7 +199,7 @@
     }
 }
 
-- (void)returnRouteInformation:(IARoute *)route callbackId:(NSString *)callbackId andKeepCallback:(BOOL)keepCallback
+- (void)returnRouteInformation:(IARoute *)route callbackId:(id)callbackId andKeepCallback:(BOOL)keepCallback
 {
     if (callbackId == nil) {
         NSLog(@"No wayfinding callback found");
@@ -310,7 +307,7 @@
 
 - (void)initializeIndoorAtlas:(CDVInvokedUrlCommand *)command
 {
-    NSString *callbackId = command.callbackId;
+    id callbackId = command.callbackId;
     CDVPluginResult *pluginResult;
     NSString *iakey = [command.arguments objectAtIndex:0];
     NSString *pluginVersion = [command.arguments objectAtIndex:2];
@@ -337,7 +334,7 @@
 
 - (void)getLocation:(CDVInvokedUrlCommand *)command
 {
-    NSString *callbackId = command.callbackId;
+    id callbackId = command.callbackId;
     if (self.IAlocationInfo == nil) {
         NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
@@ -370,7 +367,7 @@
 
 - (void)addWatch:(CDVInvokedUrlCommand *)command
 {
-    NSString *callbackId = command.callbackId;
+    id callbackId = command.callbackId;
     if (self.IAlocationInfo == nil) {
         NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
@@ -413,7 +410,7 @@
 
 - (void)addRegionWatch:(CDVInvokedUrlCommand *)command
 {
-    NSString *callbackId = command.callbackId;
+    id callbackId = command.callbackId;
     if (self.IAlocationInfo == nil) {
         NSMutableDictionary *posError = [NSMutableDictionary dictionaryWithCapacity:2];
         [posError setObject:[NSNumber numberWithInt:INVALID_ACCESS_TOKEN] forKey:@"code"];
@@ -809,14 +806,14 @@
     cData.floorCertainty = [NSNumber numberWithFloat:newLocation.floor.certainty];
     cData.region = newLocation.region;
     if (self.locationData.locationCallbacks.count > 0) {
-        for (NSString *callbackId in self.locationData.locationCallbacks) {
+        for (id callbackId in self.locationData.locationCallbacks) {
             [self returnLocationInfo:callbackId andKeepCallback:NO];
         }
 
         [self.locationData.locationCallbacks removeAllObjects];
     }
     if (self.locationData.watchCallbacks.count > 0) {
-        for (NSString *timerId in self.locationData.watchCallbacks) {
+        for (id timerId in self.locationData.watchCallbacks) {
             [self returnLocationInfo:[self.locationData.watchCallbacks objectForKey:timerId] andKeepCallback:YES];
         }
     } else {

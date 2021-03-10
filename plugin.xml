@@ -78,7 +78,7 @@
 
 	<!-- android -->
     <platform name="android">
-      <framework src="src/android/indooratlas.gradle" custom="true" type="gradleReference"/>
+      <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
 
       <config-file target="res/xml/config.xml" parent="/*">
         <feature name="IndoorAtlas">
@@ -97,10 +97,10 @@
         <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
       </config-file>
 
-      <source-file src="src/android/IALocationPlugin.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/PositionError.java" target-dir="src/com/ialocation/plugin"/>
-      <source-file src="src/android/CurrentStatus.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/src/main/java/com/ialocation/plugin/IALocationPlugin.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/src/main/java/com/ialocation/plugin/IndoorLocationListener.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/src/main/java/com/ialocation/plugin/PositionError.java" target-dir="src/com/ialocation/plugin"/>
+      <source-file src="src/android/src/main/java/com/ialocation/plugin/CurrentStatus.java" target-dir="src/com/ialocation/plugin"/>
 
     </platform>
 </plugin>

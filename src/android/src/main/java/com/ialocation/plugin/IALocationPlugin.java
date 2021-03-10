@@ -410,11 +410,11 @@ public class IALocationPlugin extends CordovaPlugin {
     }
 
     private void requestWayfindingRoute(
-        IALatLngFloorCompatible from,
-        IALatLngFloorCompatible to,
-        CallbackContext callbackContext
+        final IALatLngFloorCompatible from,
+        final IALatLngFloorCompatible to,
+        final CallbackContext callbackContext
     ) {
-        IAWayfindingListener listener = new IAWayfindingListener() {
+        final IAWayfindingListener listener = new IAWayfindingListener() {
             @Override
             public void onWayfindingUpdate(IARoute route) {
                 PluginResult pluginResult;
@@ -486,7 +486,7 @@ public class IALocationPlugin extends CordovaPlugin {
     }
 
     private void addDynamicGeofence(JSONObject geoJson) {
-        IAGeofence iaGeofence = geofenceFromJsonObject(geoJson);
+        final IAGeofence iaGeofence = geofenceFromJsonObject(geoJson);
         cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -502,7 +502,7 @@ public class IALocationPlugin extends CordovaPlugin {
     }
 
     private void removeDynamicGeofence(JSONObject geoJson) {
-        List<String> geofenceIds = new ArrayList<>();
+        final List<String> geofenceIds = new ArrayList<>();
         try {
             geofenceIds.add(geoJson.getString("id"));
         } catch (JSONException e) {

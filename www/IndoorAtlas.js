@@ -219,6 +219,7 @@ function IndoorAtlas() {
     if (debug) debug('stopping positioning');
     native('clearWatch', [DEFAULT_WATCH_ID]);
     native('clearRegionWatch', [DEFAULT_REGION_WATCH_ID]);
+    native('clearGeofenceWatch', []);
     native('removeAttitudeCallback', []);
     native('removeHeadingCallback', []);
     native('removeStatusCallback', []);
@@ -349,8 +350,7 @@ function IndoorAtlas() {
   };
 
   /**
-   * Stops IndoorAtlas positioning. Other watches are not cleared by this
-   * opertation.
+   * Stops IndoorAtlas positioning. Also clears any other watches.
    *
    * @return {object} returns `this` to allow chaining
    * @example
@@ -365,7 +365,7 @@ function IndoorAtlas() {
       return warning('Positioning not started');
     }
     delete callbacks.onLocation;
-    // NOTE: other watches not cleared
+    // NOTE: other watches are cleared as well
     stopPositioning();
     return self;
   };
@@ -570,7 +570,7 @@ function IndoorAtlas() {
    *
    * @callback geofenceCallback
    * @param {string} transitionType Event type, either `'ENTER'`, `'EXIT'` or `'UNKNOWN'`
-   * @param {#Geofence} geofence Triggered geofence.
+   * @param {Geofence} geofence Triggered geofence.
    */
 
   /**
@@ -733,7 +733,7 @@ function IndoorAtlas() {
         native('getTraceId', [], function (traceId) {
         // this might lose some trace IDs if this is called rapidly
         if (callbacks.onTraceId) {
-          callbacks.onTraceId(traceId);
+          callbacks.onTraceId(traceId.traceId);
           delete callbacks.onTraceId;
         }
       });
