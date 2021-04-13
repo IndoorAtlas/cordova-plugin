@@ -21,7 +21,7 @@ android {
 repositories {
     mavenCentral()
     maven {
-        url "https://indooratlas-ltd.bintray.com/mvn-public/"
+        url "https://dl.cloudsmith.io/public/indooratlas/mvn-public/maven/"
     }
 }
 
