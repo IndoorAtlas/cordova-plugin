@@ -1,3 +1,7 @@
+Version 3.4.2 - April 2021
+----------------
+ * Android SDK repository moved from Bintray to Cloudsmith
+
 Version 3.4.1 - March 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.3
