@@ -1,6 +1,4 @@
-_This plugin has recently been updated to a new version 3.x with new a new API.
-Refer `migration-guide.md` for instructions on migrating from 2.x versions or
-for instructions on staying in the old version until you have time to migrate._
+_IndoorAtlas React Native plugin can be found in `react-native` branch_
 
 # IndoorAtlas Cordova/React.Native Plugin <img src="https://img.shields.io/github/release/IndoorAtlas/cordova-plugin.svg">
 
