@@ -1,3 +1,7 @@
+Version 3.4.4 - September 2021
+----------------
+ * Update IndoorAtlas SDKs to 3.4.9
+
 Version 3.4.3 - June 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.7
