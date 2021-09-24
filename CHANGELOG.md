@@ -1,6 +1,7 @@
 Version 3.4.4 - September 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.9
+ * Fix broken package.json in last release
 
 Version 3.4.3 - June 2021
 ----------------
