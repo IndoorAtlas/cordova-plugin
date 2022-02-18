@@ -1,3 +1,8 @@
+Version 3.4.5 - February 2022
+----------------
+ * Update IndoorAtlas SDKs to 3.4.12
+ * Fixed disabling of indoor lock
+
 Version 3.4.4 - September 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.9

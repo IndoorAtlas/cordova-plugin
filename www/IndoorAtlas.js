@@ -87,7 +87,7 @@ function IndoorAtlas() {
   var subscriptions = {};
   var callbacks = {};
   var initialized = false;
-  var indoorLock = false;
+  var indoorLock = null;
   var floorLock = null;
   var wayfindingDestination = null;
   var positioningOptions = null;
@@ -203,7 +203,7 @@ function IndoorAtlas() {
     });
 
     // handle floor and indoor locks if set before initialized
-    if (indoorLock) self.lockIndoors(true);
+    if (indoorLock !== null) self.lockIndoors(indoorLock);
     if (floorLock !== null) self.lockFloor(floorLock);
 
     if (callbacks.onWayfindingRoute) {
@@ -238,7 +238,7 @@ function IndoorAtlas() {
     orientationFilter = null;
 
     // reset locks
-    indoorLock = false;
+    indoorLock = null;
     floorLock = null;
   }
 
@@ -694,7 +694,7 @@ function IndoorAtlas() {
    * @param {boolean} locked if `false`, enable automatic indoor-outdoor detection.
    * If `true`, disable automatic indoor-outdoor detection and keep positioning indoors.
    * @return {object} returns `this` to allow chaining
-   * @example IndoorAtlas.lockIndoors(true);
+   * @example IndoorAtlas.lockIndoors(false);
    */
   this.lockIndoors = function(locked) {
     // notice that since all parameters are optional in JavaScript, we cannot
