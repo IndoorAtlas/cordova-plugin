@@ -102,7 +102,7 @@
     } else if (lData && lData.locationInfo) {
         CLLocation *lInfo = lData.locationInfo;
         NSMutableDictionary *returnInfo = [NSMutableDictionary dictionaryWithCapacity:10];
-        NSNumber *timestamp = [NSNumber numberWithDouble:([lInfo.timestamp timeIntervalSince1970] * 1000)];
+        NSNumber *timestamp = [NSNumber numberWithUnsignedLongLong:([lInfo.timestamp timeIntervalSince1970] * 1000)];
         [returnInfo setObject:timestamp forKey:@"timestamp"];
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.speed] forKey:@"velocity"];
         [returnInfo setObject:[NSNumber numberWithDouble:lInfo.verticalAccuracy] forKey:@"altitudeAccuracy"];
@@ -240,7 +240,7 @@
 - (NSDictionary *)formatRegionInfo:(IARegion *)regionInfo andTransitionType:(IndoorLocationTransitionType)transitionType
 {
     NSMutableDictionary *result = [@{@"regionId": regionInfo.identifier,
-                                     @"timestamp": [NSNumber numberWithDouble:([regionInfo.timestamp timeIntervalSince1970] * 1000)],
+                                     @"timestamp": [NSNumber numberWithUnsignedLongLong:([regionInfo.timestamp timeIntervalSince1970] * 1000)],
                                      @"regionType": [NSNumber numberWithInt:regionInfo.type],
                                      @"transitionType": [NSNumber numberWithInteger:transitionType]
                                      } mutableCopy];
