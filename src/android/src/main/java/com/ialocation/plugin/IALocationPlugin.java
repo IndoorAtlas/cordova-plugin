@@ -2,6 +2,7 @@ package com.ialocation.plugin;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.Collections;
 
@@ -45,13 +46,18 @@ public class IALocationPlugin extends CordovaPlugin {
     private static final int PERMISSION_REQUEST = 101;
 
     private IALocationManager mLocationManager;
-    private String[] permissions = new String[]{
+    private List<String> permissions = new ArrayList<>(Arrays.asList(new String[]{
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.INTERNET
-    };
+    }));
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+        }
+    }
     private CallbackContext mCbContext;
     private IndoorLocationListener mListener;
     private boolean mLocationServiceRunning = false;
@@ -83,7 +89,7 @@ public class IALocationPlugin extends CordovaPlugin {
      */
     @Override
     public void requestPermissions(int requestCode) {
-        cordova.requestPermissions(this, requestCode, permissions);
+        cordova.requestPermissions(this, requestCode, permissions.toArray(new String[]{}));
     }
 
     /**
