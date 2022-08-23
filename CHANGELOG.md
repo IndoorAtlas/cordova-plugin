@@ -3,7 +3,6 @@ Version 3.5.0 - August 2022
  * Update IndoorAtlas SDKs to 3.5.5
  * iOS: fix JSON serialization issue with position object
  * Android: add BLUETOOTH_SCAN permission. The plugin now requires compile and target sdk version 31
- * Now requires Cordova version 11.0.0 or higher
 
 Version 3.4.5 - February 2022
 ----------------
