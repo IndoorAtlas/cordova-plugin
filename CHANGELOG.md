@@ -1,3 +1,7 @@
+Version 3.5.1 - August 2022
+----------------
+ * Fix status callback
+
 Version 3.5.0 - August 2022
 ----------------
  * Update IndoorAtlas SDKs to 3.5.5
