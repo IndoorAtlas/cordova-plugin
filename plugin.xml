@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="3.4.5">
+        version="3.5.1">
 
   <name>IndoorAtlas</name>
   <description>IndoorAtlas Cordova Plugin.</description>
   <engines>
-    <engine name="cordova" version=">=3.6.0"/>
-    <engine name="cordova-plugman" version=">=4.2.0"/><!-- needed for gradleReference support -->
+    <engine name="cordova" version=">=11.0.0"/>
+    <engine name="cordova-android" version=">=11.0.0"/>
+    <engine name="cordova-ios" version=">=6.2.0"/>
   </engines>
 
   <js-module src="www/Coordinates.js" name="Coordinates">
@@ -93,6 +94,7 @@
         <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
         <uses-permission android:name="android.permission.BLUETOOTH"/>
         <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+        <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
         <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
         <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
       </config-file>
