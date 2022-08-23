@@ -279,7 +279,7 @@ function IndoorAtlas() {
       initialized = true;
 
       native('addStatusChangedCallback', [], function (status) {
-        lastStatus = new CurrentStatus(status.code, status.message);
+        var lastStatus = new CurrentStatus(status.code, status.message);
         if (lastStatus.name === 'AVAILABLE') {
           if (debug) debug('status available');
           var wasAvailable = statusHasBeenAvailable;
