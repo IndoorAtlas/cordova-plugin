@@ -45,9 +45,8 @@ var ___; // this dummy variable helps with automatic docs generation
 
 // react.native
 var pluginVersion = require('react-native-indooratlas/package.json').version;
-var isAndroid = require('@remobile/react-native-cordova').isandroid;
 var cordovaExec = require('@remobile/react-native-cordova').exec;
-import { NativeEventEmitter, NativeModules } from 'react-native';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 var eventEmitter = new NativeEventEmitter(NativeModules.IndoorAtlas);
 var Position = require('./Position');
 var RegionChangeObserver = require('./RegionChangeObserver');
@@ -60,12 +59,6 @@ var Geofence = require('./Geofence');
 
 var DEFAULT_WATCH_ID = 'default-watch';
 var DEFAULT_REGION_WATCH_ID = 'default-region-watch';
-
-// react.native
-function getDeviceType() {
-  if (isAndroid) return 'Android';
-  else return 'iOS';
-}
 
 function isNumber(value) {
   return typeof value === 'number' && isFinite(value);
@@ -304,7 +297,7 @@ function IndoorAtlas() {
     var config = [apiKey, 'dummy-secret'];
     // plugin version
     config.push(pluginVersion);
-    if (getDeviceType() == 'Android') {
+    if (Platform.OS === 'android') {
       // get permission
       native('getPermissions', [], function () {
         native('initializeIndoorAtlas', config, initSuccess);
