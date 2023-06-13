@@ -344,6 +344,26 @@ INDOORATLAS_API
 @property (nonatomic, readonly) bool isSuccessful;
 /** Error status for routing */
 @property (nonatomic, readonly) enum ia_route_error error;
+/** Create IARoute from array of IALatLngFloor objects. Every point indicates either a turn, start or destination in the route. */
++ (nonnull IARoute*)routeFromLatLngFloors:(nonnull NSArray<IALatLngFloor*>*)points;
+/** Create IARoute from a JSON description
+ *
+ * Example json:
+ * {
+ *    "legs": [
+ *        {
+ *             "begin": { "latitude": ..., "longitude": ..., "floor": ... },
+ *             "end": { "latitude": ..., "longitude": ..., "floor": ... },
+ *             "length": ...
+ *             "direction": ...
+ *        },
+ *        ...
+ *    ]
+ * }
+ *
+ * If invalid JSON is given the error bit on the returned route will be set and isSuccessful returns false.
+ */
++ (nonnull IARoute*)routeFromJson:(nonnull NSString*)json;
 @end
 
 /**
@@ -630,6 +650,16 @@ INDOORATLAS_API
  * @param extentZ Extent Z of the plane
  */
 - (void)addPlaneWithCenterX:(float)centerX withCenterY:(float)centerY withCenterZ:(float)centerZ withExtentX:(float)extentX withExtentZ:(float)extentZ;
+
+/**
+ * Update AR route manually. Calling this method is only required if not using IndoorAtlas wayfinding.
+ * You should update the route each time location changes to keep it in sync.
+ *
+ * If this method is used while also using IndoorAtlas wayfinding, the route will not be updated automatically anymore.
+ *
+ * @param route The current route graph from the current location
+ */
+- (void)updateRoute:(nonnull IARoute*)route;
 @end
 
 /**
@@ -709,6 +739,15 @@ INDOORATLAS_API
  * @param newAttitude New attitude data.
  */
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didUpdateAttitude:(nonnull IAAttitude*)newAttitude;
+
+/**
+ * Tells the delegate that one or more beacons are in range.
+ *
+ * `[IALocationManager startMonitoringForBeacons]` must be called first.
+ *
+ * NOTE! To enable the callback, please contact IndoorAtlas support.
+ */
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager didRangeBeacons:(nonnull NSArray<CLBeacon*>*)beacons;
 @end
 
 /**
@@ -957,6 +996,21 @@ INDOORATLAS_API
  * Stops all AR related activity and releases the memory allocated for it.
  */
 - (void)releaseArSession;
+
+/**
+ * Start monitoring for beacons.
+ *
+ * Whenever IA SDK internally scans beacons, by calling this method the scans are also delivered to
+ * <indoorLocationManager:didRangeBeacons:> method of your delegate.
+ *
+ * NOTE! To enable the callback, please contact IndoorAtlas support.
+ */
+- (void)startMonitoringForBeacons;
+
+/**
+ * Stop monitoring for beacons.
+ */
+- (void)stopMonitoringForBeacons;
 
 /**
  * Returns the shared <IALocationManager> instance.

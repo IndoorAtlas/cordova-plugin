@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   s.source_files   = '**/*.{h,m}'
   s.preserve_paths = '**/*.{h,m}'
 
-  s.ios.vendored_frameworks = 'IndoorAtlas/IndoorAtlas.framework'
+  s.ios.vendored_frameworks = 'IndoorAtlas/IndoorAtlas.xcframework'
 
   s.dependency 'RCTCordova'
 end
