@@ -1,6 +1,6 @@
 {
   "name": "react-native-indooratlas",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "React.Native plugin using IndoorAtlas SDK.",
   "homepage": "https://github.com/indooratlas/cordova-plugin/tree/react-native",
   "repository": {
