@@ -748,6 +748,15 @@ INDOORATLAS_API
  * NOTE! To enable the callback, please contact IndoorAtlas support.
  */
 - (void)indoorLocationManager:(nonnull IALocationManager*)manager didRangeBeacons:(nonnull NSArray<CLBeacon*>*)beacons;
+/**
+ * Tells the delegate that an error occurred while gathering ranging information for a set of beacons.
+ *
+ * `[IALocationManager startMonitoringForBeacons]` must be called first.
+ *
+ * NOTE! To enable the callback, please contact IndoorAtlas support.
+ */
+- (void)indoorLocationManager:(nonnull IALocationManager*)manager rangingBeaconsDidFailForRegion:(nonnull CLBeaconRegion *)region
+                                                                  withError:(nonnull NSError *)error;
 @end
 
 /**
@@ -1011,6 +1020,13 @@ INDOORATLAS_API
  * Stop monitoring for beacons.
  */
 - (void)stopMonitoringForBeacons;
+
+/**
+ * Finish recording binary log data.
+ * This method is mainly meant for enterprise users to share debug data with the IndoorAtlas support.
+ * If your API key already has data storage enabled, there is no need to use this method.
+ */
+- (void)finishRecordingBinaryLog:(void(^_Nonnull)(NSData *_Nonnull))callback;
 
 /**
  * Returns the shared <IALocationManager> instance.
