@@ -1,3 +1,8 @@
+Version 3.6.1 - October 2023
+----------------
+ * Update IndoorAtlas SDKs to 3.6.4
+ * add workaround to support Android Gradle buildtools version 33
+
 Version 3.6.0 - June 2023
 ----------------
  * Update IndoorAtlas SDKs to 3.6.3
