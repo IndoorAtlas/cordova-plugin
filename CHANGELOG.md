@@ -1,3 +1,7 @@
+Version 3.6.2 - December 2023
+----------------
+ * Update IndoorAtlas SDKs to 3.6.6 (iOS) and 3.6.7 (Android)
+
 Version 3.6.1 - October 2023
 ----------------
  * Update IndoorAtlas SDKs to 3.6.4
