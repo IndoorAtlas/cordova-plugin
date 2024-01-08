@@ -831,6 +831,21 @@ INDOORATLAS_API
 @property(assign, nonatomic) enum ia_location_accuracy desiredAccuracy;
 
 /**
+ * Set the accuracy of the underlying CLLocationManager's instance.
+ *
+ * By default the SDK uses different values depending on the situation.
+ * Setting this overrides the SDK logic.
+ */
+@property(assign, nonatomic) CLLocationAccuracy desiredPlatformAccuracy;
+
+/**
+ * Set the activity type of the underlying CLLocationManager's instance.
+ *
+ * By default the SDK does not set this value.
+ */
+@property(assign, nonatomic) CLActivityType platformActivityType;
+
+/**
  * Explicitly enable background location updates. (iOS 9.0+ only)
  *
  * Location updates must be active when app goes to background for this flag to have effect.
