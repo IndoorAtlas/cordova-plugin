@@ -1047,6 +1047,11 @@ INDOORATLAS_API
  * Returns the shared <IALocationManager> instance.
  */
 + (nonnull IALocationManager *)sharedInstance;
+
+/**
+ * Extra features API.
+ */
+- (void)setObject:(nullable id)obj forKey:(nonnull id)key;
 @end
 
 #undef INDOORATLAS_API
