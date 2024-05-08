@@ -1,3 +1,7 @@
+Version 3.6.5 - May 2024
+----------------
+ * Fixed compile on iOS
+
 Version 3.6.4 - May 2024
 ----------------
  * Update IndoorAtlas SDKs to 3.6.9
