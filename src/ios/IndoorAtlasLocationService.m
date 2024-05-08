@@ -2,10 +2,6 @@
 #import <UIKit/UIKit.h>
 #import "IndoorAtlasLocationService.h"
 
-@interface IALocationManager ()
-- (void)setObject:(id)object forKey:(NSString*)key;
-@end
-
 @interface IndoorAtlasLocationService()<IALocationManagerDelegate> {
 }
 
