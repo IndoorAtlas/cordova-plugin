@@ -84,4 +84,6 @@ typedef NSUInteger IndoorLocationStatus;
 - (void)lockFloor:(CDVInvokedUrlCommand *)command;
 - (void)unlockFloor:(CDVInvokedUrlCommand *)command;
 - (void)lockIndoors:(CDVInvokedUrlCommand *)command;
+- (void)watchIBeacons:(CDVInvokedUrlCommand *)command;
+- (void)clearIBeaconWatch:(CDVInvokedUrlCommand *)command;
 @end

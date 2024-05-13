@@ -48,6 +48,9 @@
   <js-module src="www/POI.js" name="POI">
     <clobbers target="IndoorAtlas.POI"/>
   </js-module>
+  <js-module src="www/RadioScan.js" name="RadioScan">
+    <clobbers target="IndoorAtlas.RadioScan"/>
+  </js-module>
   <js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
     <merges target="IndoorAtlas"/>
   </js-module>
@@ -56,6 +59,9 @@
   <platform name="ios">
     <config-file target="*-Info.plist" parent="NSLocationWhenInUseUsageDescription">
       <string>Platform location requested for better indoor positioning experience.</string>
+    </config-file>
+    <config-file target="*-Info.plist" parent="NSMotionUsageDescription">
+      <string>Device motion requested for better indoor positioning experience.</string>
     </config-file>
     <framework src="CFNetwork.framework"/>
     <framework src="CoreLocation.framework"/>

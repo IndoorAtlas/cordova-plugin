@@ -9,6 +9,7 @@ import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IARegion;
 import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationListener;
+import com.indooratlas.android.sdk.IARadioScanListener;
 import com.indooratlas.android.sdk.IAWayfindingListener;
 import com.indooratlas.android.sdk.IAGeofence;
 import com.indooratlas.android.sdk.IAGeofenceEvent;
@@ -16,6 +17,7 @@ import com.indooratlas.android.sdk.IAGeofenceListener;
 import com.indooratlas.android.sdk.IAPOI;
 import com.indooratlas.android.sdk.resources.IAFloorPlan;
 import com.indooratlas.android.sdk.resources.IALatLng;
+import com.indooratlas.android.sdk.resources.IARadioScan;
 import com.indooratlas.android.sdk.resources.IAVenue;
 // react.native
 import com.remobile.cordova.PluginResult;
@@ -25,11 +27,12 @@ import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Handles events from IALocationListener and IARegion.Listener and relays them to Javascript callbacks.
  */
-public class IndoorLocationListener implements IALocationListener, IARegion.Listener, IAOrientationListener,
+public class IndoorLocationListener extends IARadioScanListener implements IALocationListener, IARegion.Listener, IAOrientationListener,
         IAWayfindingListener, IAGeofenceListener {
     private static final String TAG = "IndoorLocationListener";
 
@@ -44,6 +47,8 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
     private CallbackContext statusUpdateCallbackContext;
     private CallbackContext wayfindingUpdateCallbackContext;
     private CallbackContext geofenceCallbackContext;
+    private CallbackContext iBeaconScanCallbackContext;
+    private CallbackContext wifiScanCallbackContext;
     private ArrayList<CallbackContext> mCallbacks = new ArrayList<CallbackContext>();
     private CallbackContext mCallbackContext;
     public IALocation lastKnownLocation = null;
@@ -145,6 +150,22 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
 
     public void removeGeofenceUpdates() {
         geofenceCallbackContext = null;
+    }
+
+    public void addIBeaconWatch(CallbackContext callbackContext) {
+        iBeaconScanCallbackContext = callbackContext;
+    }
+
+    public void clearIBeaconWatch() {
+        iBeaconScanCallbackContext = null;
+    }
+
+    public void addWifiWatch(CallbackContext callbackContext) {
+        wifiScanCallbackContext = callbackContext;
+    }
+
+    public void clearWifiWatch() {
+        wifiScanCallbackContext = null;
     }
 
     /**
@@ -683,4 +704,99 @@ public class IndoorLocationListener implements IALocationListener, IARegion.List
             }
         }
     }
-  }
+
+    @Override
+    public void onIBeaconScan​(List<IARadioScan.IBeacon> beacons) {
+        if (iBeaconScanCallbackContext != null) {
+            try {
+                JSONArray scans = new JSONArray();
+                for (IARadioScan.IBeacon beacon : beacons) {
+                    JSONObject scan = new JSONObject();
+                    scan.put("uuid", beacon.uuid.toString().toLowerCase());
+                    scan.put("major", beacon.major);
+                    scan.put("minor", beacon.minor);
+                    scan.put("rssi", beacon.rssi);
+                    scans.put(scan);
+                }
+                JSONObject result = new JSONObject();
+                result.put("beacons", scans);
+                PluginResult pluginResult = new PluginResult(
+                    PluginResult.Status.OK,
+                    result
+                );
+                //pluginResult.setKeepCallback(true);
+                iBeaconScanCallbackContext.sendPluginResult(pluginResult);
+            } catch (JSONException e) {
+                throw new IllegalStateException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void onIBeaconScanError​(int errorCode, String description) {
+        if (iBeaconScanCallbackContext != null) {
+            try {
+                JSONObject details = new JSONObject();
+                details.put("errorCode", errorCode);
+                JSONObject error = new JSONObject();
+                error.put("description", description);
+                error.put("details", details);
+                JSONObject result = new JSONObject();
+                result.put("error", error);
+                PluginResult pluginResult = new PluginResult(
+                    PluginResult.Status.OK,
+                    result
+                );
+                //pluginResult.setKeepCallback(true);
+                iBeaconScanCallbackContext.sendPluginResult(pluginResult);
+            } catch (JSONException e) {
+                throw new IllegalStateException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void onWifiScan​(List<IARadioScan.Wifi> wifis) {
+        if (wifiScanCallbackContext != null) {
+            try {
+                JSONArray scans = new JSONArray();
+                for (IARadioScan.Wifi wifi : wifis) {
+                    JSONObject scan = new JSONObject();
+                    scan.put("bssid", wifi.bssid);
+                    scan.put("rssi", wifi.rssi);
+                    scans.put(scan);
+                }
+                JSONObject result = new JSONObject();
+                result.put("wifis", scans);
+                PluginResult pluginResult = new PluginResult(
+                    PluginResult.Status.OK,
+                    result
+                );
+                //pluginResult.setKeepCallback(true);
+                wifiScanCallbackContext.sendPluginResult(pluginResult);
+            } catch (JSONException e) {
+                throw new IllegalStateException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void onWifiScanError() {
+        if (wifiScanCallbackContext != null) {
+            try {
+                JSONObject error = new JSONObject();
+                error.put("description", "wifi scan failed");
+                JSONObject result = new JSONObject();
+                result.put("error", error);
+                PluginResult pluginResult = new PluginResult(
+                    PluginResult.Status.OK,
+                    result
+                );
+                //pluginResult.setKeepCallback(true);
+                wifiScanCallbackContext.sendPluginResult(pluginResult);
+            } catch (JSONException e) {
+                throw new IllegalStateException(e.getMessage());
+            }
+        }
+    }
+}

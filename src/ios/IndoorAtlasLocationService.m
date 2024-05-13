@@ -159,6 +159,21 @@
     }
 }
 
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager didRangeBeacons:(nonnull NSArray<CLBeacon *> *)beacons
+{
+    if([self.delegate respondsToSelector:@selector(location:didRangeBeacons:)]) {
+        [self.delegate location:self didRangeBeacons:beacons];
+    }
+}
+
+- (void)indoorLocationManager:(nonnull IALocationManager *)manager rangingBeaconsDidFailForRegion:(nonnull CLBeaconRegion *)region
+                                                                                        withError:(nonnull NSError *)error
+{
+    if([self.delegate respondsToSelector:@selector(location:rangingBeaconsDidFailForRegion:withError:)]) {
+        [self.delegate location:self rangingBeaconsDidFailForRegion:region withError:error];
+    }
+}
+
 - (void)valueForDistanceFilter:(float *)distance
 {
     self.manager.distanceFilter = (CLLocationDistance) *(distance);
@@ -269,6 +284,18 @@
 {
     NSLog(@"stopMonitoringGeofence: %@, floor %ld", geofence.name, geofence.floor.level);
     [self.manager stopMonitoringForGeofence:geofence];
+}
+
+- (void)startMonitoringForBeacons
+{
+    NSLog(@"startMonitoringForBeacons");
+    [self.manager startMonitoringForBeacons];
+}
+
+- (void)stopMonitoringForBeacons
+{
+    NSLog(@"stopMonitoringForBeacons");
+    [self.manager stopMonitoringForBeacons];
 }
 
 @end
