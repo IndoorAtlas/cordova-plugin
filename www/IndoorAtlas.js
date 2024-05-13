@@ -230,7 +230,7 @@ function IndoorAtlas() {
     native('removeStatusCallback', []);
     native('removeWayfindingUpdates', []); // just in case
     native('clearIBeaconWatch', []);
-    if (getDeviceType() === 'Android') {
+    if (Platform.OS === 'android') {
       native('clearWifiWatch', []);
     }
 
@@ -256,7 +256,7 @@ function IndoorAtlas() {
   }
 
   function watchWifis() {
-    if (getDeviceType() !== 'Android') {
+    if (Platform.OS !== 'android') {
       if (debug) debug('Wifi scan callback only available on Android');
       return;
     }
@@ -269,7 +269,7 @@ function IndoorAtlas() {
   }
 
   function clearWifiWatch() {
-    if (getDeviceType() !== 'Android') {
+    if (Platform.OS !== 'android') {
       return;
     }
     native('clearWifiWatch', []);

@@ -1025,4 +1025,23 @@ public class IALocationPlugin extends CordovaPlugin {
         executeReactMethod("lockIndoors", args, success, error);
     }
 
+    @ReactMethod
+    public void watchIBeacons(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("watchIBeacons", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearIBeaconWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearIBeaconWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void watchWifis(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("watchWifis", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearWifiWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearWifiWatch", args, success, error);
+    }
 }

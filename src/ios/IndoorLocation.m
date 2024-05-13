@@ -319,7 +319,7 @@
         [result setObject:scans forKey:@"beacons"];
 
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.beaconScanCallbackID];
     }
 }
@@ -339,7 +339,7 @@
         [result setObject:err forKey:@"error"];
 
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
+        //[pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.beaconScanCallbackID];
     }
 }
@@ -1117,4 +1117,6 @@ RCT_EXPORT_CORDOVA_METHOD2(removeDynamicGeofence);
 RCT_EXPORT_CORDOVA_METHOD2(lockFloor);
 RCT_EXPORT_CORDOVA_METHOD2(unlockFloor);
 RCT_EXPORT_CORDOVA_METHOD2(lockIndoors);
+RCT_EXPORT_CORDOVA_METHOD2(watchIBeacons);
+RCT_EXPORT_CORDOVA_METHOD2(clearIBeaconWatch);
 @end

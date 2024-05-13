@@ -724,7 +724,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 iBeaconScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -747,7 +747,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 iBeaconScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -772,7 +772,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 wifiScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -792,7 +792,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 wifiScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
