@@ -1,3 +1,7 @@
+Version 3.6.6 - May 2024
+----------------
+ * Add radio scan callbacks API (NOTE! To enable the callbacks, please contact IndoorAtlas support)
+
 Version 3.6.5 - May 2024
 ----------------
  * Fixed compile on iOS
