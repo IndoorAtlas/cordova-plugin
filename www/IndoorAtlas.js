@@ -50,6 +50,9 @@ var CurrentStatus = require('./CurrentStatus');
 var Orientation = require('./Orientation');
 var Route = require('./Route');
 var Geofence = require('./Geofence');
+var IBeacon = require('./RadioScan').IBeacon;
+var Wifi = require('./RadioScan').Wifi;
+var RadioScanError = require('./RadioScan').RadioScanError;
 
 // --- Helper functions and constants (*not* in the global scope)
 
@@ -224,6 +227,10 @@ function IndoorAtlas() {
     native('removeHeadingCallback', []);
     native('removeStatusCallback', []);
     native('removeWayfindingUpdates', []); // just in case
+    native('clearIBeaconWatch', []);
+    if (getDeviceType() === 'Android') {
+      native('clearWifiWatch', []);
+    }
 
     positioningOptions = null;
     orientationFilter = null;
@@ -231,6 +238,39 @@ function IndoorAtlas() {
     // reset locks
     indoorLock = null;
     floorLock = null;
+  }
+
+  function watchIBeacons() {
+    native('watchIBeacons', [], function (scan) {
+      if (callbacks.onIBeaconScan) {
+        if (scan.error) callbacks.onIBeaconScan(new RadioScanError(scan.error), undefined);
+        else callbacks.onIBeaconScan(undefined, scan.beacons.map(function(beacon) { return new IBeacon(beacon); }));
+      }
+    });
+  }
+
+  function clearIBeaconWatch() {
+    native('clearIBeaconWatch', []);
+  }
+
+  function watchWifis() {
+    if (getDeviceType() !== 'Android') {
+      if (debug) debug('Wifi scan callback only available on Android');
+      return;
+    }
+    native('watchWifis', [], function (scan) {
+      if (callbacks.onWifiScan) {
+        if (scan.error) callbacks.onWifiScan(new RadioScanError(scan.error), undefined);
+        else callbacks.onWifiScan(undefined, scan.wifis.map(function(wifi) { return new Wifi(wifi); }));
+      }
+    });
+  }
+
+  function clearWifiWatch() {
+    if (getDeviceType() !== 'Android') {
+      return;
+    }
+    native('clearWifiWatch', []);
   }
 
   // ################ PUBLIC API ################
@@ -289,6 +329,9 @@ function IndoorAtlas() {
       if (callbacks.onLocation) startPositioning();
 
       if (callbacks.onTriggeredGeofence) requestGeofenceUpdates();
+
+      if (callbacks.onIBeaconScan) watchIBeacons();
+      if (callbacks.onWifiScan) watchWifis();
     }
 
     var config = [apiKey, 'dummy-secret'];
@@ -737,6 +780,108 @@ function IndoorAtlas() {
           delete callbacks.onTraceId;
         }
       });
+    }
+    return self;
+  };
+
+  // --- Radio scans
+
+  /**
+   * Callback function triggered on beacon scans. Only one callback can be active at a time.
+   * 
+   * NOTE! To enable the callback, please contact IndoorAtlas support.
+   *
+   * @callback iBeaconScanCallback
+   * @param {RadioScanError} error or undefined if no error
+   * @param {IBeacon[]} list of scanned beacons or undefined if there was error
+   */
+
+  /**
+   * Start observing beacon scans.
+   * 
+   * NOTE! To enable the callback, please contact IndoorAtlas support.
+   *
+   * @param {function(iBeaconScanCallback)} onIBeaconScan a callback that executes
+   * whenever IA SDK internally scans beacons.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchIBeacons((error, beacons) => {
+   *     if (error) {
+   *        console.log(`error scanning beacons: ${error.description} details: ${JSON.stringify(error.details)}`);
+   *     } else {
+   *        console.log(`scanned beacon count: ${beacons.length}`);
+   *     }
+   * });
+   */
+  this.watchIBeacons = function(onIBeaconScan) {
+    if (callbacks.onIBeaconScan) {
+      warning('Overwriting existing beacons watch');
+    }
+    callbacks.onIBeaconScan = onIBeaconScan;
+    if (initialized) {
+      watchIBeacons();
+    }
+    return self;
+  };
+  /**
+   * Stop observing beacon scans.
+   * 
+   * @return {object} returns `this` to allow chaining
+   */
+  this.clearIBeaconWatch = function() {
+    delete callbacks.onIBeaconScan;
+    if (initialized) {
+      clearIBeaconWatch();
+    }
+    return self;
+  };
+
+  /**
+   * Callback function triggered on wifi scans. Only one callback can be active at a time.
+   * 
+   * NOTE! To enable the callback, please contact IndoorAtlas support.
+   *
+   * @callback wifiScanCallback
+   * @param {RadioScanError} error or undefined if no error
+   * @param {Wifi[]} list of scanned wifis or undefined if there was error
+   */
+
+  /**
+   * Start observing wifi scans. Only supported on Android.
+   * 
+   * NOTE! To enable the callback, please contact IndoorAtlas support.
+   *
+   * @param {function(wifiScanCallback)} onWifiScan a callback that executes
+   * whenever IA SDK internally scans wifis.
+   * @return {object} returns `this` to allow chaining
+   * @example
+   * IndoorAtlas.watchWifis((error, wifis) => {
+   *     if (error) {
+   *        console.log(`error scanning wifis: ${error.description}`);
+   *     } else {
+   *        console.log(`scanned wifi count: ${wifis.length}`);
+   *     }
+   * });
+   */
+  this.watchWifis = function(onWifiScan) {
+    if (callbacks.onWifiScan) {
+      warning('Overwriting existing wifis watch');
+    }
+    callbacks.onWifiScan = onWifiScan;
+    if (initialized) {
+      watchWifis();
+    }
+    return self;
+  };
+  /**
+   * Stop observing wifi scans.
+   * 
+   * @return {object} returns `this` to allow chaining
+   */
+  this.clearWifiWatch = function() {
+    delete callbacks.onWifiScan;
+    if (initialized) {
+      clearWifiWatch();
     }
     return self;
   };

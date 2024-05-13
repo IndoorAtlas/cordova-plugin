@@ -67,6 +67,11 @@ typedef NSUInteger IndoorLocationTransitionType;
  */
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateRoute:(nonnull IARoute *)route;
 
+- (void)location:(IndoorAtlasLocationService *)manager didRangeBeacons:(nonnull NSArray<CLBeacon *> *)beacons;
+
+- (void)location:(IndoorAtlasLocationService *)manager rangingBeaconsDidFailForRegion:(nonnull CLBeaconRegion *)region
+                                                                            withError:(nonnull NSError *)error;
+
 @end
 @interface IndoorAtlasLocationService : NSObject{
 
@@ -128,6 +133,9 @@ typedef NSUInteger IndoorLocationTransitionType;
 
 - (void)startMonitoringGeofences:(IAGeofence *)geofence;
 - (void)stopMonitoringGeofences:(IAGeofence *)geofence;
+
+- (void)startMonitoringForBeacons;
+- (void)stopMonitoringForBeacons;
 
 - (void)valueForDistanceFilter:(float *)distance;
 - (void)valueForTimeFilter:(float *)interval;

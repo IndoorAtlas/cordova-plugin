@@ -50,6 +50,7 @@
 @property (nonatomic, strong) id addStatusUpdateCallbackID;
 @property (nonatomic, strong) id addRouteUpdateCallbackID;
 @property (nonatomic, strong) id addGeofenceUpdateCallbackID;
+@property (nonatomic, strong) id beaconScanCallbackID;
 
 @end
 
@@ -234,6 +235,42 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addStatusUpdateCallbackID];
+    }
+}
+
+- (void)returnBeaconScans:(NSArray<CLBeacon *> *)beacons
+{
+    if (self.beaconScanCallbackID != nil) {
+        NSMutableArray<NSDictionary *>* scans = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [beacons count]; i++) {
+            [scans addObject:[self dictionaryFromCLBeacon:beacons[i]]];
+        }
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
+        [result setObject:scans forKey:@"beacons"];
+
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.beaconScanCallbackID];
+    }
+}
+
+- (void)returnBeaconScanError:(CLBeaconRegion *)region
+                    withError:(NSError *)error
+{
+    if (self.beaconScanCallbackID != nil) {
+        NSMutableDictionary *details = [NSMutableDictionary dictionaryWithCapacity:1];
+        [details setObject:[self dictionaryFromCLBeaconRegion:region] forKey:@"region"];
+
+        NSMutableDictionary *err = [NSMutableDictionary dictionaryWithCapacity:2];
+        [err setObject:[error localizedDescription] forKey:@"description"];
+        [err setObject:details forKey:@"details"];
+
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
+        [result setObject:err forKey:@"error"];
+
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.beaconScanCallbackID];
     }
 }
 
@@ -720,6 +757,25 @@
     return poi;
 }
 
+- (NSDictionary *)dictionaryFromCLBeacon:(CLBeacon *)clbeacon
+{
+    NSMutableDictionary *beacon = [NSMutableDictionary dictionaryWithCapacity:4];
+    [beacon setObject:[[[clbeacon proximityUUID] UUIDString] lowercaseString] forKey:@"uuid"];
+    [beacon setObject:[clbeacon major] forKey:@"major"];
+    [beacon setObject:[clbeacon minor] forKey:@"minor"];
+    [beacon setObject:[NSNumber numberWithInteger:[clbeacon rssi]] forKey:@"rssi"];
+    return beacon;
+}
+
+- (NSDictionary *)dictionaryFromCLBeaconRegion:(CLBeaconRegion *)region
+{
+    NSMutableDictionary *beacon = [NSMutableDictionary dictionaryWithCapacity:3];
+    [beacon setObject:[[[region proximityUUID] UUIDString] lowercaseString] forKey:@"uuid"];
+    [beacon setObject:[region major] forKey:@"major"];
+    [beacon setObject:[region minor] forKey:@"minor"];
+    return beacon;
+}
+
 - (void)watchGeofences:(CDVInvokedUrlCommand *)command
 {
     self.addGeofenceUpdateCallbackID = command.callbackId;
@@ -763,6 +819,17 @@
     [self.IAlocationInfo lockIndoors:indoors];
 }
 
+- (void)watchIBeacons:(CDVInvokedUrlCommand *)command
+{
+    self.beaconScanCallbackID = command.callbackId;
+    [self.IAlocationInfo startMonitoringForBeacons];
+}
+
+- (void)clearIBeaconWatch:(CDVInvokedUrlCommand *)command
+{
+    [self.IAlocationInfo stopMonitoringForBeacons];
+    self.beaconScanCallbackID = nil;
+}
 /**
  * Create NSMutableDictionary from the RouteLeg object
  */
@@ -899,6 +966,17 @@
     NSDate *timestamp = heading.timestamp;
 
     [self returnHeadingInformation:direction timestamp:timestamp];
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager didRangeBeacons:(nonnull NSArray<CLBeacon *> *)beacons
+{
+    [self returnBeaconScans:beacons];
+}
+
+- (void)location:(IndoorAtlasLocationService *)manager rangingBeaconsDidFailForRegion:(nonnull CLBeaconRegion *)region
+                                                                            withError:(nonnull NSError *)error
+{
+    [self returnBeaconScanError:region withError:error];
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager statusChanged:(IAStatus *)status
