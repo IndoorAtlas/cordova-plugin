@@ -21,6 +21,7 @@ import com.indooratlas.android.sdk.IARegion;
 import com.indooratlas.android.sdk.IARoute;
 import com.indooratlas.android.sdk.IAOrientationRequest;
 import com.indooratlas.android.sdk.IAOrientationListener;
+import com.indooratlas.android.sdk.IARadioScanRequest;
 import com.indooratlas.android.sdk.IAWayfindingListener;
 import com.indooratlas.android.sdk.IAWayfindingRequest;
 import com.indooratlas.android.sdk.IAGeofence;
@@ -66,6 +67,7 @@ public class IALocationPlugin extends CordovaPlugin {
     private boolean mLocationServiceRunning = false;
     private IALocationRequest mLocationRequest = IALocationRequest.create();
     private IAOrientationRequest mOrientationRequest = new IAOrientationRequest(1.0, 1.0);
+    private IARadioScanRequest mRadioScanRequest = null;
 
     /**
      * Called by the WebView implementation to check for geolocation permissions, can be used
@@ -249,6 +251,14 @@ public class IALocationPlugin extends CordovaPlugin {
             } else if ("lockIndoors".equals(action)) {
               boolean locked = args.getBoolean(0);
               lockIndoors(locked);
+            } else if ("watchIBeacons".equals(action)) {
+              watchIBeacons(callbackContext);
+            } else if ("clearIBeaconWatch".equals(action)) {
+              clearIBeaconWatch();
+            } else if ("watchWifis".equals(action)) {
+              watchWifis(callbackContext);
+            } else if ("clearWifiWatch".equals(action)) {
+              clearWifiWatch();
             }
         }
         catch(Exception ex) {
@@ -638,6 +648,78 @@ public class IALocationPlugin extends CordovaPlugin {
         else {
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
+    }
+
+    private void watchIBeacons(CallbackContext callbackContext) {
+        final IARadioScanRequest req = (mRadioScanRequest != null && mRadioScanRequest.wifis) ?
+            mRadioScanRequest.andIBeacons() : IARadioScanRequest.withIBeacons();
+        mRadioScanRequest = req;
+        getListener(this).addIBeaconWatch(callbackContext);
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.requestRadioScanUpdates(
+                    req,
+                    getListener(IALocationPlugin.this)
+                );
+            }
+        });
+    }
+
+    private void clearIBeaconWatch() {
+        final IARadioScanRequest req = (mRadioScanRequest != null && mRadioScanRequest.wifis) ?
+            IARadioScanRequest.withWifis() : null;
+        mRadioScanRequest = req;
+        getListener(this).clearIBeaconWatch();
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (req == null) {
+                    mLocationManager.removeRadioScanUpdates();
+                } else {
+                    mLocationManager.requestRadioScanUpdates(
+                        req,
+                        getListener(IALocationPlugin.this)
+                    );
+                }
+            }
+        });
+    }
+
+    private void watchWifis(CallbackContext callbackContext) {
+        final IARadioScanRequest req = (mRadioScanRequest != null && mRadioScanRequest.iBeacons) ?
+            mRadioScanRequest.andWifis() : IARadioScanRequest.withWifis();
+        mRadioScanRequest = req;
+        getListener(this).addWifiWatch(callbackContext);
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLocationManager.requestRadioScanUpdates(
+                    req,
+                    getListener(IALocationPlugin.this)
+                );
+            }
+        });
+    }
+
+    private void clearWifiWatch() {
+        final IARadioScanRequest req = (mRadioScanRequest != null && mRadioScanRequest.iBeacons) ?
+            IARadioScanRequest.withIBeacons() : null;
+        mRadioScanRequest = req;
+        getListener(this).clearWifiWatch();
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (req == null) {
+                    mLocationManager.removeRadioScanUpdates();
+                } else {
+                    mLocationManager.requestRadioScanUpdates(
+                        req,
+                        getListener(IALocationPlugin.this)
+                    );
+                }
+            }
+        });
     }
 
     /**
