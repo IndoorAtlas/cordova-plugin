@@ -1,3 +1,7 @@
+Version 3.6.7 - June 2024
+----------------
+ * Update IndoorAtlas SDKs to 3.6.10
+
 Version 3.6.6 - May 2024
 ----------------
  * Add radio scan callbacks API (NOTE! To enable the callbacks, please contact IndoorAtlas support)
