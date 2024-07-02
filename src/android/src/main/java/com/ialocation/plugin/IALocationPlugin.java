@@ -220,8 +220,11 @@ public class IALocationPlugin extends CordovaPlugin {
               int floor = args.getInt(2);
               requestWayfindingUpdates(lat, lon, floor, callbackContext);
             } else if ("requestWayfindingRoute".equals(action)) {
+              Log.i(args.toString());
               JSONObject _from = args.getJSONObject(0);
               JSONObject _to = args.getJSONObject(1);
+              Log.i(_from.toString());
+              Log.i(_to.toString());
               IALatLngFloor from = new IALatLngFloor(
                   _from.getDouble("latitude"),
                   _from.getDouble("longitude"),
@@ -230,6 +233,8 @@ public class IALocationPlugin extends CordovaPlugin {
                   _to.getDouble("latitude"),
                   _to.getDouble("longitude"),
                   _to.getInt("floor"));
+              Log.i(from.toString());
+              Log.i(to.toString());
               requestWayfindingRoute(from, to, callbackContext);
             } else if ("removeWayfindingUpdates".equals(action)) {
               removeWayfindingUpdates();
@@ -734,7 +739,7 @@ public class IALocationPlugin extends CordovaPlugin {
             callbackContext.error(PositionError.getErrorObject(PositionError.INITIALIZATION_ERROR));
         }
     }
-    
+
     private void setPositioningMode(String mode, CallbackContext callbackContext) {
       int priority;
       switch (mode) {
@@ -879,7 +884,7 @@ public class IALocationPlugin extends CordovaPlugin {
     public String getName() {
         return "IndoorAtlas";
     }
-    
+
     @ReactMethod
     public void initializeIndoorAtlas(ReadableArray args, Callback success, Callback error) {
         executeReactMethod("initializeIndoorAtlas", args, success, error);
