@@ -1,6 +1,9 @@
 Version 3.6.8 - August 2024
 ----------------
  * Update IndoorAtlas SDKs to 3.6.11
+ * Now uses IA fork of @remobile/react-native-cordova
+ * Fix lat/lon parameters getting truncated in addDynamicGeofence, requestWayfindingRoute and setPosition APIs
+ * Now supports also npm install (previously only yarn install was supported)
 
 Version 3.6.7 - June 2024
 ----------------
