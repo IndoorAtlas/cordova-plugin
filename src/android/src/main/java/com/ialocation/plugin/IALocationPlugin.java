@@ -24,6 +24,7 @@ import com.indooratlas.android.sdk.IAOrientationListener;
 import com.indooratlas.android.sdk.IARadioScanRequest;
 import com.indooratlas.android.sdk.IAWayfindingListener;
 import com.indooratlas.android.sdk.IAWayfindingRequest;
+import com.indooratlas.android.sdk.IAWayfindingTags;
 import com.indooratlas.android.sdk.IAGeofence;
 import com.indooratlas.android.sdk.IAGeofenceRequest;
 import com.indooratlas.android.sdk.resources.IALatLngFloor;
@@ -210,22 +211,16 @@ public class IALocationPlugin extends CordovaPlugin {
             } else if ("removeStatusCallback".equals(action)) {
               removeStatusCallback();
             } else if ("requestWayfindingUpdates".equals(action)) {
-              double lat = args.getDouble(0);
-              double lon = args.getDouble(1);
-              int floor = args.getInt(2);
-              requestWayfindingUpdates(lat, lon, floor, callbackContext);
+              IAWayfindingRequest req = getWayfindingRequestFromJSON(args.getJSONObject(0));
+              requestWayfindingUpdates(req, callbackContext);
             } else if ("requestWayfindingRoute".equals(action)) {
               JSONObject _from = args.getJSONObject(0);
-              JSONObject _to = args.getJSONObject(1);
               IALatLngFloor from = new IALatLngFloor(
                   _from.getDouble("latitude"),
                   _from.getDouble("longitude"),
                   _from.getInt("floor"));
-              IALatLngFloor to = new IALatLngFloor(
-                  _to.getDouble("latitude"),
-                  _to.getDouble("longitude"),
-                  _to.getInt("floor"));
-              requestWayfindingRoute(from, to, callbackContext);
+              IAWayfindingRequest req = getWayfindingRequestFromJSON(args.getJSONObject(1));
+              requestWayfindingRoute(from, req, callbackContext);
             } else if ("removeWayfindingUpdates".equals(action)) {
               removeWayfindingUpdates();
             } else  if ("watchGeofences".equals(action)) {
@@ -399,18 +394,12 @@ public class IALocationPlugin extends CordovaPlugin {
      * 2) Set destination of the wayfinder instance
      * 3) Get route between the given location and destination
      */
-    private void requestWayfindingUpdates(Double lat, Double lon, int floor, CallbackContext callbackContext) {
+    private void requestWayfindingUpdates(final IAWayfindingRequest req, CallbackContext callbackContext) {
         getListener(this).requestWayfindingUpdates(callbackContext);
-        final IAWayfindingRequest wayfindingRequest = new IAWayfindingRequest.Builder()
-            .withLatitude(lat)
-            .withLongitude(lon)
-            .withFloor(floor)
-            .build();
-
         cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              mLocationManager.requestWayfindingUpdates(wayfindingRequest, getListener(IALocationPlugin.this));
+              mLocationManager.requestWayfindingUpdates(req, getListener(IALocationPlugin.this));
             }
         });
     }
@@ -427,7 +416,7 @@ public class IALocationPlugin extends CordovaPlugin {
 
     private void requestWayfindingRoute(
         final IALatLngFloorCompatible from,
-        final IALatLngFloorCompatible to,
+        final IAWayfindingRequest to,
         final CallbackContext callbackContext
     ) {
         final IAWayfindingListener listener = new IAWayfindingListener() {
@@ -862,5 +851,38 @@ public class IALocationPlugin extends CordovaPlugin {
             mListener = new IndoorLocationListener(plugin);
         }
         return mListener;
+    }
+
+    private static IAWayfindingRequest getWayfindingRequestFromJSON(JSONObject json) throws JSONException {
+        IALatLngFloor to = new IALatLngFloor(
+            json.getDouble("latitude"),
+            json.getDouble("longitude"),
+            json.getInt("floor")
+        );
+        IAWayfindingRequest.Builder req = new IAWayfindingRequest.Builder().withDestination(to);
+        if (json.has("tags")) {
+            JSONObject tags = json.getJSONObject("tags");
+            IAWayfindingTags.Mode includeMode = "all".equals(tags.getString("includeMode")) ?
+                IAWayfindingTags.Mode.ALL : IAWayfindingTags.Mode.ANY;
+            IAWayfindingTags.Mode excludeMode = "all".equals(tags.getString("excludeMode")) ?
+                IAWayfindingTags.Mode.ALL : IAWayfindingTags.Mode.ANY;
+            List<String> includeTags = new ArrayList<>();
+            JSONArray includeTags_ = tags.getJSONArray("includeTags");
+            for (int i = 0; i < includeTags_.length(); i++) {
+                includeTags.add(includeTags_.getString(i));
+            }
+            List<String> excludeTags = new ArrayList<>();
+            JSONArray excludeTags_ = tags.getJSONArray("excludeTags");
+            for (int i = 0; i < excludeTags_.length(); i++) {
+                excludeTags.add(excludeTags_.getString(i));
+            }
+            req.withTags(new IAWayfindingTags(
+                includeTags,
+                excludeTags,
+                includeMode,
+                excludeMode
+            ));
+        }
+        return req.build();
     }
 }

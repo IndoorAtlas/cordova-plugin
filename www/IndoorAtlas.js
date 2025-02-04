@@ -53,6 +53,7 @@ var Geofence = require('./Geofence');
 var IBeacon = require('./RadioScan').IBeacon;
 var Wifi = require('./RadioScan').Wifi;
 var RadioScanError = require('./RadioScan').RadioScanError;
+var WayfindingTags = require('./WayfindingTags');
 
 // --- Helper functions and constants (*not* in the global scope)
 
@@ -126,7 +127,7 @@ function IndoorAtlas() {
 
   function requestWayfinding() {
     var destination = wayfindingDestination;
-    native('requestWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor], function (route) {
+    native('requestWayfindingUpdates', [destination], function (route) {
       // this check causes the updates to stop instantly when wayfinding is stopped,
       // even if some updates would be pending in some native thread
       if (callbacks.onWayfindingRoute) callbacks.onWayfindingRoute(new Route(route));
@@ -542,6 +543,8 @@ function IndoorAtlas() {
    * @param {number} destination.longitude Destination longitude in degrees
    * @param {number} destination.floor Destination floor number as defined in
    * the mapping phase
+   * @param {(WayfindingTags)} destination.tags (optional) apply tags based
+   * filtering in wayfinding routing
    * @param {function(Route)} onWayfindingRoute a callback that executes
    * when the user's location is changed, gives the shortest route to the
    * given destination as an object `{ legs }`, where `legs` is a
@@ -589,6 +592,8 @@ function IndoorAtlas() {
    * @param {number} to.longitude Destination longitude in degrees
    * @param {number} to.floor Destination floor number as defined in
    * the mapping phase
+   * @param {(WayfindingTags)} to.tags (optional) apply tags based
+   * filtering in wayfinding routing
    * @param {function(Route)} onWayfindingRoute a callback that executes
    * with the shortest route to the
    * given destination as an object `{ legs }`, where `legs` is a

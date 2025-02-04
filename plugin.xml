@@ -51,6 +51,9 @@
   <js-module src="www/RadioScan.js" name="RadioScan">
     <clobbers target="IndoorAtlas.RadioScan"/>
   </js-module>
+  <js-module src="www/WayfindingTags.js" name="WayfindingTags">
+    <clobbers target="IndoorAtlas.WayfindingTags"/>
+  </js-module>
   <js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
     <merges target="IndoorAtlas"/>
   </js-module>
