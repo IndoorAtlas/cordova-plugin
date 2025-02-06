@@ -323,6 +323,7 @@
                            @"metersToPixels": @(floorplan.meterToPixelConversion),
                            @"pixelsToMeters": @(floorplan.pixelToMeterConversion),
                            @"bottomLeft": @[@(floorplan.bottomLeft.longitude), @(floorplan.bottomLeft.latitude)],
+                           @"bottomRight": @[@(floorplan.bottomRight.longitude), @(floorplan.bottomRight.latitude)],
                            @"center": @[@(floorplan.center.longitude), @(floorplan.center.latitude)],
                            @"topLeft": @[@(floorplan.topLeft.longitude), @(floorplan.topLeft.latitude)],
                            @"topRight": @[@(floorplan.topRight.longitude), @(floorplan.topRight.latitude)],

@@ -251,6 +251,12 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
         floorplanInfo.put("bottomLeft", latlngArray);
 
         latlngArray = new JSONArray();
+        iaLatLng = floorPlan.getBottomRight();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("bottomRight", latlngArray);
+
+        latlngArray = new JSONArray();
         iaLatLng = floorPlan.getCenter();
         latlngArray.put(iaLatLng.longitude);
         latlngArray.put(iaLatLng.latitude);
