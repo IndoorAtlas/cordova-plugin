@@ -1027,6 +1027,15 @@ public class IALocationPlugin extends CordovaPlugin {
         executeReactMethod("clearWifiWatch", args, success, error);
     }
 
+    // Required for rn built in EventEmitter Calls.
+    @ReactMethod
+    public void addListener(String eventName) {
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+    }
+
     private static IAWayfindingRequest getWayfindingRequestFromJSON(JSONObject json) throws JSONException {
         IALatLngFloor to = new IALatLngFloor(
             json.getDouble("latitude"),
