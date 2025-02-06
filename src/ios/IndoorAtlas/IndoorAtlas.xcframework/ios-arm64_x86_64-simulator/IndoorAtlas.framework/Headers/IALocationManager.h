@@ -120,6 +120,11 @@ typedef NS_ENUM(NSInteger, ia_route_error) {
     kIARouteErrorGraphNotAvailable = 2
 };
 
+typedef NS_ENUM(NSInteger, ia_wayfinding_tags_mode) {
+    kIAWayfindingTagsModeAny = 0,
+    kIAWayfindingTagsModeAll = 1
+};
+
 @protocol IALatLngFloorCompatible
 @property (nonatomic,readonly) IALatLngFloor * _Nonnull latLngFloor;
 @end
@@ -256,7 +261,25 @@ INDOORATLAS_API
 @end
 
 /**
- * Provides wayfinding destination for the SDK.
+ * Enables tag based filtering in wayfinding routing.
+ */
+INDOORATLAS_API
+@interface IAWayfindingTags : NSObject <IABeta>
+/** all routes in graph are included and any tags are ignored */
++ (nonnull IAWayfindingTags*)none;
+/** inaccessible routes are excluded (wayfinding graph edges with "inaccessible" tag) */
++ (nonnull IAWayfindingTags*)excludeInaccessible;
+/** accessible-only routes are excluded (wayfinding graph edges with "accessibleonly" tag)  */
++ (nonnull IAWayfindingTags*)excludeAccessibleOnly;
+
+@property (nonatomic, copy, nonnull) NSSet<NSString*> *includeTags;
+@property (nonatomic, copy, nonnull) NSSet<NSString*> *excludeTags;
+@property (nonatomic, assign) enum ia_wayfinding_tags_mode includeMode;
+@property (nonatomic, assign) enum ia_wayfinding_tags_mode excludeMode;
+@end
+
+/**
+ * Provides wayfinding destination for the SDK. Optionally <IAWayfindingTags> can be used to apply tag based filtering in routing.
  */
 INDOORATLAS_API
 @interface IAWayfindingRequest : NSObject <IALatLngFloorCompatible>
@@ -269,6 +292,16 @@ INDOORATLAS_API
  * Wayfinding request's destination floor level.
  */
 @property (nonatomic, assign) NSInteger floor;
+
+/**
+ * Wayfinding request's route filtering tags (optional).
+ */
+@property (nonatomic, strong, nullable) IAWayfindingTags *tags;
+
+/**
+ * Create <IAWayfindingRequest> with given destination and tags for routing.
+ */
++ (nonnull IAWayfindingRequest*)requestWithDestination:(nonnull id<IALatLngFloorCompatible>)destination andTags:(nonnull IAWayfindingTags *)tags;
 @end
 
 /**
@@ -487,7 +520,7 @@ INDOORATLAS_API
  * NOTE! To enable AR features, please contact IndoorAtlas sales.
  */
 INDOORATLAS_API
-@interface IAARObject : NSObject <IABeta,IARestricted>
+@interface IAARObject : NSObject <IARestricted>
 /**
  * Get the current model matrix for this object.
  *
@@ -521,7 +554,7 @@ INDOORATLAS_API
  * The methods of an instance of this class can be called from any thread.
  */
 INDOORATLAS_API
-@interface IAARSession : NSObject <IABeta,IARestricted>
+@interface IAARSession : NSObject <IARestricted>
 /**
  * Wayfinding arrow AR object.
  */
@@ -986,9 +1019,9 @@ INDOORATLAS_API
  * Calling this method several times in succession overwrites the previously done requests.
  * Calling <stopUpdatingLocation> in-between, however, does cause a new initial event to be sent the next time you call this method.
  *
- * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination
+ * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination. <IAWayfindingRequest> must be used to apply optional tags based filtering in wayfinding routing.
  */
-- (void)startMonitoringForWayfinding:(nonnull id<IALatLngFloorCompatible>)to;
+- (void)startMonitoringForWayfinding:(nonnull id<IALatLngFloorCompatible, NSObject>)to;
 
 /**
  * Stops monitoring for wayfinding updates.
@@ -1002,10 +1035,10 @@ INDOORATLAS_API
  * Request a single-shot wayfinding route. Callback with route result is called from the application main thread.
  *
  * @param from An <IALatLngFloorCompatible> object specifying the wayfinding starting location
- * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination
+ * @param to An <IALatLngFloorCompatible> object specifying the wayfinding destination. <IAWayfindingRequest> must be used to apply optional tags based filtering in wayfinding routing.
  * @param callback callback to call with route result
  */
-- (void)requestWayfindingRouteFrom:(nonnull id<IALatLngFloorCompatible>)from to:(nonnull id<IALatLngFloorCompatible>)to callback:(void(^_Nonnull)(IARoute *_Nonnull))callback;
+- (void)requestWayfindingRouteFrom:(nonnull id<IALatLngFloorCompatible>)from to:(nonnull id<IALatLngFloorCompatible, NSObject>)to callback:(void(^_Nonnull)(IARoute *_Nonnull))callback;
 
 /**
  * Lazily creates AR session.
@@ -1052,6 +1085,26 @@ INDOORATLAS_API
  * Extra features API.
  */
 - (void)setObject:(nullable id)obj forKey:(nonnull id)key;
+@end
+
+/**
+ * External storage API.
+ *
+ * NOTE! To enable external storage support, please contact IndoorAtlas.
+ */
+INDOORATLAS_API
+@protocol IAExternalStorageProtocol <IABeta,IARestricted>
+/**
+ * Return data for `key`
+ * Data may be null or zero-length for indicating no data.
+ */
+- (nullable NSData*)getDataForKey:(nonnull NSString*)key;
+
+/**
+ * Set data for `key`
+ * Data may be null or zero-length, which means the data can be removed for the key.
+ */
+- (void)setData:(nullable NSData*)data forKey:(nonnull NSString*)key;
 @end
 
 #undef INDOORATLAS_API

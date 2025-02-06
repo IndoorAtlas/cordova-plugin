@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="cordova-plugin-indooratlas"
-        version="3.6.8">
+        version="3.7.0">
 
   <name>IndoorAtlas</name>
   <description>IndoorAtlas Cordova Plugin.</description>
@@ -51,6 +51,9 @@
   <js-module src="www/RadioScan.js" name="RadioScan">
     <clobbers target="IndoorAtlas.RadioScan"/>
   </js-module>
+  <js-module src="www/WayfindingTags.js" name="WayfindingTags">
+    <clobbers target="IndoorAtlas.WayfindingTags"/>
+  </js-module>
   <js-module src="www/IndoorAtlas.js" name="IndoorAtlas">
     <merges target="IndoorAtlas"/>
   </js-module>
@@ -76,6 +79,7 @@
       <feature name="IndoorAtlas">
         <param name="ios-package" value="IndoorLocation"/>
       </feature>
+      <preference name="deployment-target" value="12.0" />
     </config-file>
     <header-file src="src/ios/IndoorAtlasLocationService.h"/>
     <source-file src="src/ios/IndoorAtlasLocationService.m"/>
