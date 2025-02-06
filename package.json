@@ -17,6 +17,6 @@
   "author": "IndoorAtlas",
   "license": "Apache 2.0",
   "dependencies": {
-    "@remobile/react-native-cordova": "github:IndoorAtlas/react-native-cordova"
+    "@remobile/react-native-cordova": "github:IndoorAtlas/react-native-cordova#update-compile-sdk-and-fix-nullable"
   }
 }
