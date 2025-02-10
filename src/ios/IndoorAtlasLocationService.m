@@ -45,6 +45,8 @@
 
         self.manager.delegate = self;
         serviceStopped = YES;
+        // Set default orientation and heading sensitivity
+        [self setSensitivities:10.0];
     }
     return self;
 }
@@ -145,13 +147,6 @@
     }
 }
 
-- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateHeading:(nonnull IAHeading *)newHeading
-{
-    if([self.delegate respondsToSelector:@selector(location:didUpdateHeading:)]) {
-        [self.delegate location:self didUpdateHeading:newHeading];
-    }
-}
-
 - (void)indoorLocationManager:(IALocationManager *)manager didUpdateRoute:(nonnull IARoute *)route
 {
     if([self.delegate respondsToSelector:@selector(location:didUpdateRoute:)]) {
@@ -174,14 +169,14 @@
     }
 }
 
-- (void)valueForDistanceFilter:(float *)distance
+- (void)valueForDistanceFilter:(float)distance
 {
-    self.manager.distanceFilter = (CLLocationDistance) *(distance);
+    self.manager.distanceFilter = (CLLocationDistance) distance;
 }
 
-- (void)valueForTimeFilter:(float *)interval
+- (void)valueForTimeFilter:(float)interval
 {
-    self.manager.timeFilter = (NSTimeInterval) *(interval);
+    self.manager.timeFilter = (NSTimeInterval) interval;
 }
 
 - (void)setDesiredAccuracy:(ia_location_accuracy)accuracy
@@ -199,10 +194,10 @@
   return [[IALocationManager sharedInstance].extraInfo objectForKey:kIATraceId];
 }
 
-- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity
+- (void)setSensitivities:(double)orientationSensitivity
 {
-    self.manager.attitudeFilter = (CLLocationDegrees) *(orientationSensitivity);
-    self.manager.headingFilter = (CLLocationDegrees) *(headingSensitivity);
+    self.manager.attitudeFilter = (CLLocationDegrees) orientationSensitivity;
+    self.manager.headingFilter = -1.0; // disabled
 }
 
 

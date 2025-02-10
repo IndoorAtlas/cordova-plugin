@@ -46,7 +46,6 @@
 @property (nonatomic, strong) id getFloorCertaintyCallbackID;
 @property (nonatomic, strong) id getTraceIdCallbackID;
 @property (nonatomic, strong) id addAttitudeUpdateCallbackID;
-@property (nonatomic, strong) id addHeadingUpdateCallbackID;
 @property (nonatomic, strong) id addStatusUpdateCallbackID;
 @property (nonatomic, strong) id addRouteUpdateCallbackID;
 @property (nonatomic, strong) id addGeofenceUpdateCallbackID;
@@ -182,21 +181,6 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addAttitudeUpdateCallbackID];
-    }
-}
-
-- (void)returnHeadingInformation:(double)heading timestamp:(NSDate *)timestamp
-{
-    if (_addHeadingUpdateCallbackID != nil) {
-        CDVPluginResult *pluginResult;
-
-        NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
-        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-        [result setObject:secondsSinceRefDate forKey:@"timestamp"];
-        [result setObject:[NSNumber numberWithDouble:heading] forKey:@"trueHeading"];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        [pluginResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addHeadingUpdateCallbackID];
     }
 }
 
@@ -499,16 +483,6 @@
     _addAttitudeUpdateCallbackID = nil;
 }
 
-- (void)addHeadingCallback:(CDVInvokedUrlCommand *)command
-{
-    _addHeadingUpdateCallbackID = command.callbackId;
-}
-
-- (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command
-{
-    _addHeadingUpdateCallbackID = nil;
-}
-
 - (void)removeRouteCallback:(CDVInvokedUrlCommand *)command
 {
     _addRouteUpdateCallbackID = nil;
@@ -563,8 +537,8 @@
     NSString *interval = [command argumentAtIndex:1];
     float t = [interval floatValue];
     
-    [self.IAlocationInfo valueForDistanceFilter: &d];
-    [self.IAlocationInfo valueForTimeFilter: &t];
+    [self.IAlocationInfo valueForDistanceFilter: d];
+    [self.IAlocationInfo valueForTimeFilter: t];
 
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -619,12 +593,10 @@
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command
 {
     NSString *oSensitivity = [command argumentAtIndex:0];
-    NSString *hSensitivity = [command argumentAtIndex:1];
 
     double orientationSensitivity = [oSensitivity doubleValue];
-    double headingSensitivity = [hSensitivity doubleValue];
 
-    [self.IAlocationInfo setSensitivities: &orientationSensitivity headingSensitivity:&headingSensitivity];
+    [self.IAlocationInfo setSensitivities:orientationSensitivity];
 
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -991,14 +963,6 @@
     NSDate *timestamp = attitude.timestamp;
 
     [self returnAttitudeInformation:x y:y z:z w:w timestamp:timestamp];
-}
-
-- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)heading
-{
-    double direction = heading.trueHeading;
-    NSDate *timestamp = heading.timestamp;
-
-    [self returnHeadingInformation:direction timestamp:timestamp];
 }
 
 - (void)location:(IndoorAtlasLocationService *)manager didRangeBeacons:(nonnull NSArray<CLBeacon *> *)beacons
