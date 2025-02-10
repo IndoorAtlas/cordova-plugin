@@ -233,6 +233,7 @@ function IndoorAtlas() {
       native('clearWifiWatch', []);
     }
 
+    wayfindingDestination = null;
     positioningOptions = null;
     orientationFilter = null;
 
@@ -411,6 +412,14 @@ function IndoorAtlas() {
     delete callbacks.onLocation;
     // NOTE: other watches are cleared as well
     stopPositioning();
+    delete callbacks.onFloorPlanChange;
+    delete callbacks.onVenueChange;
+    delete callbacks.onWayfindingRoute;
+    delete callbacks.onOrientation;
+    delete callbacks.onTriggeredGeofence;
+    delete callbacks.onIBeaconScan;
+    delete callbacks.onWifiScan;
+    delete callbacks.onStatus;
     return self;
   };
 
