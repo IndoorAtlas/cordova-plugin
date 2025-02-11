@@ -214,8 +214,7 @@ function IndoorAtlas() {
     // after addAttitudeCallback on purpose
     if (orientationFilter && orientationFilter.minChangeDegrees > 0) {
       var orientationSensitivity = orientationFilter.minChangeDegrees;
-      var headingSensitivity = 1000; // no heading callbacks needed
-      native('setSensitivities', [orientationSensitivity, headingSensitivity]);
+      native('setSensitivities', [orientationSensitivity]);
     }
   }
 
@@ -225,7 +224,6 @@ function IndoorAtlas() {
     native('clearRegionWatch', [DEFAULT_REGION_WATCH_ID]);
     native('clearGeofenceWatch', []);
     native('removeAttitudeCallback', []);
-    native('removeHeadingCallback', []);
     native('removeStatusCallback', []);
     native('removeWayfindingUpdates', []); // just in case
     native('clearIBeaconWatch', []);
@@ -233,6 +231,7 @@ function IndoorAtlas() {
       native('clearWifiWatch', []);
     }
 
+    wayfindingDestination = null;
     positioningOptions = null;
     orientationFilter = null;
 
@@ -411,6 +410,14 @@ function IndoorAtlas() {
     delete callbacks.onLocation;
     // NOTE: other watches are cleared as well
     stopPositioning();
+    delete callbacks.onFloorPlanChange;
+    delete callbacks.onVenueChange;
+    delete callbacks.onWayfindingRoute;
+    delete callbacks.onOrientation;
+    delete callbacks.onTriggeredGeofence;
+    delete callbacks.onIBeaconScan;
+    delete callbacks.onWifiScan;
+    delete callbacks.onStatus;
     return self;
   };
 
@@ -510,7 +517,7 @@ function IndoorAtlas() {
    * @param {object} options distance filter options (optional)
    * @param {number} options.minChangeDegrees (optional) Change filter.
    * If set, determines the minimum angle in degrees that the device has to
-   * be rotated (about any axis) before a new orientation is reported.
+   * be rotated (about any axis) before a new orientation is reported. Default: 10 degrees.
    * @return {object} returns `this` to allow chaining
    * @example
    * IndoorAtlas.watchOrientation(orientation => {

@@ -21,6 +21,7 @@ public class PositionError {
     public static final int FLOOR_PLAN_UNDEFINED = 8;
     public static final int INVALID_OUTPUT_THRESHOLD_VALUE = 9;
     public static final int INVALID_POSITIONING_MODE = 10;
+    public static final int ALREADY_DESTROYED = 11;
     
     /**
      * Returns an error JSON object with given errorCode and message
@@ -85,6 +86,10 @@ public class PositionError {
                 case INVALID_POSITIONING_MODE:
                   errorObject.put("code", errorCode);
                   errorObject.put("message", "Invalid positioning mode");
+                  break;
+                case ALREADY_DESTROYED:
+                  errorObject.put("code", errorCode);
+                  errorObject.put("message", "IALocationPlugin already destroyed");
                   break;
                 case UNSPECIFIED_ERROR:
                 default:
