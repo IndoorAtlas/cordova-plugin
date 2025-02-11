@@ -53,14 +53,6 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateAttitude:(IAAttitude *)newAttitude;
 
 /**
- *  UpdatedHeading callback
- *
- *  @param manager
- *  @param newHeading
- */
-- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)newHeading;
-
-/**
  * Updated when a wayfinding route update is available.
  *
  * @param route Updated wayfinding route.
