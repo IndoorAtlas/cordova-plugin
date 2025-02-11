@@ -8,7 +8,7 @@
 @property (nonatomic, strong) IALocationManager *manager;
 @property (nonatomic, retain) NSString *apikey;
 @property (nonatomic, retain) NSString *apiSecret;
-@property (nonatomic, strong) IAFloorPlan *previousFloorplan;
+@property (nonatomic, strong) IAStatus *previousStatus;
 @end
 
 @implementation IndoorAtlasLocationService {
@@ -33,6 +33,9 @@
 {
     self = [super init];
     if (self) {
+        if (!self.apikey || ![self.apikey isEqualToString:apikey]) {
+            self.previousStatus = nil;
+        }
         self.apikey = apikey;
         // Create IALocationManager and point delegate to receiver
         self.manager = [IALocationManager sharedInstance];
@@ -59,6 +62,9 @@
 - (void)startPositioning
 {
     serviceStopped = NO;
+    if (self.previousStatus && [self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
+        [self indoorLocationManager:self.manager statusChanged:self.previousStatus];
+    }
     [self.manager startUpdatingLocation];
     [self setCriticalLog:[NSString stringWithFormat:@"IndoorAtlas positioning started"]];
 }
@@ -135,6 +141,7 @@
  */
 - (void)indoorLocationManager:(nonnull IALocationManager *)manager statusChanged:(nonnull IAStatus *)status
 {
+    self.previousStatus = status;
     if([self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
         [self.delegate location:self statusChanged:status];
     }
