@@ -23,12 +23,13 @@ repositories {
     mavenCentral()
     maven {
         url "https://dl.cloudsmith.io/public/indooratlas/mvn-public/maven/"
+        url "https://dl.cloudsmith.io/public/indooratlas/mvn-public-beta/maven/"
     }
 }
 
 dependencies {
     implementation 'com.android.support:appcompat-v7:27.0.2'
-    implementation 'com.indooratlas.android:indooratlas-android-sdk:3.6.11'
+    implementation 'com.indooratlas.android:indooratlas-android-sdk:3.7.0-beta-1900@aar'
     implementation 'com.facebook.react:react-native:+'
     implementation project(':react-native-cordova')
 }

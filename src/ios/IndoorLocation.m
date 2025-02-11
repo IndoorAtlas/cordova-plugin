@@ -50,7 +50,6 @@
 @property (nonatomic, strong) id getFloorCertaintyCallbackID;
 @property (nonatomic, strong) id getTraceIdCallbackID;
 @property (nonatomic, strong) id addAttitudeUpdateCallbackID;
-@property (nonatomic, strong) id addHeadingUpdateCallbackID;
 @property (nonatomic, strong) id addStatusUpdateCallbackID;
 @property (nonatomic, strong) id addRouteUpdateCallbackID;
 @property (nonatomic, strong) id addGeofenceUpdateCallbackID;
@@ -255,21 +254,6 @@
     }
 }
 
-- (void)returnHeadingInformation:(double)heading timestamp:(NSDate *)timestamp
-{
-    if (_addHeadingUpdateCallbackID != nil) {
-        CDVPluginResult *pluginResult;
-
-        NSNumber *secondsSinceRefDate = [NSNumber numberWithDouble:[timestamp timeIntervalSinceReferenceDate]];
-        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:2];
-        [result setObject:secondsSinceRefDate forKey:@"timestamp"];
-        [result setObject:[NSNumber numberWithDouble:heading] forKey:@"trueHeading"];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-        //[pluginResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.addHeadingUpdateCallbackID];
-    }
-}
-
 - (void)returnRouteInformation:(IARoute *)route callbackId:(id)callbackId andKeepCallback:(BOOL)keepCallback
 {
     if (callbackId == nil) {
@@ -393,6 +377,7 @@
                            @"metersToPixels": @(floorplan.meterToPixelConversion),
                            @"pixelsToMeters": @(floorplan.pixelToMeterConversion),
                            @"bottomLeft": @[@(floorplan.bottomLeft.longitude), @(floorplan.bottomLeft.latitude)],
+                           @"bottomRight": @[@(floorplan.bottomRight.longitude), @(floorplan.bottomRight.latitude)],
                            @"center": @[@(floorplan.center.longitude), @(floorplan.center.latitude)],
                            @"topLeft": @[@(floorplan.topLeft.longitude), @(floorplan.topLeft.latitude)],
                            @"topRight": @[@(floorplan.topRight.longitude), @(floorplan.topRight.latitude)],
@@ -568,16 +553,6 @@
     _addAttitudeUpdateCallbackID = nil;
 }
 
-- (void)addHeadingCallback:(CDVInvokedUrlCommand *)command
-{
-    _addHeadingUpdateCallbackID = command.callbackId;
-}
-
-- (void)removeHeadingCallback:(CDVInvokedUrlCommand *)command
-{
-    _addHeadingUpdateCallbackID = nil;
-}
-
 - (void)removeRouteCallback:(CDVInvokedUrlCommand *)command
 {
     _addRouteUpdateCallbackID = nil;
@@ -632,8 +607,8 @@
     NSString *interval = [command argumentAtIndex:1];
     float t = [interval floatValue];
     
-    [self.IAlocationInfo valueForDistanceFilter: &d];
-    [self.IAlocationInfo valueForTimeFilter: &t];
+    [self.IAlocationInfo valueForDistanceFilter: d];
+    [self.IAlocationInfo valueForTimeFilter: t];
 
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -688,12 +663,10 @@
 - (void)setSensitivities:(CDVInvokedUrlCommand *)command
 {
     NSString *oSensitivity = [command argumentAtIndex:0];
-    NSString *hSensitivity = [command argumentAtIndex:1];
 
     double orientationSensitivity = [oSensitivity doubleValue];
-    double headingSensitivity = [hSensitivity doubleValue];
 
-    [self.IAlocationInfo setSensitivities: &orientationSensitivity headingSensitivity:&headingSensitivity];
+    [self.IAlocationInfo setSensitivities:orientationSensitivity];
 
     CDVPluginResult *pluginResult;
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -704,19 +677,33 @@
 
 - (void)requestWayfindingUpdates:(CDVInvokedUrlCommand *)command
 {
-    NSString *oLat = [command argumentAtIndex:0];
-    NSString *oLon = [command argumentAtIndex:1];
-    NSString *oFloor = [command argumentAtIndex:2];
+    NSDictionary *to_ = [command argumentAtIndex:0];
+    IALatLngFloor *to = [IALatLngFloor latLngFloorWithLatitude:[[to_ valueForKey:@"latitude"] doubleValue]
+                                                  andLongitude:[[to_ valueForKey:@"longitude"] doubleValue]
+                                                      andFloor:[[to_ valueForKey:@"floor"] integerValue]];
+
+    IAWayfindingRequest *req = [IAWayfindingRequest alloc];
+    req.coordinate = CLLocationCoordinate2DMake(to.latitude, to.longitude);
+    req.floor = to.floor;
+
+    if ([to_ objectForKey:@"tags"]) {
+        NSDictionary *tags_ = [to_ objectForKey:@"tags"];
+        IAWayfindingTags *tags = [IAWayfindingTags new];
+        tags.includeTags = [NSSet setWithArray:[tags_ objectForKey:@"includeTags"]];
+        tags.excludeTags = [NSSet setWithArray:[tags_ objectForKey:@"excludeTags"]];
+        ia_wayfinding_tags_mode includeMode = [[tags_ valueForKey:@"includeMode"] isEqualToString:@"all"] ?
+            kIAWayfindingTagsModeAll : kIAWayfindingTagsModeAny;
+        ia_wayfinding_tags_mode excludeMode = [[tags_ valueForKey:@"excludeMode"] isEqualToString:@"all"] ?
+            kIAWayfindingTagsModeAll : kIAWayfindingTagsModeAny;
+        tags.includeMode = includeMode;
+        tags.excludeMode = excludeMode;
+        req.tags = tags;
+    }
+
     self.addRouteUpdateCallbackID = command.callbackId;
 
-    const double lat = [oLat doubleValue];
-    const double lon = [oLon doubleValue];
-    const int floor = [oFloor intValue];
+    NSLog(@"locationManager::requestWayfindingUpdates %f, %f, %d", to.latitude, to.longitude, to.floor);
 
-    NSLog(@"locationManager::requestWayfindingUpdates %f, %f, %d", lat, lon, floor);
-    IAWayfindingRequest *req = [IAWayfindingRequest alloc];
-    req.coordinate = CLLocationCoordinate2DMake(lat, lon);
-    req.floor = floor;
     [self.IAlocationInfo startMonitoringForWayfinding:req];
 }
 
@@ -737,9 +724,27 @@
                                                   andLongitude:[[to_ valueForKey:@"longitude"] doubleValue]
                                                       andFloor:[[to_ valueForKey:@"floor"] integerValue]];
 
+    IAWayfindingRequest *req = [IAWayfindingRequest alloc];
+    req.coordinate = CLLocationCoordinate2DMake(to.latitude, to.longitude);
+    req.floor = to.floor;
+
+    if ([to_ objectForKey:@"tags"]) {
+        NSDictionary *tags_ = [to_ objectForKey:@"tags"];
+        IAWayfindingTags *tags = [IAWayfindingTags new];
+        tags.includeTags = [NSSet setWithArray:[tags_ objectForKey:@"includeTags"]];
+        tags.excludeTags = [NSSet setWithArray:[tags_ objectForKey:@"excludeTags"]];
+        ia_wayfinding_tags_mode includeMode = [[tags_ valueForKey:@"includeMode"] isEqualToString:@"all"] ?
+            kIAWayfindingTagsModeAll : kIAWayfindingTagsModeAny;
+        ia_wayfinding_tags_mode excludeMode = [[tags_ valueForKey:@"excludeMode"] isEqualToString:@"all"] ?
+            kIAWayfindingTagsModeAll : kIAWayfindingTagsModeAny;
+        tags.includeMode = includeMode;
+        tags.excludeMode = excludeMode;
+        req.tags = tags;
+    }
+
     NSLog(@"locationManager::requestWayfindingRoute from %f, %f, %d to %f, %f, %d", from.latitude, from.longitude, from.floor, to.latitude, to.longitude, to.floor);
     
-    [self.IAlocationInfo requestWayfindingRouteFrom:from to:to callback:^(IARoute *route) {
+    [self.IAlocationInfo requestWayfindingRouteFrom:from to:req callback:^(IARoute *route) {
         [self returnRouteInformation:route callbackId:command.callbackId andKeepCallback:NO];
     }];
 }
@@ -1030,14 +1035,6 @@
     [self returnAttitudeInformation:x y:y z:z w:w timestamp:timestamp];
 }
 
-- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)heading
-{
-    double direction = heading.trueHeading;
-    NSDate *timestamp = heading.timestamp;
-
-    [self returnHeadingInformation:direction timestamp:timestamp];
-}
-
 - (void)location:(IndoorAtlasLocationService *)manager didRangeBeacons:(nonnull NSArray<CLBeacon *> *)beacons
 {
     [self returnBeaconScans:beacons];
@@ -1096,8 +1093,6 @@ RCT_EXPORT_CORDOVA_METHOD2(addRegionWatch);
 RCT_EXPORT_CORDOVA_METHOD2(clearRegionWatch);
 RCT_EXPORT_CORDOVA_METHOD2(addAttitudeCallback);
 RCT_EXPORT_CORDOVA_METHOD2(removeAttitudeCallback);
-RCT_EXPORT_CORDOVA_METHOD2(addHeadingCallback);
-RCT_EXPORT_CORDOVA_METHOD2(removeHeadingCallback);
 RCT_EXPORT_CORDOVA_METHOD2(removeRouteCallback);
 RCT_EXPORT_CORDOVA_METHOD2(addStatusChangedCallback);
 RCT_EXPORT_CORDOVA_METHOD2(removeStatusCallback);
