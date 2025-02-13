@@ -57,6 +57,7 @@ var Geofence = require('./Geofence');
 var IBeacon = require('./RadioScan').IBeacon;
 var Wifi = require('./RadioScan').Wifi;
 var RadioScanError = require('./RadioScan').RadioScanError;
+var WayfindingTags = require('./WayfindingTags');
 
 // --- Helper functions and constants (*not* in the global scope)
 
@@ -128,7 +129,7 @@ function IndoorAtlas() {
 
   function requestWayfinding() {
     var destination = wayfindingDestination;
-    native('requestWayfindingUpdates', [destination.latitude, destination.longitude, destination.floor], function (route) {
+    native('requestWayfindingUpdates', [destination], function (route) {
       // this check causes the updates to stop instantly when wayfinding is stopped,
       // even if some updates would be pending in some native thread
       if (callbacks.onWayfindingRoute) callbacks.onWayfindingRoute(new Route(route));
@@ -215,8 +216,7 @@ function IndoorAtlas() {
     // after addAttitudeCallback on purpose
     if (orientationFilter && orientationFilter.minChangeDegrees > 0) {
       var orientationSensitivity = orientationFilter.minChangeDegrees;
-      var headingSensitivity = 1000; // no heading callbacks needed
-      native('setSensitivities', [orientationSensitivity, headingSensitivity]);
+      native('setSensitivities', [orientationSensitivity]);
     }
   }
 
@@ -226,7 +226,6 @@ function IndoorAtlas() {
     native('clearRegionWatch', [DEFAULT_REGION_WATCH_ID]);
     native('clearGeofenceWatch', []);
     native('removeAttitudeCallback', []);
-    native('removeHeadingCallback', []);
     native('removeStatusCallback', []);
     native('removeWayfindingUpdates', []); // just in case
     native('clearIBeaconWatch', []);
@@ -234,6 +233,7 @@ function IndoorAtlas() {
       native('clearWifiWatch', []);
     }
 
+    wayfindingDestination = null;
     positioningOptions = null;
     orientationFilter = null;
 
@@ -413,11 +413,20 @@ function IndoorAtlas() {
     delete callbacks.onLocation;
     // NOTE: other watches are cleared as well
     stopPositioning();
+    delete callbacks.onFloorPlanChange;
+    delete callbacks.onVenueChange;
+    delete callbacks.onWayfindingRoute;
+    delete callbacks.onOrientation;
+    delete callbacks.onTriggeredGeofence;
+    delete callbacks.onIBeaconScan;
+    delete callbacks.onWifiScan;
+    delete callbacks.onStatus;
     // react.native
     for (const [_, value] of Object.entries(subscriptions)) {
       value.remove();
     }
     subscriptions = {};
+
     return self;
   };
 
@@ -517,7 +526,7 @@ function IndoorAtlas() {
    * @param {object} options distance filter options (optional)
    * @param {number} options.minChangeDegrees (optional) Change filter.
    * If set, determines the minimum angle in degrees that the device has to
-   * be rotated (about any axis) before a new orientation is reported.
+   * be rotated (about any axis) before a new orientation is reported. Default: 10 degrees.
    * @return {object} returns `this` to allow chaining
    * @example
    * IndoorAtlas.watchOrientation(orientation => {
@@ -550,6 +559,8 @@ function IndoorAtlas() {
    * @param {number} destination.longitude Destination longitude in degrees
    * @param {number} destination.floor Destination floor number as defined in
    * the mapping phase
+   * @param {(WayfindingTags)} destination.tags (optional) apply tags based
+   * filtering in wayfinding routing
    * @param {function(Route)} onWayfindingRoute a callback that executes
    * when the user's location is changed, gives the shortest route to the
    * given destination as an object `{ legs }`, where `legs` is a
@@ -597,6 +608,8 @@ function IndoorAtlas() {
    * @param {number} to.longitude Destination longitude in degrees
    * @param {number} to.floor Destination floor number as defined in
    * the mapping phase
+   * @param {(WayfindingTags)} to.tags (optional) apply tags based
+   * filtering in wayfinding routing
    * @param {function(Route)} onWayfindingRoute a callback that executes
    * with the shortest route to the
    * given destination as an object `{ legs }`, where `legs` is a

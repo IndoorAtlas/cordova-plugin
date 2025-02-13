@@ -53,14 +53,6 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)location:(IndoorAtlasLocationService *)manager didUpdateAttitude:(IAAttitude *)newAttitude;
 
 /**
- *  UpdatedHeading callback
- *
- *  @param manager
- *  @param newHeading
- */
-- (void)location:(IndoorAtlasLocationService *)manager didUpdateHeading:(IAHeading *)newHeading;
-
-/**
  * Updated when a wayfinding route update is available.
  *
  * @param route Updated wayfinding route.
@@ -137,11 +129,11 @@ typedef NSUInteger IndoorLocationTransitionType;
 - (void)startMonitoringForBeacons;
 - (void)stopMonitoringForBeacons;
 
-- (void)valueForDistanceFilter:(float *)distance;
-- (void)valueForTimeFilter:(float *)interval;
+- (void)valueForDistanceFilter:(float)distance;
+- (void)valueForTimeFilter:(float)interval;
 - (void)setDesiredAccuracy:(ia_location_accuracy)accuracy;
 - (float)fetchFloorCertainty;
 - (NSString *)fetchTraceId;
-- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity;
+- (void)setSensitivities:(double)orientationSensitivity;
 
 @end

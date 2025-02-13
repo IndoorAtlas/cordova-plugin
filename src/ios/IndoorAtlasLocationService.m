@@ -8,7 +8,7 @@
 @property (nonatomic, strong) IALocationManager *manager;
 @property (nonatomic, retain) NSString *apikey;
 @property (nonatomic, retain) NSString *apiSecret;
-@property (nonatomic, strong) IAFloorPlan *previousFloorplan;
+@property (nonatomic, strong) IAStatus *previousStatus;
 @end
 
 @implementation IndoorAtlasLocationService {
@@ -33,6 +33,9 @@
 {
     self = [super init];
     if (self) {
+        if (!self.apikey || ![self.apikey isEqualToString:apikey]) {
+            self.previousStatus = nil;
+        }
         self.apikey = apikey;
         // Create IALocationManager and point delegate to receiver
         self.manager = [IALocationManager sharedInstance];
@@ -45,6 +48,8 @@
 
         self.manager.delegate = self;
         serviceStopped = YES;
+        // Set default orientation and heading sensitivity
+        [self setSensitivities:10.0];
     }
     return self;
 }
@@ -57,6 +62,9 @@
 - (void)startPositioning
 {
     serviceStopped = NO;
+    if (self.previousStatus && [self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
+        [self indoorLocationManager:self.manager statusChanged:self.previousStatus];
+    }
     [self.manager startUpdatingLocation];
     [self setCriticalLog:[NSString stringWithFormat:@"IndoorAtlas positioning started"]];
 }
@@ -133,6 +141,7 @@
  */
 - (void)indoorLocationManager:(nonnull IALocationManager *)manager statusChanged:(nonnull IAStatus *)status
 {
+    self.previousStatus = status;
     if([self.delegate respondsToSelector:@selector(location:statusChanged:)]) {
         [self.delegate location:self statusChanged:status];
     }
@@ -142,13 +151,6 @@
 {
     if([self.delegate respondsToSelector:@selector(location:didUpdateAttitude:)]) {
         [self.delegate location:self didUpdateAttitude:newAttitude];
-    }
-}
-
-- (void)indoorLocationManager:(nonnull IALocationManager *)manager didUpdateHeading:(nonnull IAHeading *)newHeading
-{
-    if([self.delegate respondsToSelector:@selector(location:didUpdateHeading:)]) {
-        [self.delegate location:self didUpdateHeading:newHeading];
     }
 }
 
@@ -174,14 +176,14 @@
     }
 }
 
-- (void)valueForDistanceFilter:(float *)distance
+- (void)valueForDistanceFilter:(float)distance
 {
-    self.manager.distanceFilter = (CLLocationDistance) *(distance);
+    self.manager.distanceFilter = (CLLocationDistance) distance;
 }
 
-- (void)valueForTimeFilter:(float *)interval
+- (void)valueForTimeFilter:(float)interval
 {
-    self.manager.timeFilter = (NSTimeInterval) *(interval);
+    self.manager.timeFilter = (NSTimeInterval) interval;
 }
 
 - (void)setDesiredAccuracy:(ia_location_accuracy)accuracy
@@ -199,10 +201,10 @@
   return [[IALocationManager sharedInstance].extraInfo objectForKey:kIATraceId];
 }
 
-- (void)setSensitivities:(double *)orientationSensitivity headingSensitivity:(double *)headingSensitivity
+- (void)setSensitivities:(double)orientationSensitivity
 {
-    self.manager.attitudeFilter = (CLLocationDegrees) *(orientationSensitivity);
-    self.manager.headingFilter = (CLLocationDegrees) *(headingSensitivity);
+    self.manager.attitudeFilter = (CLLocationDegrees) orientationSensitivity;
+    self.manager.headingFilter = -1.0; // disabled
 }
 
 

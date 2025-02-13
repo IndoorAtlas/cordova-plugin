@@ -43,7 +43,6 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
     private HashMap<String, CallbackContext> watches = new HashMap<String, CallbackContext>();
     private HashMap<String, CallbackContext> regionWatches = new HashMap<String, CallbackContext>();
     private CallbackContext attitudeUpdateCallbackContext;
-    private CallbackContext headingUpdateCallbackContext;
     private CallbackContext statusUpdateCallbackContext;
     private CallbackContext wayfindingUpdateCallbackContext;
     private CallbackContext geofenceCallbackContext;
@@ -117,14 +116,6 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
     }
 
     /**
-     * Adds headingWatch JS callback to the collection
-     * @param callbackContext
-     */
-    public void addHeadingCallback(CallbackContext callbackContext) {
-      headingUpdateCallbackContext = callbackContext;
-    }
-
-    /**
      * Adds getCurrentPosition JS callback to the collection
      * @param callbackContext
      */
@@ -133,7 +124,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
     }
 
     /**
-     * Adds headingWatch JS callback to the collection
+     * Adds statusChanged JS callback to the collection
      * @param callbackContext
      */
     public void addStatusChangedCallback(CallbackContext callbackContext) {
@@ -213,13 +204,6 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
       attitudeUpdateCallbackContext = null;
     }
 
-    /**
-     * Removes heading callback
-     */
-     public void removeHeadingCallback() {
-       headingUpdateCallbackContext = null;
-     }
-
      /**
       * Removes status callback
       */
@@ -248,6 +232,12 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
         latlngArray.put(iaLatLng.longitude);
         latlngArray.put(iaLatLng.latitude);
         floorplanInfo.put("bottomLeft", latlngArray);
+
+        latlngArray = new JSONArray();
+        iaLatLng = floorPlan.getBottomRight();
+        latlngArray.put(iaLatLng.longitude);
+        latlngArray.put(iaLatLng.latitude);
+        floorplanInfo.put("bottomRight", latlngArray);
 
         latlngArray = new JSONArray();
         iaLatLng = floorPlan.getCenter();
@@ -459,27 +449,17 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
     }
 
     /**
-     * Called to report that orientation has changed
+     * Called to report that heading has changed
      * @param timestamp
-     * @param quaternion
+     * @param heading
      */
     @Override
     public void onHeadingChanged(long timestamp, double heading) {
-      try {
-          JSONObject headingData;
-          headingData = new JSONObject();
-          headingData.put("timestamp", timestamp);
-          headingData.put("trueHeading", heading);
-          sendHeadingResult(headingData);
-      }
-      catch(JSONException ex) {
-          Log.e(TAG, ex.toString());
-          throw new IllegalStateException(ex.getMessage());
-      }
+        // not used
     }
 
     /**
-     * Invokes JS callback from watchRegion callback collection.
+     * Invokes JS callback from watchOrientation callback collection.
      * @param orientationData
      */
      private void sendOrientationResult(JSONObject orientationData) {
@@ -490,20 +470,6 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
          attitudeUpdateCallbackContext.sendPluginResult(pluginResult);
        }
      }
-
-    /**
-     * Invokes JS callback from watchRegion callback collection.
-     * @param headingData
-     */
-    private void sendHeadingResult(JSONObject headingData) {
-      if (headingUpdateCallbackContext != null) {
-        PluginResult pluginResult;
-        pluginResult = new PluginResult(PluginResult.Status.OK, headingData);
-        //pluginResult.setKeepCallback(true);
-        headingUpdateCallbackContext.sendPluginResult(pluginResult);
-      }
-    }
-
 
     /**
      * Invokes JS callback from watchRegion callback collection.

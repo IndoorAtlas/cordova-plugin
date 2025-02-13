@@ -94,6 +94,14 @@ var FloorPlan = function(data) {
   this.bottomLeft = data.bottomLeft;
 
   /**
+   * WGS84 coordinates of the bottom right corner of the floor plan
+   * placed on the surface of Earth. Represented as array in lon, lat sequence
+   * @type {array}
+   * @example [24.1234, 63.1234]
+   */
+  this.bottomRight = data.bottomRight;
+
+  /**
    * WGS84 coordinates of the center of the floor plan
    * placed on the surface of Earth. Represented as array in lon, lat sequence
    * @type {array}
