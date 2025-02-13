@@ -1,8 +1,9 @@
 Version 3.7.0 - February 2025
 ----------------
  * Update IndoorAtlas SDKs to 3.7.0
- * Add wayfinding tags API
+ * Add accessible wayfinding API
  * Add floor plan bottomRight coordinates to API
+ * Bug fixes
 
 Version 3.6.8 - August 2024
 ----------------
