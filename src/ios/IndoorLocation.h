@@ -1,8 +1,8 @@
-
 #import <UIKit/UIKit.h>
 #import <CoreLocation/CoreLocation.h>
-#import <Cordova/CDVPlugin.h>
 #import "IndoorAtlasLocationService.h"
+// react.native
+#import <CDVPlugin.h>
 
 enum IndoorLocationStatus {
     PERMISSION_DENIED = 1,
@@ -47,7 +47,8 @@ typedef NSUInteger IndoorLocationStatus;
 
 @end
 
-@interface IndoorLocation : CDVPlugin {
+// react.native
+@interface IndoorLocation : CDVPluginEventEmitter {
 }
 
 @property (nonatomic, strong) IndoorLocationInfo *locationData;

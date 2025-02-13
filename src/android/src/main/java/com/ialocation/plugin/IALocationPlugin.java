@@ -1,10 +1,10 @@
 package com.ialocation.plugin;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.Collections;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -29,10 +29,13 @@ import com.indooratlas.android.sdk.IAGeofence;
 import com.indooratlas.android.sdk.IAGeofenceRequest;
 import com.indooratlas.android.sdk.resources.IALatLngFloor;
 import com.indooratlas.android.sdk.resources.IALatLngFloorCompatible;
-
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.PluginResult;
+// react.native
+import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
+import com.remobile.cordova.CordovaPlugin;
+import com.remobile.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,7 +77,7 @@ public class IALocationPlugin extends CordovaPlugin {
      * by other Java methods in the event that a plugin is using this as a dependency.
      * @return Returns true if the plugin has all the permissions it needs to operate.
      */
-    @Override
+    //@Override
     public boolean hasPermisssion() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true;
@@ -92,7 +95,7 @@ public class IALocationPlugin extends CordovaPlugin {
      * @param requestCode   Passed to the activity to track the request
      *
      */
-    @Override
+    //@Override
     public void requestPermissions(int requestCode) {
         cordova.requestPermissions(this, requestCode, permissions.toArray(new String[]{}));
     }
@@ -133,7 +136,9 @@ public class IALocationPlugin extends CordovaPlugin {
      * @throws JSONException
      */
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(String action, JSONArray args, com.remobile.cordova.CallbackContext realCallbackContext) throws JSONException {
+        // react.native
+        CallbackContext callbackContext = new CallbackContext(action, realCallbackContext, this);
         if (mDestroyed) {
             Log.w(TAG, "already destroyed, ignoring action " + action);
             callbackContext.error(PositionError.getErrorObject(PositionError.ALREADY_DESTROYED));
@@ -309,7 +314,8 @@ public class IALocationPlugin extends CordovaPlugin {
                     Bundle bundle = new Bundle(2);
                     bundle.putString(IALocationManager.EXTRA_API_KEY, apiKey);
                     bundle.putString(IALocationManager.EXTRA_API_SECRET, apiSecret);
-                    bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperName", "cordova");
+                    // react.native
+                    bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperName", "react-native");
                     if (pluginVersion != null) {
                         bundle.putString("com.indooratlas.android.sdk.intent.extras.wrapperVersion", pluginVersion);
                     }
@@ -421,7 +427,7 @@ public class IALocationPlugin extends CordovaPlugin {
             public void onWayfindingUpdate(IARoute route) {
                 PluginResult pluginResult;
                 pluginResult = new PluginResult(PluginResult.Status.OK, getRouteJSONFromIARoute(route));
-                pluginResult.setKeepCallback(false);
+                //pluginResult.setKeepCallback(false);
                 callbackContext.sendPluginResult(pluginResult);
             }
         };
@@ -844,6 +850,190 @@ public class IALocationPlugin extends CordovaPlugin {
             mListener = new IndoorLocationListener(plugin);
         }
         return mListener;
+    }
+
+    // react.native
+    public IALocationPlugin(ReactApplicationContext reactContext) {
+        super(reactContext);
+    }
+
+    @Override
+    public String getName() {
+        return "IndoorAtlas";
+    }
+    
+    @ReactMethod
+    public void initializeIndoorAtlas(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("initializeIndoorAtlas", args, success, error);
+    }
+
+    @ReactMethod
+    public void addWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void getLocation(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("getLocation", args, success, error);
+    }
+
+    @ReactMethod
+    public void getPermissions(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("getPermissions", args, success, error);
+    }
+
+    @ReactMethod
+    public void setPosition(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("setPosition", args, success, error);
+    }
+
+    @ReactMethod
+    public void addRegionWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addRegionWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearRegionWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearRegionWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void setOutputThresholds(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("setOutputThresholds", args, success, error);
+    }
+
+    @ReactMethod
+    public void setPositioningMode(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("setPositioningMode", args, success, error);
+    }
+
+    @ReactMethod
+    public void getTraceId(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("getTraceId", args, success, error);
+    }
+
+    @ReactMethod
+    public void getFloorCertainty(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("getFloorCertainty", args, success, error);
+    }
+
+    @ReactMethod
+    public void addAttitudeCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addAttitudeCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void removeAttitudeCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("removeAttitudeCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void addHeadingCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addHeadingCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void removeHeadingCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("removeHeadingCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void setSensitivities(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("setSensitivities", args, success, error);
+    }
+
+    @ReactMethod
+    public void addStatusChangedCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addStatusChangedCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void removeStatusCallback(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("removeStatusCallback", args, success, error);
+    }
+
+    @ReactMethod
+    public void requestWayfindingUpdates(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("requestWayfindingUpdates", args, success, error);
+    }
+
+    @ReactMethod
+    public void requestWayfindingRoute(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("requestWayfindingRoute", args, success, error);
+    }
+
+    @ReactMethod
+    public void removeWayfindingUpdates(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("removeWayfindingUpdates", args, success, error);
+    }
+
+    @ReactMethod
+    public void watchGeofences(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("watchGeofences", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearGeofenceWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearGeofenceWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void addDynamicGeofence(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("addDynamicGeofence", args, success, error);
+    }
+
+    @ReactMethod
+    public void removeDynamicGeofence(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("removeDynamicGeofence", args, success, error);
+    }
+
+    @ReactMethod
+    public void lockFloor(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("lockFloor", args, success, error);
+    }
+
+    @ReactMethod
+    public void unlockFloor(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("unlockFloor", args, success, error);
+    }
+
+    @ReactMethod
+    public void lockIndoors(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("lockIndoors", args, success, error);
+    }
+
+    @ReactMethod
+    public void watchIBeacons(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("watchIBeacons", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearIBeaconWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearIBeaconWatch", args, success, error);
+    }
+
+    @ReactMethod
+    public void watchWifis(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("watchWifis", args, success, error);
+    }
+
+    @ReactMethod
+    public void clearWifiWatch(ReadableArray args, Callback success, Callback error) {
+        executeReactMethod("clearWifiWatch", args, success, error);
+    }
+
+    // Required for rn built in EventEmitter Calls.
+    @ReactMethod
+    public void addListener(String eventName) {
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
     }
 
     private static IAWayfindingRequest getWayfindingRequestFromJSON(JSONObject json) throws JSONException {

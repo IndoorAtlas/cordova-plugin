@@ -8,6 +8,9 @@ Version 3.7.0 - February 2025
 Version 3.6.8 - August 2024
 ----------------
  * Update IndoorAtlas SDKs to 3.6.11
+ * Now uses IA fork of @remobile/react-native-cordova
+ * Fix lat/lon parameters getting truncated in addDynamicGeofence, requestWayfindingRoute and setPosition APIs
+ * Now supports also npm install (previously only yarn install was supported)
 
 Version 3.6.7 - June 2024
 ----------------
@@ -15,7 +18,6 @@ Version 3.6.7 - June 2024
 
 Version 3.6.6 - May 2024
 ----------------
- * Add `NSMotionUsageDescription` declaration for iOS
  * Add radio scan callbacks API (NOTE! To enable the callbacks, please contact IndoorAtlas support)
 
 Version 3.6.5 - May 2024
@@ -37,6 +39,7 @@ Version 3.6.2 - December 2023
 Version 3.6.1 - October 2023
 ----------------
  * Update IndoorAtlas SDKs to 3.6.4
+ * add workaround to support Android Gradle buildtools version 33
 
 Version 3.6.0 - June 2023
 ----------------
@@ -51,7 +54,6 @@ Version 3.5.0 - August 2022
  * Update IndoorAtlas SDKs to 3.5.5
  * iOS: fix JSON serialization issue with position object
  * Android: add BLUETOOTH_SCAN permission. The plugin now requires compile and target sdk version 31
- * Now requires Cordova version 11.0.0 or higher
 
 Version 3.4.5 - February 2022
 ----------------
@@ -61,6 +63,7 @@ Version 3.4.5 - February 2022
 Version 3.4.4 - September 2021
 ----------------
  * Update IndoorAtlas SDKs to 3.4.9
+ * Fix broken package.json in last release
 
 Version 3.4.3 - June 2021
 ----------------
