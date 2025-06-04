@@ -1,3 +1,7 @@
+Version 3.7.1 - June 2025
+----------------
+ * Update IndoorAtlas SDKs to 3.7.1
+
 Version 3.7.0 - February 2025
 ----------------
  * Update IndoorAtlas SDKs to 3.7.0
