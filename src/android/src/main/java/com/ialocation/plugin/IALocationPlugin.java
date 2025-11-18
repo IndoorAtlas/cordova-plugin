@@ -134,7 +134,7 @@ public class IALocationPlugin extends CordovaPlugin {
      */
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (mDestroyed) {
+        if (mDestroyed && !"initializeIndoorAtlas".equals(action)) {
             Log.w(TAG, "already destroyed, ignoring action " + action);
             callbackContext.error(PositionError.getErrorObject(PositionError.ALREADY_DESTROYED));
             return false;
@@ -146,6 +146,7 @@ public class IALocationPlugin extends CordovaPlugin {
                     String apiSecret = args.getString(1);
                     String pluginVersion = args.getString(2);
                     initializeIndoorAtlas(apiKey, apiSecret, pluginVersion, callbackContext);
+                    mDestroyed = false;
                 }
                 else {
                     callbackContext.error(PositionError.getErrorObject(PositionError.INVALID_ACCESS_TOKEN));
