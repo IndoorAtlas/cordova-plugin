@@ -1,7 +1,7 @@
 Version 3.7.2 - November 2025
 ----------------
  * Update IndoorAtlas SDKs to 3.7.2
- * Android: allow reinit after onDestroy()
+ * Android: ignore clear/remove* actions after onDestroy()
 
 Version 3.7.1 - June 2025
 ----------------
