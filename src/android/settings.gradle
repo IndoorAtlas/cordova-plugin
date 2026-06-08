@@ -1,0 +1,2 @@
+include ':react-native-cordova'                                                                                                                                                                                                                                                                   
+project(':react-native-cordova').projectDir = file('../../../@remobile/react-native-cordova/android')  

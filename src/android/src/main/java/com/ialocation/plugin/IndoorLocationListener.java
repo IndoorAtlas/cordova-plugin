@@ -19,9 +19,8 @@ import com.indooratlas.android.sdk.resources.IAFloorPlan;
 import com.indooratlas.android.sdk.resources.IALatLng;
 import com.indooratlas.android.sdk.resources.IARadioScan;
 import com.indooratlas.android.sdk.resources.IAVenue;
-
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
+// react.native
+import com.remobile.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -467,7 +466,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
        if (attitudeUpdateCallbackContext != null) {
          PluginResult pluginResult;
          pluginResult = new PluginResult(PluginResult.Status.OK, orientationData);
-         pluginResult.setKeepCallback(true);
+         //pluginResult.setKeepCallback(true);
          attitudeUpdateCallbackContext.sendPluginResult(pluginResult);
        }
      }
@@ -480,7 +479,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
         PluginResult pluginResult;
         for (CallbackContext callbackContext : regionWatches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.OK, regionData);
-            pluginResult.setKeepCallback(true);
+            //pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
         }
     }
@@ -493,13 +492,13 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
         PluginResult pluginResult;
         for (CallbackContext callbackContext : mCallbacks) {
             pluginResult = new PluginResult(PluginResult.Status.OK, locationData);
-            pluginResult.setKeepCallback(false);
+            //pluginResult.setKeepCallback(false);
             callbackContext.sendPluginResult(pluginResult);
         }
 
         for (CallbackContext callbackContext : watches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.OK, locationData);
-            pluginResult.setKeepCallback(true);
+            //pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
         }
         mCallbacks.clear();
@@ -516,7 +515,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
       if (statusUpdateCallbackContext != null) {
         PluginResult pluginResult;
         pluginResult = new PluginResult(PluginResult.Status.OK, statusData);
-        pluginResult.setKeepCallback(true);
+        //pluginResult.setKeepCallback(true);
         statusUpdateCallbackContext.sendPluginResult(pluginResult);
       }
     }
@@ -528,12 +527,12 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
         PluginResult pluginResult;
         for (CallbackContext callbackContext : watches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.POSITION_UNAVAILABLE));
-            pluginResult.setKeepCallback(true);
+            //pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
         }
         for (CallbackContext callbackContext : regionWatches.values()) {
             pluginResult = new PluginResult(PluginResult.Status.ERROR, PositionError.getErrorObject(PositionError.POSITION_UNAVAILABLE));
-            pluginResult.setKeepCallback(true);
+            //pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
         }
     }
@@ -573,7 +572,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
       if (wayfindingUpdateCallbackContext != null) {
           PluginResult pluginResult;
           pluginResult = new PluginResult(PluginResult.Status.OK, getRouteJSONFromIARoute(route));
-          pluginResult.setKeepCallback(true);
+          //pluginResult.setKeepCallback(true);
           wayfindingUpdateCallbackContext.sendPluginResult(pluginResult);
       }
     }
@@ -663,7 +662,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                         PluginResult.Status.OK,
                         result
                     );
-                    pluginResult.setKeepCallback(true);
+                    //pluginResult.setKeepCallback(true);
                     geofenceCallbackContext.sendPluginResult(pluginResult);
                 } catch (JSONException e) {
                     throw new IllegalStateException(e.getMessage());
@@ -691,7 +690,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 iBeaconScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -714,7 +713,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 iBeaconScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -739,7 +738,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 wifiScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
@@ -759,7 +758,7 @@ public class IndoorLocationListener extends IARadioScanListener implements IALoc
                     PluginResult.Status.OK,
                     result
                 );
-                pluginResult.setKeepCallback(true);
+                //pluginResult.setKeepCallback(true);
                 wifiScanCallbackContext.sendPluginResult(pluginResult);
             } catch (JSONException e) {
                 throw new IllegalStateException(e.getMessage());
