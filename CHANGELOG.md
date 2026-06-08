@@ -1,3 +1,7 @@
+Version 3.8.1 - June 2026
+----------------
+ * Update IndoorAtlas SDKs to 3.8.1
+
 Version 3.8.0 - March 2026
 ----------------
  * Update IndoorAtlas SDKs to 3.8.0
